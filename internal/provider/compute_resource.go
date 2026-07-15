@@ -15,6 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -194,18 +198,30 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						},
 					},
 				},
+				PlanModifiers: []planmodifier.Object{
+				    objectplanmodifier.RequiresReplace(),
+				},
 			},
 			"volumes": schema.ListNestedAttribute{
 				Required: true,
 				NestedObject: schema.NestedAttributeObject{
                     Attributes: volumeAttributes(),
 				},
+				PlanModifiers: []planmodifier.List{
+                    listplanmodifier.RequiresReplace(),
+				},
 			},
 			"vm_name": schema.StringAttribute{
 				Required: true,
+				PlanModifiers: []planmodifier.String{
+				    stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"region": schema.StringAttribute{
 				Required: true,
+				PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
 			},
 			"cloudinit": schema.SingleNestedAttribute{
 			    Optional: true,
@@ -218,6 +234,9 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						ElementType: types.StringType,
 					},
 				},
+				PlanModifiers: []planmodifier.Object{
+                    objectplanmodifier.RequiresReplace(),
+				},
 			},
 			"additional_info": schema.SingleNestedAttribute{
 				Required: true,
@@ -226,6 +245,9 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						Required: true,
 					},
 				},
+				PlanModifiers: []planmodifier.Object{
+                    objectplanmodifier.RequiresReplace(),
+                },
 			},
 			"billing_frequency": schema.StringAttribute{
 				Required: true,
@@ -236,6 +258,9 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						"year",
 					),
 				},
+				PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
 			},
 			"billing_uuid": schema.StringAttribute{
                 Computed: true,
@@ -272,7 +297,6 @@ func (r *computeResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-    // Retrieve values from plan
     var plan computeResourceModel
     diags := req.Plan.Get(ctx, &plan)
     resp.Diagnostics.Append(diags...)
@@ -368,7 +392,6 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
 
     plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
-    // Set state to fully populated data
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
@@ -444,7 +467,6 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     state.UUID = types.StringValue(resource.UUID)
     state.PaymentURL = types.StringNull()
 
-    // Set refreshed state
     diags = resp.State.Set(ctx, &state)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
@@ -453,6 +475,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *computeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+    // TODO: Implement update if the API supports it. For now, we mark everything as needing replacement.
 }
 
 func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
