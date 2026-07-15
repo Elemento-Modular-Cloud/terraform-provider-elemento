@@ -456,4 +456,19 @@ func (r *computeResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+    var state computeResourceModel
+    diags := req.State.Get(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    err := r.client.DeleteComputeResource(state.UUID.ValueString())
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Deleting HashiCups Order",
+            "Could not delete order, unexpected error: " + err.Error(),
+        )
+        return
+    }
 }

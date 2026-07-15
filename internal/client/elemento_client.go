@@ -129,7 +129,6 @@ func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) 
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
-
         return nil, fmt.Errorf("failed to create compute resource: %s %s", resp.Status, string(body))
     }
 
@@ -179,4 +178,46 @@ func (c *ElementoClient) ListComputeResources(ctx context.Context) ([]ComputeLis
     }
 
     return computeResources.VMS, nil
+}
+
+func (c *ElementoClient) DeleteComputeResource(uuid string) error {
+    url := "https://" + c.Host + ":7777/api/v1.0/unregister"
+
+    delRequest := struct {
+        UUID string `json:"vm_uid"`
+    }{
+        UUID: uuid,
+    }
+
+    body, err := json.Marshal(delRequest)
+    if err != nil {
+        return err
+    }
+
+    req, err := http.NewRequest("DELETE", url, bytes.NewReader(body))
+    if err != nil {
+        return err
+    }
+
+    req.Header.Set("Content-Type", "application/json")
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return err
+    }
+    req.Header.Set("Authorization", "Bearer " + *authToken)
+
+    resp, err := c.httpClient.Do(req)
+    if err != nil {
+        return err
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return fmt.Errorf("failed to delete compute resource: %s %s", resp.Status, string(body))
+    }
+
+    return nil
 }
