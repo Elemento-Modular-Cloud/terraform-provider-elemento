@@ -14,7 +14,7 @@ provider "elemento" {
 
 resource "elemento_compute" "n8n_cloudinit_test" {
   vm_name           = "n8n-cloudinit-test"
-  region            = "italynorth"
+  region            = "fi-hel2"
   billing_frequency = "month"
 
   requirements = {

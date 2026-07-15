@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"terraform-provider-elemento/internal/client"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -19,7 +20,7 @@ func NewStorageResource() resource.Resource {
 }
 
 type storageResource struct{
-	client *ElementoClient
+	client *client.ElementoClient
 }
 
 type storageVolumeModel struct {
@@ -28,10 +29,10 @@ type storageVolumeModel struct {
     Private     types.Bool   `tfsdk:"private"`
     Shareable   types.Bool   `tfsdk:"shareable"`
     Bootable    types.Bool   `tfsdk:"bootable"`
+    Clonable    types.Bool   `tfsdk:"clonable"`
     Readonly    types.Bool   `tfsdk:"readonly"`
     Priority    types.Int32  `tfsdk:"priority"`
-    VolumeUUID  types.String `tfsdk:"volume_uuid"`
-    ServerURL   types.String `tfsdk:"serverurl"`
+    UUID        types.String `tfsdk:"volume_uuid"`
     LastUpdated types.String `tfsdk:"last_updated"`
 }
 
@@ -56,6 +57,10 @@ func volumeAttributes() map[string]schema.Attribute {
         "bootable": schema.BoolAttribute{
 	       	Required: true,
         },
+        "clonable": schema.BoolAttribute{
+           	Optional: true,
+            Computed: true,
+        },
         "readonly": schema.BoolAttribute{
 	       	Required: true,
         },
@@ -65,10 +70,7 @@ func volumeAttributes() map[string]schema.Attribute {
         "volume_uuid": schema.StringAttribute{
  	       	Computed: true,
         },
-        "serverurl": schema.StringAttribute{
-	       	Computed: true,
-        },
-        "last_updates": schema.StringAttribute{
+        "last_updated": schema.StringAttribute{
         	Computed: true,
         },
    }
@@ -85,7 +87,7 @@ func (r *storageResource) Configure(_ context.Context, req resource.ConfigureReq
 		return
 	}
 
-	client, ok := req.ProviderData.(*ElementoClient)
+	client, ok := req.ProviderData.(*client.ElementoClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(

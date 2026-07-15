@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"os"
+	"terraform-provider-elemento/internal/client"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -172,7 +173,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	client := NewElementoClient(host, username, password, portal)
+	client := client.NewElementoClient(host, username, password, portal)
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }

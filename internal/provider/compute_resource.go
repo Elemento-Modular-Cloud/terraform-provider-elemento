@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"terraform-provider-elemento/internal/client"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
@@ -27,7 +29,7 @@ func NewComputeResource() resource.Resource {
 }
 
 type computeResource struct{
-	client *ElementoClient
+	client *client.ElementoClient
 }
 
 type computeResourceModel struct {
@@ -256,7 +258,7 @@ func (r *computeResource) Configure(_ context.Context, req resource.ConfigureReq
 		return
 	}
 
-	client, ok := req.ProviderData.(*ElementoClient)
+	client, ok := req.ProviderData.(*client.ElementoClient)
 
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -290,9 +292,9 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     diags = plan.CloudInit.Variables.ElementsAs(ctx, &cloudinitVariables, false)
     resp.Diagnostics.Append(diags...)
 
-    var volumes []StorageVolume
+    var volumes []client.StorageVolume
     for _, volume := range plan.Volumes {
-        volumes = append(volumes, StorageVolume{
+        volumes = append(volumes, client.StorageVolume{
             Name:      volume.Name.ValueString(),
             Size:      int(volume.Size.ValueInt64()),
             Private:   volume.Private.ValueBool(),
@@ -306,9 +308,9 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         return
     }
 
-    computeResource := ComputeResource{
-        Requirements: ComputeRequirements{
-            CPU: ComputeCPU{
+    computeResource := client.ComputeResource{
+        Requirements: client.ComputeRequirements{
+            CPU: client.ComputeCPU{
                 SMTEnabled:       plan.Requirements.CPU.SMTEnabled.ValueBool(),
                 MinFrequency:     plan.Requirements.CPU.MinFrequency.ValueFloat64(),
                 Arch:             plan.Requirements.CPU.Arch.ValueString(),
@@ -318,32 +320,32 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
                 FullPhysical:     plan.Requirements.CPU.FullPhysical.ValueBool(),
                 MaxOverprovision: int(plan.Requirements.CPU.MaxOverprovision.ValueInt32()),
             },
-            Memory: ComputeMemory{
+            Memory: client.ComputeMemory{
                 Capacity:   int(plan.Requirements.Memory.Capacity.ValueInt32()),
                 RequireECC: plan.Requirements.Memory.RequireECC.ValueBool(),
             },
-            PCI: ComputePCI{
+            PCI: client.ComputePCI{
                 Devices: pciDevices,
             },
-            Misc: ComputeMisc{
+            Misc: client.ComputeMisc{
                 OSFamily:  plan.Requirements.Misc.OSFamily.ValueString(),
                 OSFlavour: plan.Requirements.Misc.OSFlavour.ValueString(),
             },
         },
         VMName: plan.VMName.ValueString(),
         Region: plan.Region.ValueString(),
-        CloudInit: CloudInitConfig{
+        CloudInit: client.CloudInitConfig{
             Template:  plan.CloudInit.Template.ValueString(),
             Variables: cloudinitVariables,
         },
-        AdditionalInfo: AdditionalInfoConfig{
+        AdditionalInfo: client.AdditionalInfoConfig{
             Service: plan.AdditionalInfo.Service.ValueString(),
         },
         BillingFrequency: plan.BillingFrequency.ValueString(),
         Volumes: volumes,
     }
 
-    response, err := r.client.CreateComputeResource(ctx, computeResource)
+    response, err := r.client.CreateComputeResource(computeResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error creating compute resource",
@@ -354,11 +356,12 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
 
     plan.BillingUUID = types.StringValue(response.BillingUUID)
     plan.PaymentURL = types.StringValue(response.PaymentURL)
+    plan.UUID = types.StringNull()
 
     for volumeIndex, volume := range plan.Volumes {
         volume.Priority = types.Int32Null()
-        volume.VolumeUUID = types.StringNull()
-        volume.ServerURL = types.StringNull()
+        volume.Clonable = types.BoolNull()
+        volume.UUID = types.StringNull()
         volume.LastUpdated = types.StringNull()
         plan.Volumes[volumeIndex] = volume
     }
@@ -374,7 +377,79 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+    var state computeResourceModel
+    diags := req.State.Get(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 
+    resources, err := r.client.ListComputeResources(ctx)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading Compute Resources",
+            "Could not list compute resources: "+err.Error(),
+        )
+        return
+    }
+
+    var resource *client.ComputeListItem;
+    for _, res := range resources {
+        if res.BillingUUID == state.BillingUUID.ValueString() {
+            resource = &res
+            break
+        }
+    }
+
+    if resource == nil {
+        resp.State.RemoveResource(ctx)
+        return
+    }
+
+    state.Requirements.CPU.Arch = types.StringValue(resource.Requirements.Arch)
+    state.Requirements.CPU.Flags, diags = types.ListValueFrom(ctx, types.StringType, resource.Requirements.Flags)
+    resp.Diagnostics.Append(diags...)
+    state.Requirements.CPU.Slots = types.Int32Value(int32(resource.Requirements.Slots))
+    state.Requirements.CPU.AllowSMT = types.BoolValue(resource.Requirements.AllowSMT)
+    state.Requirements.CPU.MaxOverprovision = types.Int32Value(int32(resource.Requirements.Overprovision))
+
+    state.Requirements.Memory.Capacity = types.Int32Value(int32(resource.Requirements.RamSize * 1024))
+    state.Requirements.Memory.RequireECC = types.BoolValue(resource.Requirements.RequireECC)
+
+    // TODO: PCI DEVICES
+
+    state.Requirements.Misc.OSFamily = types.StringValue(resource.Requirements.OSFamily)
+    state.Requirements.Misc.OSFlavour = types.StringValue(resource.Requirements.OSFlavour)
+
+    var volumes []storageVolumeModel
+    for _, volume := range resource.Requirements.Volumes {
+        volumes = append(volumes, storageVolumeModel{
+            Name:      types.StringValue(volume.Name),
+            Size:      types.Int64Value(int64(volume.Size)),
+            Private:   types.BoolValue(volume.Private),
+            Shareable: types.BoolValue(volume.Shareable),
+            Bootable:  types.BoolValue(volume.Bootable),
+            Readonly:  types.BoolValue(volume.Readonly),
+            Clonable:  types.BoolValue(volume.Clonable),
+            Priority:  types.Int32Value(int32(volume.Priority)),
+            UUID: types.StringValue(volume.UUID),
+            LastUpdated: types.StringValue(volume.LastUpdated),
+        })
+    }
+    state.Volumes = volumes
+
+    state.VMName = types.StringValue(resource.Requirements.VMName)
+    state.Region = types.StringValue(resource.Region)
+    state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+    state.UUID = types.StringValue(resource.UUID)
+    state.PaymentURL = types.StringNull()
+
+    // Set refreshed state
+    diags = resp.State.Set(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 }
 
 func (r *computeResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
