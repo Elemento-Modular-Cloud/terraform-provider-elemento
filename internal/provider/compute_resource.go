@@ -38,6 +38,7 @@ type computeResource struct{
 
 type computeResourceModel struct {
 	Requirements     computeRequirementsModel   `tfsdk:"requirements"`
+	Authentication   computeAuthenticationModel `tfsdk:"authentication"`
 	Volumes          []storageVolumeModel       `tfsdk:"volumes"`
 	VMName           types.String               `tfsdk:"vm_name"`
     Region           types.String               `tfsdk:"region"`
@@ -85,6 +86,12 @@ type computeMiscModel struct {
 type computeCloudInitModel struct {
     Template  types.String `tfsdk:"template"`
     Variables types.Map    `tfsdk:"variables"`
+}
+
+type computeAuthenticationModel struct {
+    Username types.String `tfsdk:"username"`
+    Password types.String `tfsdk:"password"`
+    SSHKey   types.String `tfsdk:"ssh_key"`
 }
 
 type computeAdditionalInfoModel struct {
@@ -196,6 +203,25 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 								Optional: true, // TODO: os_flavour validator based on iso-templates?
 							},
 						},
+					},
+				},
+				PlanModifiers: []planmodifier.Object{
+				    objectplanmodifier.RequiresReplace(),
+				},
+			},
+			"authentication": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"username": schema.StringAttribute{
+						Required: true,
+					},
+					"password": schema.StringAttribute{
+						Required: true,
+						Sensitive: true,
+					},
+					"ssh_key": schema.StringAttribute{
+						Optional: true,
+						Sensitive: true,
 					},
 				},
 				PlanModifiers: []planmodifier.Object{

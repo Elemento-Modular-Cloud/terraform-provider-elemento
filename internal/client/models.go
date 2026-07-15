@@ -1,13 +1,14 @@
 package client
 
 type ComputeResource struct {
-    Requirements     ComputeRequirements  `json:"req"`
-    VMName           string               `json:"vm_name"`
-    Region           string               `json:"region"`
-    CloudInit        CloudInitConfig      `json:"cloudinit"`
-    AdditionalInfo   AdditionalInfoConfig `json:"additional_info"`
-    BillingFrequency string               `json:"billing_frequency"`
-    Volumes          []StorageVolume      `json:"volumes"`
+    Requirements     ComputeRequirements   `json:"req"`
+    Authentication   ComputeAuthentication `json:"authentication"`
+    VMName           string                `json:"vm_name"`
+    Region           string                `json:"region"`
+    CloudInit        CloudInitConfig       `json:"cloudinit"`
+    AdditionalInfo   AdditionalInfoConfig  `json:"additional_info"`
+    BillingFrequency string                `json:"billing_frequency"`
+    Volumes          []StorageVolume       `json:"volumes"`
 }
 
 type ComputeRequirements struct {
@@ -40,6 +41,12 @@ type ComputePCI struct {
 type ComputeMisc struct {
     OSFamily string  `json:"os_family"`
     OSFlavour string `json:"os_flavour"`
+}
+
+type ComputeAuthentication struct {
+    Username string `json:"username"`
+    Password string `json:"password"`
+    SSHKey   string `json:"ssh-key"`
 }
 
 type CloudInitConfig struct {
