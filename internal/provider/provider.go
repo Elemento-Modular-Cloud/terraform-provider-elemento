@@ -1,109 +1,188 @@
-// Copyright IBM Corp. 2021, 2025
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
 	"context"
-	"net/http"
+	"os"
 
-	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
-	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// Ensure ScaffoldingProvider satisfies various provider interfaces.
-var _ provider.Provider = &ScaffoldingProvider{}
-var _ provider.ProviderWithFunctions = &ScaffoldingProvider{}
-var _ provider.ProviderWithEphemeralResources = &ScaffoldingProvider{}
-var _ provider.ProviderWithActions = &ScaffoldingProvider{}
+var (
+    _ provider.Provider = &ElementoProvider{}
+)
 
-// ScaffoldingProvider defines the provider implementation.
-type ScaffoldingProvider struct {
-	// version is set to the provider version on release, "dev" when the
-	// provider is built and ran locally, and "test" when running acceptance
-	// testing.
-	version string
+func New(version string) func() provider.Provider {
+    return func() provider.Provider {
+        return &ElementoProvider{
+            version: version,
+        }
+    }
 }
 
-// ScaffoldingProviderModel describes the provider data model.
-type ScaffoldingProviderModel struct {
-	Endpoint types.String `tfsdk:"endpoint"`
+type ElementoProvider struct {
+    version string
 }
 
-func (p *ScaffoldingProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "scaffolding"
-	resp.Version = p.version
+func (p *ElementoProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
+    resp.TypeName = "elemento"
+    resp.Version = p.version
 }
 
-func (p *ScaffoldingProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"endpoint": schema.StringAttribute{
-				MarkdownDescription: "Example provider attribute",
-				Optional:            true,
+func (p *ElementoProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
+    resp.Schema = schema.Schema{
+    	Attributes: map[string]schema.Attribute{
+     		"host": schema.StringAttribute{
+       			Optional: true,
+       		},
+         	"username": schema.StringAttribute{
+       			Optional: true,
+       		},
+         	"password": schema.StringAttribute{
+	   			Optional: true,
+				Sensitive: true,
+	   		},
+			"portal": schema.StringAttribute{
+				Optional: true,
 			},
-		},
-	}
+     	},
+    }
 }
 
-func (p *ScaffoldingProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	var data ScaffoldingProviderModel
+type ElementoProviderModel struct {
+	Host     types.String `tfsdk:"host"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
+	Portal   types.String `tfsdk:"portal"`
+}
 
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+func (p *ElementoProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var config ElementoProviderModel
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// If practitioner provided a configuration value for any of the attributes, it must be a known value.
+
+	if config.Host.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("host"),
+			"Unknown Elemento API Host",
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API host. " +
+			    "Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_HOST environment variable.",
+		)
+	}
+
+	if config.Username.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("username"),
+			"Unknown Elemento API Username",
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API username. " +
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_USERNAME environment variable.",
+		)
+	}
+
+	if config.Password.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("password"),
+			"Unknown Elemento API Password",
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API password. " +
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_PASSWORD environment variable.",
+		)
+	}
+
+	if config.Portal.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("portal"),
+			"Unknown Elemento API Portal",
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API portal. " +
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_PORTAL environment variable.",
+		)
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Configuration values are now available.
-	// if data.Endpoint.IsNull() { /* ... */ }
+	// Default values to environment variables, but override
+	// with Terraform configuration value if set.
 
-	// Example client configuration for data sources and resources
-	client := http.DefaultClient
+	host := os.Getenv("ELEMENTO_HOST")
+	username := os.Getenv("ELEMENTO_USERNAME")
+	password := os.Getenv("ELEMENTO_PASSWORD")
+	portal := os.Getenv("ELEMENTO_PORTAL")
+
+	if !config.Host.IsNull() {
+		host = config.Host.ValueString()
+	}
+
+	if !config.Username.IsNull() {
+		username = config.Username.ValueString();
+	}
+
+	if !config.Password.IsNull() {
+		password = config.Password.ValueString()
+	}
+
+	if !config.Portal.IsNull() {
+		portal = config.Portal.ValueString()
+	}
+
+	if host == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("host"),
+			"Missing Elemento API Host",
+            "The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API host. "+
+                "Set the host value in the configuration or use the ELEMENTO_HOST environment variable. "+
+                "If either is already set, ensure the value is not empty.",
+		)
+	}
+
+	if username == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("username"),
+			"Missing Elemento API username",
+            "The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API username. "+
+            	"Set the username value in the configuration or use the ELEMENTO_USERNAME environment variable. "+
+                "If either is already set, ensure the value is not empty.",
+		)
+	}
+
+	if password == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("password"),
+			"Missing Elemento API password",
+            "The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API password. "+
+            	"Set the password value in the configuration or use the ELEMENTO_PASSWORD environment variable. "+
+        	    "If either is already set, ensure the value is not empty.",
+		)
+	}
+
+	if portal == "" {
+	    portal = "portal.elemento.cloud"
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	client := NewElementoClient(host, username, password, portal)
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }
 
-func (p *ScaffoldingProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{
-		NewExampleResource,
-	}
+func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return nil
 }
 
-func (p *ScaffoldingProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
-	return []func() ephemeral.EphemeralResource{
-		NewExampleEphemeralResource,
-	}
-}
-
-func (p *ScaffoldingProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewExampleDataSource,
-	}
-}
-
-func (p *ScaffoldingProvider) Functions(ctx context.Context) []func() function.Function {
-	return []func() function.Function{
-		NewExampleFunction,
-	}
-}
-
-func (p *ScaffoldingProvider) Actions(ctx context.Context) []func() action.Action {
-	return []func() action.Action{
-		NewExampleAction,
-	}
-}
-
-func New(version string) func() provider.Provider {
-	return func() provider.Provider {
-		return &ScaffoldingProvider{
-			version: version,
-		}
+func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resource {
+    return []func() resource.Resource{
+    	NewComputeResource,
 	}
 }
