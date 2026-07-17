@@ -58,7 +58,7 @@ type AdditionalInfoConfig struct {
     Service string `json:"service"`
 }
 
-type StorageVolume struct {
+type StorageResourceMin struct {
     Name      string `json:"name"`
     Size      int    `json:"size"`
     Private   bool   `json:"private"`
@@ -67,6 +67,25 @@ type StorageVolume struct {
     Readonly  bool   `json:"readonly"`
 }
 
+type StorageResource struct {
+    CreatorUUID      string   `json:"creatorID"`
+    Name             string   `json:"name"`
+    Size             int      `json:"size"`
+    Private          bool     `json:"private"`
+    Shareable        bool     `json:"shareable"`
+    Bootable         bool     `json:"bootable"`
+    Clonable         *bool    `json:"clonable,omitempty"`
+    Algorithm        *string  `json:"alg,omitempty"`
+    Format           *string  `json:"format,omitempty"`
+    Bus              *string  `json:"bus,omitempty"`
+    FS               *string  `json:"fs,omitempty"`
+    HardwareDevice   *string  `json:"hw_device,omitempty"`
+    Tags             []string `json:"tags,omitempty"`
+    Region           string   `json:"region"`
+    Readonly         bool     `json:"readonly"`
+    Priority         *int     `json:"priority,omitempty"`
+    BillingFrequency string   `json:"billing_frequency"`
+}
 
 type ComputeListItem struct {
     UUID             string             `json:"uniqueID"`
@@ -87,7 +106,7 @@ type ComputeReqResponse struct {
     Flags                []string                `json:"flags"`
     RamSize              float64                 `json:"ramsize"`
     RequireECC           bool                    `json:"reqECC"`
-    Volumes              []StorageVolumeResponse `json:"volumes"`
+    Volumes              []StorageResourceResponse `json:"volumes"`
     PciDevices           []string                `json:"pcidevs"`
     NetworkDevices       []string                `json:"netdevs"`
     OSFamily             string                  `json:"os_family"`
@@ -104,7 +123,7 @@ type MesonInfo struct {
     Price    struct{} `json:"price"`
 }
 
-type StorageVolumeResponse struct {
+type StorageResourceResponse struct {
     CreatorUUID string   `json:"creatorID"`
     Name        string   `json:"name"`
     Size        int      `json:"size"`

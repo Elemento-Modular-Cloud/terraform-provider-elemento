@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -23,25 +24,40 @@ type storageResource struct{
 	client *client.ElementoClient
 }
 
-type storageVolumeModel struct {
-    Name        types.String `tfsdk:"name"`
-    Size        types.Int64  `tfsdk:"size"`
-    Private     types.Bool   `tfsdk:"private"`
-    Shareable   types.Bool   `tfsdk:"shareable"`
-    Bootable    types.Bool   `tfsdk:"bootable"`
-    Clonable    types.Bool   `tfsdk:"clonable"`
-    Readonly    types.Bool   `tfsdk:"readonly"`
-    Priority    types.Int32  `tfsdk:"priority"`
-    UUID        types.String `tfsdk:"volume_uuid"`
-    LastUpdated types.String `tfsdk:"last_updated"`
+type storageResourceModel struct {
+    CreatorUUID      types.String   `tfsdk:"creator_uuid"`
+    Name             types.String   `tfsdk:"name"`
+    Size             types.Int64    `tfsdk:"size"`
+    Private          types.Bool     `tfsdk:"private"`
+    Shareable        types.Bool     `tfsdk:"shareable"`
+    Bootable         types.Bool     `tfsdk:"bootable"`
+    Clonable         types.Bool     `tfsdk:"clonable"`
+    Algorithm        types.String   `tfsdk:"alg"`
+    Format           types.String   `tfsdk:"format"`
+    Bus              types.String   `tfsdk:"bus"`
+    FS               types.String   `tfsdk:"fs"`
+    HardwareDevice   types.String   `tfsdk:"hardware_device"`
+    Tags             types.List     `tfsdk:"tags"`
+    Region           types.String   `tfsdk:"region"`
+    Readonly         types.Bool     `tfsdk:"readonly"`
+    Priority         types.Int32    `tfsdk:"priority"`
+    UUID             types.String   `tfsdk:"volume_uuid"`
+    LastUpdated      types.String   `tfsdk:"last_updated"`
+    BillingFrequency types.String   `tfsdk:"billing_frequency"`
+    BillingUUID      types.String   `tfsdk:"billing_uuid"`
+    PaymentURL       types.String   `tfsdk:"payment_url"`
 }
 
 func (r *storageResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_compute"
+	resp.TypeName = req.ProviderTypeName + "_storage"
 }
 
 func volumeAttributes() map[string]schema.Attribute {
     return map[string]schema.Attribute{
+        "creator_uuid": schema.StringAttribute{
+            Optional: true,
+            Computed: true,
+        },
         "name": schema.StringAttribute{
             Required: true,
         },
@@ -61,10 +77,35 @@ func volumeAttributes() map[string]schema.Attribute {
            	Optional: true,
             Computed: true,
         },
+        "alg": schema.StringAttribute{
+           	Optional: true,
+        },
+        "format": schema.StringAttribute{
+           	Optional: true,
+        },
+        "bus": schema.StringAttribute{
+           	Optional: true,
+        },
+        "fs": schema.StringAttribute{
+           	Optional: true,
+        },
+        "hardware_device": schema.StringAttribute{
+           	Optional: true,
+        },
+        "tags": schema.ListAttribute{
+            ElementType: types.StringType,
+            Optional: true,
+            Computed: true,
+        },
+        "region": schema.StringAttribute{
+           	Optional: true,
+            Computed: true,
+        },
         "readonly": schema.BoolAttribute{
 	       	Required: true,
         },
         "priority": schema.Int32Attribute{
+            Optional: true,
 	       	Computed: true,
         },
         "volume_uuid": schema.StringAttribute{
@@ -73,11 +114,28 @@ func volumeAttributes() map[string]schema.Attribute {
         "last_updated": schema.StringAttribute{
         	Computed: true,
         },
-   }
+        "billing_frequency": schema.StringAttribute{
+            Optional: true,
+        },
+        "billing_uuid": schema.StringAttribute{
+            Computed: true,
+        },
+        "payment_url": schema.StringAttribute{
+            Computed: true,
+        },
+    }
 }
 
 func (r *storageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
+    attributes := volumeAttributes()
+    attributes["region"] = schema.StringAttribute{
+        Required: true,
+    }
+    attributes["billing_frequency"] = schema.StringAttribute{
+        Required: true,
+    }
+
+    resp.Schema = schema.Schema{
 		Attributes: volumeAttributes(),
 	}
 }
@@ -101,13 +159,89 @@ func (r *storageResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+    var plan storageResourceModel
+    diags := req.Plan.Get(ctx, &plan)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    var tags []string
+    diags = plan.Tags.ElementsAs(ctx, &tags, false)
+    resp.Diagnostics.Append(diags...)
+
+    var priority *int
+    if !plan.Priority.IsNull() {
+        priorityValue := int(plan.Priority.ValueInt32())
+        priority = &priorityValue
+    }
+
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    storageResource := client.StorageResource{
+        CreatorUUID:      plan.CreatorUUID.ValueString(),
+        Name:             plan.Name.ValueString(),
+        Size:             int(plan.Size.ValueInt64()),
+        Private:          plan.Private.ValueBool(),
+        Shareable:        plan.Shareable.ValueBool(),
+        Bootable:         plan.Bootable.ValueBool(),
+        Clonable:         plan.Clonable.ValueBoolPointer(),
+        Algorithm:        plan.Algorithm.ValueStringPointer(),
+        Format:           plan.Format.ValueStringPointer(),
+        Bus:              plan.Bus.ValueStringPointer(),
+        FS:               plan.FS.ValueStringPointer(),
+        HardwareDevice:   plan.HardwareDevice.ValueStringPointer(),
+        Tags:             tags,
+        Region:           plan.Region.ValueString(),
+        Readonly:         plan.Readonly.ValueBool(),
+        Priority:         priority,
+        BillingFrequency: plan.BillingFrequency.ValueString(),
+    }
+
+    response, err := r.client.CreateStorageResource(storageResource)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error creating compute resource",
+            "Could not create compute resource, unexpected error: " + err.Error(),
+        )
+        return
+    }
+
+    plan.BillingUUID = types.StringValue(response.BillingUUID)
+    plan.PaymentURL = types.StringValue(response.PaymentURL)
+    plan.UUID = types.StringNull()
+    plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+
+    diags = resp.State.Set(ctx, plan)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 }
 
 func (r *storageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
 func (r *storageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+    // TODO: Implement update if the API supports it. For now, we mark everything as needing replacement.
 }
 
 func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+    var state storageResourceModel
+    diags := req.State.Get(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    err := r.client.DeleteStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Deleting Storage Resource",
+            "Could not delete storage resource, unexpected error: " + err.Error(),
+        )
+        return
+    }
 }

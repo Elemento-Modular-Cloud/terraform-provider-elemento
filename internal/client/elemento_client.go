@@ -20,6 +20,7 @@ type ElementoClient struct {
 	httpClient *http.Client
 	cachedToken *string
 	cachedTokenExpiry int64
+	cachedUUID *string
 }
 
 func NewElementoClient(host, username, password, portal string) *ElementoClient {
@@ -134,6 +135,45 @@ func (c *ElementoClient) getAuth() (*string, error) {
     return c.cachedToken, nil
 }
 
+func (c *ElementoClient) getClientUUID() (*string, error) {
+    if c.cachedUUID != nil {
+        return c.cachedUUID, nil
+    }
+
+    url := "https://" + c.Portal + "/api/v2/account/uuid"
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
+
+    resp, err := c.request("GET", url, headers, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to get client UUID: %s %s", resp.Status, string(body))
+    }
+
+    var uuidResponse struct {
+        UUID string `json:"id"`
+    }
+    err = json.NewDecoder(resp.Body).Decode(&uuidResponse)
+    if err != nil {
+        return nil, err
+    }
+
+    c.cachedUUID = &uuidResponse.UUID
+
+    return c.cachedUUID, nil
+}
+
 // TODO: Add canCreate
 func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName string) (*CreateResponse, error) {
     url := "https://" + c.Host + urlSuffix
@@ -245,35 +285,25 @@ func (c *ElementoClient) DeleteComputeResource(uuid string) error {
     return c.deleteResource(delRequest, "DELETE", ":7777/api/v1.0/unregister", "compute")
 }
 
-    body, err := json.Marshal(delRequest)
+
+func (c *ElementoClient) CreateStorageResource(storageResource StorageResource) (*CreateResponse, error) {
+    uuid, err := c.getClientUUID()
     if err != nil {
-        return err
+        return nil, err
+    }
+    storageResource.CreatorUUID = *uuid
+
+    return c.createResource(storageResource, ":7772/api/v1.0/create", "storage")
+}
+
+func (c *ElementoClient) DeleteStorageResource(client_uuid, volume_uuid string) error {
+    delRequest := struct {
+        UUID       string `json:"volume_id"`
+        ClientUUID string `json:"client_id"`
+    }{
+        UUID: volume_uuid,
+        ClientUUID: client_uuid,
     }
 
-    req, err := http.NewRequest("DELETE", url, bytes.NewReader(body))
-    if err != nil {
-        return err
-    }
-
-    req.Header.Set("Content-Type", "application/json")
-
-    authToken, err := c.getAuth()
-    if err != nil {
-        return err
-    }
-    req.Header.Set("Authorization", "Bearer " + *authToken)
-
-    resp, err := c.httpClient.Do(req)
-    if err != nil {
-        return err
-    }
-
-    defer resp.Body.Close()
-
-    if resp.StatusCode >= 400 {
-        body, _ := io.ReadAll(resp.Body)
-        return fmt.Errorf("failed to delete compute resource: %s %s", resp.Status, string(body))
-    }
-
-    return nil
+    return c.deleteResource(delRequest, "POST", ":7772/api/v1.0/destroy", "storage")
 }

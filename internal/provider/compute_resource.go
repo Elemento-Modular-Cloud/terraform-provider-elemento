@@ -39,7 +39,7 @@ type computeResource struct{
 type computeResourceModel struct {
 	Requirements     computeRequirementsModel    `tfsdk:"requirements"`
 	Authentication   *computeAuthenticationModel `tfsdk:"authentication"`
-	Volumes          []storageVolumeModel        `tfsdk:"volumes"`
+	Volumes          []storageResourceModel      `tfsdk:"volumes"`
 	VMName           types.String                `tfsdk:"vm_name"`
     Region           types.String                `tfsdk:"region"`
     CloudInit        computeCloudInitModel       `tfsdk:"cloudinit"`
@@ -342,9 +342,9 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     diags = plan.CloudInit.Variables.ElementsAs(ctx, &cloudinitVariables, false)
     resp.Diagnostics.Append(diags...)
 
-    var volumes []client.StorageVolume
+    var volumes []client.StorageResourceMin
     for _, volume := range plan.Volumes {
-        volumes = append(volumes, client.StorageVolume{
+        volumes = append(volumes, client.StorageResourceMin{
             Name:      volume.Name.ValueString(),
             Size:      int(volume.Size.ValueInt64()),
             Private:   volume.Private.ValueBool(),
@@ -477,9 +477,9 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     state.Requirements.Misc.OSFamily = types.StringValue(resource.Requirements.OSFamily)
     state.Requirements.Misc.OSFlavour = types.StringValue(resource.Requirements.OSFlavour)
 
-    var volumes []storageVolumeModel
+    var volumes []storageResourceModel
     for _, volume := range resource.Requirements.Volumes {
-        volumes = append(volumes, storageVolumeModel{
+        volumes = append(volumes, storageResourceModel{
             Name:      types.StringValue(volume.Name),
             Size:      types.Int64Value(int64(volume.Size)),
             Private:   types.BoolValue(volume.Private),

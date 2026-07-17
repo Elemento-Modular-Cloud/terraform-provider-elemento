@@ -185,5 +185,6 @@ func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.Da
 func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resource {
     return []func() resource.Resource{
     	NewComputeResource,
+        NewStorageResource,
 	}
 }
