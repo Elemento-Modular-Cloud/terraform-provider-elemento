@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -46,6 +45,11 @@ type ComputeResponse struct {
     BillingUUID string `json:"billing_uuid"`
 }
 
+type CreateResponse struct {
+    PaymentURL  string `json:"payment_url"`
+    BillingUUID string `json:"billing_uuid"`
+}
+
 type authRequest struct {
     Username string `json:"username"`
     Password string `json:"password"`
@@ -57,6 +61,38 @@ type authResponse struct {
     RefreshToken string `json:"refresh_token"`
     AccessTokenIAT int64 `json:"access_token_iat"`
     AccessTokenExp int64 `json:"access_token_exp"`
+}
+
+func (c *ElementoClient) request(
+    method,
+    url string,
+    headers map[string]string,
+    body any,
+) (*http.Response, error) {
+    var reqBody io.Reader = nil
+    if body != nil {
+        body, err := json.Marshal(body)
+        if err != nil {
+            return nil, err
+        }
+        reqBody = bytes.NewReader(body)
+    }
+
+    req, err := http.NewRequest(method, url, reqBody)
+    if err != nil {
+        return nil, err
+    }
+
+    for header := range headers {
+        req.Header.Set(header, headers[header])
+    }
+
+    resp, err := c.httpClient.Do(req)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp, nil
 }
 
 func (c *ElementoClient) getAuth() (*string, error) {
@@ -71,12 +107,11 @@ func (c *ElementoClient) getAuth() (*string, error) {
         Password: c.Password,
     }
 
-    body, err := json.Marshal(authRequest)
-    if err != nil {
-        return nil, err
+    headers := map[string]string{
+        "Content-Type": "application/json",
     }
 
-    resp, err := c.httpClient.Post(url, "application/json", bytes.NewReader(body))
+    resp, err := c.request("POST", url, headers, authRequest)
     if err != nil {
         return nil, err
     }
@@ -99,28 +134,20 @@ func (c *ElementoClient) getAuth() (*string, error) {
     return c.cachedToken, nil
 }
 
-func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) (*ComputeResponse, error) {
-    url := "https://" + c.Host + ":7777/api/v1.0/register"
-
-    body, err := json.Marshal(computeResource)
-    if err != nil {
-        return nil, err
-    }
-
-    req, err := http.NewRequest("POST", url, bytes.NewReader(body))
-    if err != nil {
-        return nil, err
-    }
-
-    req.Header.Set("Content-Type", "application/json")
+// TODO: Add canCreate
+func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName string) (*CreateResponse, error) {
+    url := "https://" + c.Host + urlSuffix
 
     authToken, err := c.getAuth()
     if err != nil {
         return nil, err
     }
-    req.Header.Set("Authorization", "Bearer " + *authToken)
 
-    resp, err := c.httpClient.Do(req)
+    headers := map[string]string{
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + *authToken,
+    }
+    resp, err := c.request("POST", url, headers, resource)
     if err != nil {
         return nil, err
     }
@@ -129,10 +156,10 @@ func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) 
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
-        return nil, fmt.Errorf("failed to create compute resource: %s %s", resp.Status, string(body))
+        return nil, fmt.Errorf("failed to create %s resource: %s %s", resourceName, resp.Status, string(body))
     }
 
-    var response ComputeResponse
+    var response CreateResponse
     err = json.NewDecoder(resp.Body).Decode(&response)
     if err != nil {
         return nil, err
@@ -141,21 +168,51 @@ func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) 
     return &response, nil
 }
 
-func (c *ElementoClient) ListComputeResources(ctx context.Context) ([]ComputeListItem, error) {
-    url := "https://" + c.Host + ":7777/api/v1.0/running"
+func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, resourceName string) error {
+    url := "https://" + c.Host + urlSuffix
 
-    req, err := http.NewRequest("GET", url, nil)
+    authToken, err := c.getAuth()
     if err != nil {
-        return nil, err
+        return err
     }
+
+    headers := map[string]string{
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + *authToken,
+    }
+    resp, err := c.request(method, url, headers, deleteRequest)
+    if err != nil {
+        return err
+    }
+
+    defer resp.Body.Close()
+
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return fmt.Errorf("failed to delete %s resource: %s %s", resourceName, resp.Status, string(body))
+    }
+
+    return nil
+}
+
+
+func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) (*CreateResponse, error) {
+    return c.createResource(computeResource, ":7777/api/v1.0/register", "compute")
+}
+
+func (c *ElementoClient) ListComputeResources() ([]ComputeListItem, error) {
+    url := "https://" + c.Host + ":7777/api/v1.0/running"
 
     authToken, err := c.getAuth()
     if err != nil {
         return nil, err
     }
-    req.Header.Set("Authorization", "Bearer " + *authToken)
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
 
-    resp, err := c.httpClient.Do(req)
+    resp, err := c.request("GET", url, headers, nil)
     if err != nil {
         return nil, err
     }
@@ -164,7 +221,6 @@ func (c *ElementoClient) ListComputeResources(ctx context.Context) ([]ComputeLis
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
-
         return nil, fmt.Errorf("failed to list compute resources: %s %s", resp.Status, string(body))
     }
 
@@ -181,13 +237,13 @@ func (c *ElementoClient) ListComputeResources(ctx context.Context) ([]ComputeLis
 }
 
 func (c *ElementoClient) DeleteComputeResource(uuid string) error {
-    url := "https://" + c.Host + ":7777/api/v1.0/unregister"
-
     delRequest := struct {
         UUID string `json:"vm_uid"`
     }{
         UUID: uuid,
     }
+    return c.deleteResource(delRequest, "DELETE", ":7777/api/v1.0/unregister", "compute")
+}
 
     body, err := json.Marshal(delRequest)
     if err != nil {
