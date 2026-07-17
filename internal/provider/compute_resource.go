@@ -37,18 +37,18 @@ type computeResource struct{
 }
 
 type computeResourceModel struct {
-	Requirements     computeRequirementsModel   `tfsdk:"requirements"`
-	Authentication   computeAuthenticationModel `tfsdk:"authentication"`
-	Volumes          []storageVolumeModel       `tfsdk:"volumes"`
-	VMName           types.String               `tfsdk:"vm_name"`
-    Region           types.String               `tfsdk:"region"`
-    CloudInit        computeCloudInitModel      `tfsdk:"cloudinit"`
-    AdditionalInfo   computeAdditionalInfoModel `tfsdk:"additional_info"`
-    BillingFrequency types.String               `tfsdk:"billing_frequency"`
-    BillingUUID      types.String               `tfsdk:"billing_uuid"`
-    PaymentURL       types.String               `tfsdk:"payment_url"`
-    LastUpdated      types.String               `tfsdk:"last_updated"`
-    UUID             types.String               `tfsdk:"vm_uuid"`
+	Requirements     computeRequirementsModel    `tfsdk:"requirements"`
+	Authentication   *computeAuthenticationModel `tfsdk:"authentication"`
+	Volumes          []storageVolumeModel        `tfsdk:"volumes"`
+	VMName           types.String                `tfsdk:"vm_name"`
+    Region           types.String                `tfsdk:"region"`
+    CloudInit        computeCloudInitModel       `tfsdk:"cloudinit"`
+    AdditionalInfo   computeAdditionalInfoModel  `tfsdk:"additional_info"`
+    BillingFrequency types.String                `tfsdk:"billing_frequency"`
+    BillingUUID      types.String                `tfsdk:"billing_uuid"`
+    PaymentURL       types.String                `tfsdk:"payment_url"`
+    LastUpdated      types.String                `tfsdk:"last_updated"`
+    UUID             types.String                `tfsdk:"uuid"`
 }
 
 type computeRequirementsModel struct {
@@ -297,7 +297,7 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
             "last_updated": schema.StringAttribute{
                 Computed: true,
             },
-            "vm_uuid": schema.StringAttribute{
+            "uuid": schema.StringAttribute{
                 Computed: true,
             },
 		},
@@ -354,6 +354,12 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         })
     }
 
+    authentication := client.ComputeAuthentication{
+        Username: plan.Authentication.Username.ValueString(),
+        Password: plan.Authentication.Password.ValueString(),
+        SSHKey:   plan.Authentication.SSHKey.ValueStringPointer(),
+    }
+
     if resp.Diagnostics.HasError() {
         return
     }
@@ -382,6 +388,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
                 OSFlavour: plan.Requirements.Misc.OSFlavour.ValueString(),
             },
         },
+        Authentication: &authentication,
         VMName: plan.VMName.ValueString(),
         Region: plan.Region.ValueString(),
         CloudInit: client.CloudInitConfig{
@@ -515,8 +522,8 @@ func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest
     err := r.client.DeleteComputeResource(state.UUID.ValueString())
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error Deleting HashiCups Order",
-            "Could not delete order, unexpected error: " + err.Error(),
+            "Error Deleting Compute Resource",
+            "Could not delete compute resoruce, unexpected error: " + err.Error(),
         )
         return
     }
