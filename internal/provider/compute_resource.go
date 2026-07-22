@@ -354,10 +354,13 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         })
     }
 
-    authentication := client.ComputeAuthentication{
-        Username: plan.Authentication.Username.ValueString(),
-        Password: plan.Authentication.Password.ValueString(),
-        SSHKey:   plan.Authentication.SSHKey.ValueStringPointer(),
+    var authentication *client.ComputeAuthentication = nil
+    if plan.Authentication != nil {
+        authentication = &client.ComputeAuthentication{
+            Username: plan.Authentication.Username.ValueString(),
+            Password: plan.Authentication.Password.ValueString(),
+            SSHKey:   plan.Authentication.SSHKey.ValueStringPointer(),
+        }
     }
 
     if resp.Diagnostics.HasError() {
@@ -388,7 +391,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
                 OSFlavour: plan.Requirements.Misc.OSFlavour.ValueString(),
             },
         },
-        Authentication: &authentication,
+        Authentication: authentication,
         VMName: plan.VMName.ValueString(),
         Region: plan.Region.ValueString(),
         CloudInit: client.CloudInitConfig{
@@ -420,6 +423,11 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         volume.Clonable = types.BoolNull()
         volume.UUID = types.StringNull()
         volume.LastUpdated = types.StringNull()
+        volume.BillingUUID = types.StringNull()
+        volume.CreatorUUID = types.StringNull()
+        volume.Region = types.StringNull()
+        volume.PaymentURL = types.StringNull()
+        volume.Tags = types.ListValueMust(types.StringType, []attr.Value{})
         plan.Volumes[volumeIndex] = volume
     }
 
@@ -440,7 +448,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
         return
     }
 
-    resources, err := r.client.ListComputeResources(ctx)
+    resources, err := r.client.ListComputeResources()
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Reading Compute Resources",
@@ -479,17 +487,22 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
 
     var volumes []storageResourceModel
     for _, volume := range resource.Requirements.Volumes {
+        tags, diags := types.ListValueFrom(ctx, types.StringType, volume.Tags)
+        resp.Diagnostics.Append(diags...)
+
         volumes = append(volumes, storageResourceModel{
-            Name:      types.StringValue(volume.Name),
-            Size:      types.Int64Value(int64(volume.Size)),
-            Private:   types.BoolValue(volume.Private),
-            Shareable: types.BoolValue(volume.Shareable),
-            Bootable:  types.BoolValue(volume.Bootable),
-            Readonly:  types.BoolValue(volume.Readonly),
-            Clonable:  types.BoolValue(volume.Clonable),
-            Priority:  types.Int32Value(int32(volume.Priority)),
-            UUID: types.StringValue(volume.UUID),
+            Name:        types.StringValue(volume.Name),
+            Size:        types.Int64Value(int64(volume.Size)),
+            Private:     types.BoolValue(volume.Private),
+            Shareable:   types.BoolValue(volume.Shareable),
+            Bootable:    types.BoolValue(volume.Bootable),
+            Readonly:    types.BoolValue(volume.Readonly),
+            Clonable:    types.BoolValue(volume.Clonable),
+            Priority:    types.Int32Value(int32(volume.Priority)),
+            UUID:        types.StringValue(volume.UUID),
             LastUpdated: types.StringValue(volume.LastUpdated),
+            Tags:        tags,
+            Region:      types.StringValue(volume.Region),
         })
     }
     state.Volumes = volumes

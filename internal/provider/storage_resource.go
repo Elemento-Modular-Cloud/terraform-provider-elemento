@@ -6,8 +6,10 @@ import (
 	"terraform-provider-elemento/internal/client"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -96,6 +98,12 @@ func volumeAttributes() map[string]schema.Attribute {
             ElementType: types.StringType,
             Optional: true,
             Computed: true,
+            Default: listdefault.StaticValue(
+				types.ListValueMust(
+					types.StringType,
+					[]attr.Value{},
+				),
+			),
         },
         "region": schema.StringAttribute{
            	Optional: true,
