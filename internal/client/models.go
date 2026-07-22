@@ -99,28 +99,44 @@ type ComputeListItem struct {
 }
 
 type ComputeReqResponse struct {
-    Slots                int                     `json:"slots"`
-    Overprovision        int                     `json:"overprovision"`
-    AllowSMT             bool                    `json:"allowSMT"`
-    Arch                 string                  `json:"arch"`
-    Flags                []string                `json:"flags"`
-    RamSize              float64                 `json:"ramsize"`
-    RequireECC           bool                    `json:"reqECC"`
-    Volumes              []StorageResourceResponse `json:"volumes"`
-    PciDevices           []string                `json:"pcidevs"`
-    NetworkDevices       []string                `json:"netdevs"`
-    OSFamily             string                  `json:"os_family"`
-    OSFlavour            string                  `json:"os_flavour"`
-    VMName               string                  `json:"vm_name"`
-    CreationDate         string                  `json:"creation_date"`
-    NetworkConfig        NetworkConfig           `json:"network_config"`
-    Networks             []Network               `json:"networks"`
-    PrivateNetworkConfig []PrivateNetworkConfig  `json:"private_network_config"`
+    Slots                int                          `json:"slots"`
+    Overprovision        int                          `json:"overprovision"`
+    AllowSMT             bool                         `json:"allowSMT"`
+    Arch                 string                       `json:"arch"`
+    Flags                []string                     `json:"flags"`
+    RamSize              float64                      `json:"ramsize"`
+    RequireECC           bool                         `json:"reqECC"`
+    Volumes              []StorageResourceResponseMin `json:"volumes"`
+    PciDevices           []string                     `json:"pcidevs"`
+    NetworkDevices       []string                     `json:"netdevs"`
+    OSFamily             string                       `json:"os_family"`
+    OSFlavour            string                       `json:"os_flavour"`
+    VMName               string                       `json:"vm_name"`
+    CreationDate         string                       `json:"creation_date"`
+    NetworkConfig        NetworkConfig                `json:"network_config"`
+    Networks             []Network                    `json:"networks"`
+    PrivateNetworkConfig []PrivateNetworkConfig       `json:"private_network_config"`
 }
 
 type MesonInfo struct {
     Provider string   `json:"provider"`
     Price    struct{} `json:"price"`
+}
+
+type StorageResourceResponseMin struct {
+    CreatorUUID string   `json:"creatorID"`
+    Name        string   `json:"name"`
+    Size        int      `json:"size"`
+    Private     bool     `json:"private"`
+    Shareable   bool     `json:"shareable"`
+    Bootable    bool     `json:"bootable"`
+    Readonly    bool     `json:"readonly"`
+    Clonable    bool     `json:"clonable"`
+    Priority    int      `json:"priority"`
+    Tags        []string `json:"tags"`
+    UUID        string   `json:"volumeID"`
+    LastUpdated string   `json:"lastUpdated"`
+    Region      string   `json:"region"`
 }
 
 type StorageResourceResponse struct {
@@ -134,9 +150,10 @@ type StorageResourceResponse struct {
     Clonable    bool     `json:"clonable"`
     Priority    int      `json:"priority"`
     Tags        []string `json:"tags"`
-    UUID        string   `json:"volume_uuid"`
+    UUID        string   `json:"volumeID"`
     LastUpdated string   `json:"lastUpdated"`
     Region      string   `json:"region"`
+    BillingUUID string   `json:"billing_uuid"`
 }
 
 type NetworkConfig struct {

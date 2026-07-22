@@ -307,3 +307,80 @@ func (c *ElementoClient) DeleteStorageResource(client_uuid, volume_uuid string) 
 
     return c.deleteResource(delRequest, "POST", ":7772/api/v1.0/destroy", "storage")
 }
+
+func (c *ElementoClient) ListStorageResources(client_uuid string) ([]StorageResourceResponse, error) {
+    url := "https://" + c.Host + ":7772/api/v1.0/accessible"
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
+
+    var listRequest = struct {
+        ClientUUID string `json:"client_uid"`
+    }{
+        ClientUUID: client_uuid,
+    }
+
+    resp, err := c.request("POST", url, headers, listRequest)
+    if err != nil {
+        return nil, err
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to list storage resources: %s %s", resp.Status, string(body))
+    }
+
+    var storageResources []StorageResourceResponse
+    err = json.NewDecoder(resp.Body).Decode(&storageResources)
+    if err != nil {
+        return nil, err
+    }
+
+    return storageResources, nil
+}
+
+func (c *ElementoClient) GetStorageResource(client_uuid, volume_uuid string) (*StorageResourceResponse, error) {
+    url := "https://" + c.Host + ":7772/api/v1.0/info"
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
+
+    var getRequest = struct {
+        ClientUUID string `json:"client_uid"`
+        VolumeUUID string `json:"volume_id"`
+    }{
+        ClientUUID: client_uuid,
+        VolumeUUID: volume_uuid,
+    }
+
+    resp, err := c.request("POST", url, headers, getRequest)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to get storage resource: %s %s", resp.Status, string(body))
+    }
+
+    var storageResource StorageResourceResponse
+    err = json.NewDecoder(resp.Body).Decode(&storageResource)
+    if err != nil {
+        return nil, err
+    }
+
+    return &storageResource, nil
+}

@@ -231,6 +231,69 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *storageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+    var state storageResourceModel
+    diags := req.State.Get(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    var resource *client.StorageResourceResponse
+    if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
+        resources, err := r.client.ListStorageResources(state.CreatorUUID.ValueString())
+        if err != nil {
+            resp.Diagnostics.AddError(
+                "Error Reading Storage Resources",
+                "Could not list storage resources: "+err.Error(),
+            )
+            return
+        }
+
+        for _, res := range resources {
+            if res.BillingUUID == state.BillingUUID.ValueString() {
+                resource = &res
+                break
+            }
+        }
+    } else {
+        res, err := r.client.GetStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
+        if err != nil {
+            resp.Diagnostics.AddError(
+                "Error Reading Storage Resource",
+                "Could not read storage resource: "+err.Error(),
+            )
+            return
+        }
+        resource = res
+    }
+
+    if resource == nil {
+        resp.State.RemoveResource(ctx)
+        return
+    }
+
+    state.Name        = types.StringValue(resource.Name)
+    state.Private     = types.BoolValue(resource.Private)
+    state.Shareable   = types.BoolValue(resource.Shareable)
+    state.Bootable    = types.BoolValue(resource.Bootable)
+    state.Readonly    = types.BoolValue(resource.Readonly)
+    state.Clonable    = types.BoolValue(resource.Clonable)
+    state.Size        = types.Int64Value(int64(resource.Size))
+    state.Priority    = types.Int32Value(int32(resource.Priority))
+    state.Tags, diags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
+    resp.Diagnostics.Append(diags...)
+
+    state.Region      = types.StringValue(resource.Region)
+    state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+    state.UUID        = types.StringValue(resource.UUID)
+    state.PaymentURL  = types.StringNull()
+
+    diags = resp.State.Set(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
 }
 
 func (r *storageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -247,7 +310,7 @@ func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest
 
     err := r.client.DeleteStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
     if err != nil {
-        resp.Diagnostics.AddError(
+        resp.Diagnostics.AddWarning(
             "Error Deleting Storage Resource",
             "Could not delete storage resource, unexpected error: " + err.Error(),
         )
