@@ -7,7 +7,7 @@ terraform {
 }
 
 provider "elemento" {
-  host     = "upcloud.dev.meson.elemento.cloud"
+  host     = "azure.dev.meson.elemento.cloud"
   username = "user@elemento.cloud"
   password = "password"
 }
@@ -25,6 +25,11 @@ resource "elemento_storage" "my_boot_volume" {
   size              = 32
   priority          = 100
   tags              = ["test:test"]
-  region            = "fi-hel2"
+  region            = "italynorth"
   billing_frequency = "month"
+}
+
+output "payment_url" {
+  description = "Payment URL for the created resource"
+  value       = elemento_storage.my_boot_volume.payment_url
 }
