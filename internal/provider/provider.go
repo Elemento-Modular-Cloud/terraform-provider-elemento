@@ -186,5 +186,6 @@ func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resour
     return []func() resource.Resource{
     	NewComputeResource,
         NewStorageResource,
+        NewObjectStorageResource,
 	}
 }

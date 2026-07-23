@@ -211,8 +211,8 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
     response, err := r.client.CreateStorageResource(storageResource)
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error creating compute resource",
-            "Could not create compute resource, unexpected error: " + err.Error(),
+            "Error Creating Storage Resource",
+            "Could not create storage resource, unexpected error: " + err.Error(),
         )
         return
     }

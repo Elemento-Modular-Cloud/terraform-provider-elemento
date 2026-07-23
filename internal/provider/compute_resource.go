@@ -408,7 +408,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     response, err := r.client.CreateComputeResource(computeResource)
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error creating compute resource",
+            "Error Creating Compute Resource",
             "Could not create compute resource, unexpected error: " + err.Error(),
         )
         return

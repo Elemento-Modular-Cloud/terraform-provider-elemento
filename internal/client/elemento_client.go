@@ -236,6 +236,114 @@ func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, re
     return nil
 }
 
+func listResources[T any](c *ElementoClient, listRequest any, method, urlSuffix, resourceName string) ([]T, error) {
+    url := "https://" + c.Host + urlSuffix
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
+    if listRequest != nil {
+        headers["Content-Type"] = "application/json"
+    }
+
+    resp, err := c.request(method, url, headers, listRequest)
+    if err != nil {
+        return nil, err
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to list %s resources: %s %s", resourceName, resp.Status, string(body))
+    }
+
+    var resources []T
+
+    err = json.NewDecoder(resp.Body).Decode(&resources)
+    if err != nil {
+        return nil, err
+    }
+
+    return resources, nil
+}
+
+func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, resourceName string) (*T, error) {
+    url := "https://" + c.Host + urlSuffix
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
+    if getRequest != nil {
+        headers["Content-Type"] = "application/json"
+    }
+
+    resp, err := c.request(method, url, headers, getRequest)
+    if err != nil {
+        return nil, err
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to get %s resource: %s %s", resourceName, resp.Status, string(body))
+    }
+
+    var resource T
+
+    err = json.NewDecoder(resp.Body).Decode(&resource)
+    if err != nil {
+        return nil, err
+    }
+
+    return &resource, nil
+}
+
+type deserializer[T any] func(io.Reader) (*T, error)
+
+func getCredentials[T any](c *ElementoClient, service, service_uuid string, deserialize deserializer[T]) (*T, error) {
+    url := "https://" + c.Host + ":7770/api/v1.0/" + service + "/credentials/" + service_uuid
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
+
+    resp, err := c.request("GET", url, headers, nil)
+    if err != nil {
+        return nil, err
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to get %s credentials: %s %s", service, resp.Status, string(body))
+    }
+
+    resource, err := deserialize(resp.Body)
+    if err != nil {
+        return nil, err
+    }
+
+    return resource, nil
+}
+
 
 func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) (*CreateResponse, error) {
     return c.createResource(computeResource, ":7777/api/v1.0/register", "compute")
@@ -309,54 +417,16 @@ func (c *ElementoClient) DeleteStorageResource(client_uuid, volume_uuid string) 
 }
 
 func (c *ElementoClient) ListStorageResources(client_uuid string) ([]StorageResourceResponse, error) {
-    url := "https://" + c.Host + ":7772/api/v1.0/accessible"
-
-    authToken, err := c.getAuth()
-    if err != nil {
-        return nil, err
-    }
-    headers := map[string]string{
-        "Authorization": "Bearer " + *authToken,
-    }
-
     var listRequest = struct {
         ClientUUID string `json:"client_uid"`
     }{
         ClientUUID: client_uuid,
     }
 
-    resp, err := c.request("POST", url, headers, listRequest)
-    if err != nil {
-        return nil, err
-    }
-
-    defer resp.Body.Close()
-
-    if resp.StatusCode >= 400 {
-        body, _ := io.ReadAll(resp.Body)
-        return nil, fmt.Errorf("failed to list storage resources: %s %s", resp.Status, string(body))
-    }
-
-    var storageResources []StorageResourceResponse
-    err = json.NewDecoder(resp.Body).Decode(&storageResources)
-    if err != nil {
-        return nil, err
-    }
-
-    return storageResources, nil
+    return listResources[StorageResourceResponse](c, listRequest, "POST", ":7772/api/v1.0/accessible", "storage")
 }
 
 func (c *ElementoClient) GetStorageResource(client_uuid, volume_uuid string) (*StorageResourceResponse, error) {
-    url := "https://" + c.Host + ":7772/api/v1.0/info"
-
-    authToken, err := c.getAuth()
-    if err != nil {
-        return nil, err
-    }
-    headers := map[string]string{
-        "Authorization": "Bearer " + *authToken,
-    }
-
     var getRequest = struct {
         ClientUUID string `json:"client_uid"`
         VolumeUUID string `json:"volume_id"`
@@ -365,22 +435,32 @@ func (c *ElementoClient) GetStorageResource(client_uuid, volume_uuid string) (*S
         VolumeUUID: volume_uuid,
     }
 
-    resp, err := c.request("POST", url, headers, getRequest)
-    if err != nil {
-        return nil, err
-    }
-    defer resp.Body.Close()
+    return getResource[StorageResourceResponse](c, getRequest, "POST", ":7772/api/v1.0/info", "storage")
+}
 
-    if resp.StatusCode >= 400 {
-        body, _ := io.ReadAll(resp.Body)
-        return nil, fmt.Errorf("failed to get storage resource: %s %s", resp.Status, string(body))
-    }
 
-    var storageResource StorageResourceResponse
-    err = json.NewDecoder(resp.Body).Decode(&storageResource)
-    if err != nil {
-        return nil, err
+func (c *ElementoClient) CreateObjectStorageResource(objectStorageResource ObjectStorageRequest) (*CreateResponse, error) {
+    return c.createResource(objectStorageResource, ":7770/api/v1.0/objectstorage/create", "objectstorage")
+}
+
+func (c *ElementoClient) DeleteObjectStorageResource(service_uuid string) error {
+    delRequest := struct {
+        UUID       string `json:"service_uuid"`
+    }{
+        UUID: service_uuid,
     }
 
-    return &storageResource, nil
+    return c.deleteResource(delRequest, "DELETE", ":7770/api/v1.0/objectstorage/delete", "objectstorage")
+}
+
+func (c *ElementoClient) ListObjectStorageResources() ([]ObjectStorageResponse, error) {
+    return listResources[ObjectStorageResponse](c, nil, "GET", ":7770/api/v1.0/objectstorage/running", "objectstorage")
+}
+
+func (c *ElementoClient) GetObjectStorageResource(service_uuid string) (*ObjectStorageResponse, error) {
+    return getResource[ObjectStorageResponse](c, nil, "GET", ":7770/api/v1.0/objectstorage/running/" + service_uuid, "objectstorage")
+}
+
+func (c *ElementoClient) GetObjectStorageCredentials(service_uuid string) (*ObjectStorageCredentials, error) {
+    return getCredentials[ObjectStorageCredentials](c, "objectstorage", service_uuid, KVDeserializer[ObjectStorageCredentials])
 }
