@@ -127,6 +127,25 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
         BillingFrequency: plan.BillingFrequency.ValueString(),
     }
 
+    canCreateResponse, err := r.client.CanCreateObjectStorageResource(objectStorageResource)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Checking ObjectStorage Resource Creation",
+            "Could not check if objectstorage resource can be created, unexpected error: " + err.Error(),
+        )
+        return
+    }
+
+    if !canCreateResponse.CanCreate {
+        for field, reason := range canCreateResponse.Reasons {
+            resp.Diagnostics.AddError(
+                "ObjectStorage Resource Creation Not Allowed",
+                fmt.Sprintf("Cannot create objectstorage resource for field '%s': %s", field, reason),
+            )
+        }
+        return
+    }
+
     response, err := r.client.CreateObjectStorageResource(objectStorageResource)
     if err != nil {
         resp.Diagnostics.AddError(
@@ -200,10 +219,10 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
     state.Name          = types.StringValue(resource.Name)
     state.ActiveStorage = types.Int32Value(int32(resource.ActiveStorage))
     state.Endpoint      = types.StringValue(resource.Endpoint)
-    state.Region      = types.StringValue(resource.Region)
-    state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-    state.UUID        = types.StringValue(resource.UUID)
-    state.PaymentURL  = types.StringNull()
+    state.Region        = types.StringValue(resource.Region)
+    state.LastUpdated   = types.StringValue(time.Now().Format(time.RFC850))
+    state.UUID          = types.StringValue(resource.UUID)
+    state.PaymentURL    = types.StringNull()
 
     credentials, err := r.client.GetObjectStorageCredentials(resource.UUID)
     if err != nil {

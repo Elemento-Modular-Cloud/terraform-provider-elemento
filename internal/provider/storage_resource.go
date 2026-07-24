@@ -208,6 +208,8 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
         BillingFrequency: plan.BillingFrequency.ValueString(),
     }
 
+    // TODO: Add cancreate handling
+
     response, err := r.client.CreateStorageResource(storageResource)
     if err != nil {
         resp.Diagnostics.AddError(

@@ -87,6 +87,20 @@ type StorageResource struct {
     BillingFrequency string   `json:"billing_frequency"`
 }
 
+type CanCreateStorageRequest struct {
+    Size             int    `json:"size"`
+    Region           string `json:"region"`
+    BillingFrequency string `json:"billing_frequency"`
+    Benchmark        bool   `json:"benchmark"`
+}
+
+type CanCreateStorageBenchmark struct {
+    ReadIOPS         int `json:"read_iops"`
+    WriteIOPS        int `json:"write_iops"`
+    ReadMBBandwidth  int `json:"read_MB_bw"`
+    WriteMBBandwidth int `json:"write_MB_bw"`
+}
+
 type ComputeListItem struct {
     UUID             string             `json:"uniqueID"`
     Requirements     ComputeReqResponse `json:"req_json"`

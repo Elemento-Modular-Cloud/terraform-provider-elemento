@@ -390,6 +390,10 @@ func getCredentials[T any](c *ElementoClient, service, service_uuid string, dese
 }
 
 
+func (c *ElementoClient) CanCreateComputeResource(computeResource ComputeResource) (*CanCreateResponse, error) {
+    return c.canCreate(computeResource, "GET", ":7777/api/v1.0/canallocate", "compute")
+}
+
 func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) (*CreateResponse, error) {
     return c.createResource(computeResource, ":7777/api/v1.0/register", "compute")
 }
@@ -439,6 +443,10 @@ func (c *ElementoClient) DeleteComputeResource(uuid string) error {
 }
 
 
+func (c *ElementoClient) CanCreateStorageResource(req CanCreateStorageRequest) (*CanCreateResponse, error) {
+    return c.canCreate(req, "GET", ":7772/api/v1.0/cancreate", "storage")
+}
+
 func (c *ElementoClient) CreateStorageResource(storageResource StorageResource) (*CreateResponse, error) {
     uuid, err := c.getClientUUID()
     if err != nil {
@@ -483,6 +491,10 @@ func (c *ElementoClient) GetStorageResource(client_uuid, volume_uuid string) (*S
     return getResource[StorageResourceResponse](c, getRequest, "POST", ":7772/api/v1.0/info", "storage")
 }
 
+
+func (c *ElementoClient) CanCreateObjectStorageResource(objectStorageResource ObjectStorageRequest) (*CanCreateResponse, error) {
+    return c.canCreate(objectStorageResource, "POST", ":7770/api/v1.0/objectstorage/cancreate", "objectstorage")
+}
 
 func (c *ElementoClient) CreateObjectStorageResource(objectStorageResource ObjectStorageRequest) (*CreateResponse, error) {
     return c.createResource(objectStorageResource, ":7770/api/v1.0/objectstorage/create", "objectstorage")

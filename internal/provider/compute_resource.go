@@ -405,6 +405,25 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         Volumes: volumes,
     }
 
+    canCreateResponse, err := r.client.CanCreateComputeResource(computeResource)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Checking Compute Resource Creation",
+            "Could not check if compute resource can be created, unexpected error: " + err.Error(),
+        )
+        return
+    }
+
+    if !canCreateResponse.CanCreate {
+        for field, reason := range canCreateResponse.Reasons {
+            resp.Diagnostics.AddError(
+                "Compute Resource Creation Not Allowed",
+                fmt.Sprintf("Cannot create compute resource for field '%s': %s", field, reason),
+            )
+        }
+        return
+    }
+
     response, err := r.client.CreateComputeResource(computeResource)
     if err != nil {
         resp.Diagnostics.AddError(
