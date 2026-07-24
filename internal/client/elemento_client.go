@@ -552,3 +552,44 @@ func (c *ElementoClient) GetDBAASResource(service_uuid string) (*DBAASResponse, 
 func (c *ElementoClient) GetDBAASCredentials(service_uuid string) (*DBAASCredentials, error) {
     return getCredentials[DBAASCredentials](c, "dbaas", service_uuid, KVDeserializer[DBAASCredentials])
 }
+
+
+
+func (c *ElementoClient) CanCreateKAASResource(kaasResource KAASRequest) (*CanCreateResponse, error) {
+    return c.canCreate(kaasResource, "POST", ":7770/api/v1.0/kaas/cancreate", "kaas")
+}
+
+func (c *ElementoClient) CreateKAASResource(kaasResource KAASRequest) (*CreateResponse, error) {
+    return c.createResource(kaasResource, ":7770/api/v1.0/kaas/create", "kaas")
+}
+
+func (c *ElementoClient) DeleteKAASResource(service_uuid string) error {
+    delRequest := struct {
+        UUID       string `json:"service_uuid"`
+    }{
+        UUID: service_uuid,
+    }
+
+    return c.deleteResource(delRequest, "DELETE", ":7770/api/v1.0/kaas/delete", "kaas")
+}
+
+func (c *ElementoClient) ListKAASResources() ([]KAASResponse, error) {
+    return listResources[KAASResponse](c, nil, "GET", ":7770/api/v1.0/kaas/running", "kaas")
+}
+
+func (c *ElementoClient) GetKAASResource(service_uuid string) (*KAASResponse, error) {
+    return getResource[KAASResponse](c, nil, "GET", ":7770/api/v1.0/kaas/running/" + service_uuid, "kaas")
+}
+
+func (c *ElementoClient) GetKAASCredentials(service_uuid string) (*string, error) {
+    deserializer := func (r io.Reader) (*string, error) {
+        credentials, err := io.ReadAll(r)
+        if err != nil {
+            return nil, err
+        }
+
+        creds := string(credentials)
+        return &creds, nil
+    }
+    return getCredentials[string](c, "kaas", service_uuid, deserializer)
+}
