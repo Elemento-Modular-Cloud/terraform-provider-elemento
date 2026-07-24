@@ -51,17 +51,29 @@ type CreateResponse struct {
     BillingUUID string `json:"billing_uuid"`
 }
 
+type CanCreateBilling struct {
+    BillingUUID string `json:"billing_uuid"`
+    PaymentURL  string `json:"payment_url"`
+}
+
+type CanCreateResponse struct {
+    CanCreate bool               `json:"cancreate"`
+    Billing   []CanCreateBilling `json:"billing"`
+    Provider  string             `json:"provider"`
+    Reasons   map[string]string  `json:"reasons"`
+}
+
 type authRequest struct {
     Username string `json:"username"`
     Password string `json:"password"`
 }
 
 type authResponse struct {
-    Username string `json:"username"`
-    AccessToken string `json:"access_token"`
-    RefreshToken string `json:"refresh_token"`
-    AccessTokenIAT int64 `json:"access_token_iat"`
-    AccessTokenExp int64 `json:"access_token_exp"`
+    Username       string `json:"username"`
+    AccessToken    string `json:"access_token"`
+    RefreshToken   string `json:"refresh_token"`
+    AccessTokenIAT int64  `json:"access_token_iat"`
+    AccessTokenExp int64  `json:"access_token_exp"`
 }
 
 func (c *ElementoClient) request(
@@ -174,7 +186,40 @@ func (c *ElementoClient) getClientUUID() (*string, error) {
     return c.cachedUUID, nil
 }
 
-// TODO: Add canCreate
+func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName string) (*CanCreateResponse, error) {
+    url := "https://" + c.Host + urlSuffix
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+
+    headers := map[string]string{
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + *authToken,
+    }
+    resp, err := c.request(method, url, headers, resource)
+    if err != nil {
+        return nil, err
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to create %s resource: %s %s", resourceName, resp.Status, string(body))
+    }
+
+    var response CanCreateResponse
+    err = json.NewDecoder(resp.Body).Decode(&response)
+    if err != nil {
+        return nil, err
+    }
+
+    return &response, nil
+}
+
+
 func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName string) (*CreateResponse, error) {
     url := "https://" + c.Host + urlSuffix
 
@@ -463,4 +508,35 @@ func (c *ElementoClient) GetObjectStorageResource(service_uuid string) (*ObjectS
 
 func (c *ElementoClient) GetObjectStorageCredentials(service_uuid string) (*ObjectStorageCredentials, error) {
     return getCredentials[ObjectStorageCredentials](c, "objectstorage", service_uuid, KVDeserializer[ObjectStorageCredentials])
+}
+
+
+func (c *ElementoClient) CanCreateDBAASResource(dbaasResource DBAASRequest) (*CanCreateResponse, error) {
+    return c.canCreate(dbaasResource, "POST", ":7770/api/v1.0/dbaas/cancreate", "dbaas")
+}
+
+func (c *ElementoClient) CreateDBAASResource(dbaasResource DBAASRequest) (*CreateResponse, error) {
+    return c.createResource(dbaasResource, ":7770/api/v1.0/dbaas/create", "dbaas")
+}
+
+func (c *ElementoClient) DeleteDBAASResource(service_uuid string) error {
+    delRequest := struct {
+        UUID       string `json:"service_uuid"`
+    }{
+        UUID: service_uuid,
+    }
+
+    return c.deleteResource(delRequest, "DELETE", ":7770/api/v1.0/dbaas/delete", "dbaas")
+}
+
+func (c *ElementoClient) ListDBAASResources() ([]DBAASResponse, error) {
+    return listResources[DBAASResponse](c, nil, "GET", ":7770/api/v1.0/dbaas/running", "dbaas")
+}
+
+func (c *ElementoClient) GetDBAASResource(service_uuid string) (*DBAASResponse, error) {
+    return getResource[DBAASResponse](c, nil, "GET", ":7770/api/v1.0/dbaas/running/" + service_uuid, "dbaas")
+}
+
+func (c *ElementoClient) GetDBAASCredentials(service_uuid string) (*DBAASCredentials, error) {
+    return getCredentials[DBAASCredentials](c, "dbaas", service_uuid, KVDeserializer[DBAASCredentials])
 }
