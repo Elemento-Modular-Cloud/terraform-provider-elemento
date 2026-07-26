@@ -190,5 +190,6 @@ func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resour
         NewDBAASResource,
         NewKAASResource,
         NewN8NResource,
+        NewOpenClawResource,
 	}
 }

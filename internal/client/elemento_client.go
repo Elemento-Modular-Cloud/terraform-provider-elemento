@@ -634,3 +634,30 @@ func (c *ElementoClient) GetN8NCredentials(service_uuid string) (*N8NCredentials
 
     return getCredentials[N8NCredentials](c, urlSuffix, "n8n", serializer)
 }
+
+
+func (c *ElementoClient) ListOpenClawResources() ([]ComputeListItem, error) {
+    ret, err := c.ListComputeResources()
+    if err != nil {
+        return nil, err
+    }
+
+    var resources []ComputeListItem
+    for _, item := range ret {
+        if slices.Contains(strings.Split(item.Tags, ":"), "openclaw") {
+            resources = append(resources, item)
+        }
+    }
+
+    return resources, nil
+}
+
+func (c *ElementoClient) GetOpenClawCredentials(service_uuid string) (*OpenClawCredentials, error) {
+    urlSuffix := ":7777/api/v1.0/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*OpenClawCredentials, error) {
+        return KVDeserializer[OpenClawCredentials](r, ": ")
+    }
+
+    return getCredentials[OpenClawCredentials](c, urlSuffix, "openclaw", serializer)
+}
