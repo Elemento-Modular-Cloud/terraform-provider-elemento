@@ -21,7 +21,7 @@ type ComputeRequirements struct {
 type ComputeCPU struct {
     SMTEnabled       bool     `json:"smtEnabled"`
     MinFrequency     float64  `json:"min_frequency"`
-    Arch             string   `json:"arch"`
+    Arch             []string `json:"arch"`
     Flags            []string `json:"flags"`
     Slots            int      `json:"slots"`
     AllowSMT         bool     `json:"allowSMT"`
@@ -110,6 +110,7 @@ type ComputeListItem struct {
     ServiceUUID      string             `json:"service_uuid"`
     Meson            MesonInfo          `json:"meson"`
     XML              string             `json:"xml"`
+    Tags             string             `json:"vm_tags"`
 }
 
 type ComputeReqResponse struct {

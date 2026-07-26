@@ -21,7 +21,7 @@ resource "elemento_compute" "n8n_cloudinit_test" {
     cpu = {
       smt_enabled       = false
       min_frequency     = 1
-      arch              = "X86_64"
+      arch              = ["X86_64"]
       flags             = []
       slots             = 2
       allow_smt         = false
@@ -69,8 +69,3 @@ output "payment_url" {
   description = "Payment URL for the created resource (if applicable)"
   value       = elemento_compute.n8n_cloudinit_test.payment_url
 }
-
-# output "billing_uuid" {
-#   description = "Billing UUID for the created resource"
-#   value       = elemento_compute.n8n_cloudinit_test.billing_uuid
-# }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -49,6 +50,7 @@ type computeResourceModel struct {
     PaymentURL       types.String                `tfsdk:"payment_url"`
     LastUpdated      types.String                `tfsdk:"last_updated"`
     UUID             types.String                `tfsdk:"uuid"`
+    Tags             types.String                `tfsdk:"tags"`
 }
 
 type computeRequirementsModel struct {
@@ -61,7 +63,7 @@ type computeRequirementsModel struct {
 type computeCPUModel struct {
 	SMTEnabled 		 types.Bool    `tfsdk:"smt_enabled"`
 	MinFrequency 	 types.Float64 `tfsdk:"min_frequency"`
-	Arch 			 types.String  `tfsdk:"arch"`
+	Arch 			 types.List    `tfsdk:"arch"`
 	Flags 			 types.List    `tfsdk:"flags"`
 	Slots 			 types.Int32   `tfsdk:"slots"`
 	AllowSMT 		 types.Bool    `tfsdk:"allow_smt"`
@@ -120,14 +122,18 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 									float64validator.AtLeast(0),
 								},
 							},
-							"arch": schema.StringAttribute{
-								Required: true,
-								Validators: []validator.String{
-									stringvalidator.OneOf(
-										"X86_64",
-										"arm64",
-									),
-								},
+							"arch": schema.ListAttribute{
+							    Required: true,
+								ElementType: types.StringType,
+                                Validators: []validator.List{
+                                    listvalidator.SizeAtLeast(1),
+                                    listvalidator.ValueStringsAre(
+                                        stringvalidator.OneOf(
+    										"X86_64",
+    										"arm64",
+    									),
+                                    ),
+                                },
 							},
 							"flags": schema.ListAttribute{
 								ElementType: types.StringType,
@@ -300,6 +306,9 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
             "uuid": schema.StringAttribute{
                 Computed: true,
             },
+            "tags": schema.StringAttribute{
+                Computed: true,
+            },
 		},
 	}
 }
@@ -329,6 +338,10 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     if resp.Diagnostics.HasError() {
         return
     }
+
+    var cpuArch []string
+    diags = plan.Requirements.CPU.Arch.ElementsAs(ctx, &cpuArch, false)
+    resp.Diagnostics.Append(diags...)
 
     var cpuFlags []string
     diags = plan.Requirements.CPU.Flags.ElementsAs(ctx, &cpuFlags, false)
@@ -372,7 +385,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
             CPU: client.ComputeCPU{
                 SMTEnabled:       plan.Requirements.CPU.SMTEnabled.ValueBool(),
                 MinFrequency:     plan.Requirements.CPU.MinFrequency.ValueFloat64(),
-                Arch:             plan.Requirements.CPU.Arch.ValueString(),
+                Arch:             cpuArch,
                 Flags:            cpuFlags,
                 Slots:            int(plan.Requirements.CPU.Slots.ValueInt32()),
                 AllowSMT:         plan.Requirements.CPU.AllowSMT.ValueBool(),
@@ -436,6 +449,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     plan.BillingUUID = types.StringValue(response.BillingUUID)
     plan.PaymentURL = types.StringValue(response.PaymentURL)
     plan.UUID = types.StringNull()
+    plan.Tags = types.StringNull()
 
     for volumeIndex, volume := range plan.Volumes {
         volume.Priority = types.Int32Null()
@@ -489,19 +503,22 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
         return
     }
 
-    state.Requirements.CPU.Arch = types.StringValue(resource.Requirements.Arch)
+    state.Requirements.CPU.Arch, diags = types.ListValueFrom(ctx, types.StringType, []string{resource.Requirements.Arch})
+    resp.Diagnostics.Append(diags...)
+
     state.Requirements.CPU.Flags, diags = types.ListValueFrom(ctx, types.StringType, resource.Requirements.Flags)
     resp.Diagnostics.Append(diags...)
-    state.Requirements.CPU.Slots = types.Int32Value(int32(resource.Requirements.Slots))
-    state.Requirements.CPU.AllowSMT = types.BoolValue(resource.Requirements.AllowSMT)
+
+    state.Requirements.CPU.Slots            = types.Int32Value(int32(resource.Requirements.Slots))
+    state.Requirements.CPU.AllowSMT         = types.BoolValue(resource.Requirements.AllowSMT)
     state.Requirements.CPU.MaxOverprovision = types.Int32Value(int32(resource.Requirements.Overprovision))
 
-    state.Requirements.Memory.Capacity = types.Int32Value(int32(resource.Requirements.RamSize * 1024))
+    state.Requirements.Memory.Capacity   = types.Int32Value(int32(resource.Requirements.RamSize * 1024))
     state.Requirements.Memory.RequireECC = types.BoolValue(resource.Requirements.RequireECC)
 
     // TODO: PCI DEVICES
 
-    state.Requirements.Misc.OSFamily = types.StringValue(resource.Requirements.OSFamily)
+    state.Requirements.Misc.OSFamily  = types.StringValue(resource.Requirements.OSFamily)
     state.Requirements.Misc.OSFlavour = types.StringValue(resource.Requirements.OSFlavour)
 
     var volumes []storageResourceModel
@@ -526,11 +543,12 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     }
     state.Volumes = volumes
 
-    state.VMName = types.StringValue(resource.Requirements.VMName)
-    state.Region = types.StringValue(resource.Region)
+    state.VMName      = types.StringValue(resource.Requirements.VMName)
+    state.Region      = types.StringValue(resource.Region)
     state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-    state.UUID = types.StringValue(resource.UUID)
-    state.PaymentURL = types.StringNull()
+    state.UUID        = types.StringValue(resource.UUID)
+    state.Tags        = types.StringValue(resource.Tags)
+    state.PaymentURL  = types.StringNull()
 
     diags = resp.State.Set(ctx, &state)
     resp.Diagnostics.Append(diags...)
