@@ -13,7 +13,7 @@ const tagName = "kv"
 
 // KVDeserializer returns a Deserializer[T] that parses "key=value" lines
 // from the body and populates a struct of type T based on `kv` tags.
-func KVDeserializer[T any](r io.Reader) (*T, error) {
+func KVDeserializer[T any](r io.Reader, sep string) (*T, error) {
 	var out T
 	v := reflect.ValueOf(&out).Elem()
 	if v.Kind() != reflect.Struct {
@@ -29,7 +29,7 @@ func KVDeserializer[T any](r io.Reader) (*T, error) {
 			continue
 		}
 
-		key, val, ok := strings.Cut(line, "=")
+		key, val, ok := strings.Cut(line, sep)
 		if !ok {
 			return &out, fmt.Errorf("kv: malformed line %q", line)
 		}

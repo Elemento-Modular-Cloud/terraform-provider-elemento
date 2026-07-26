@@ -189,5 +189,6 @@ func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resour
         NewObjectStorageResource,
         NewDBAASResource,
         NewKAASResource,
+        NewN8NResource,
 	}
 }

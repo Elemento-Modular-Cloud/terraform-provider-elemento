@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
+	"strings"
 	"time"
 
 	// "github.com/hashicorp/terraform-plugin-log/tflog"
@@ -357,8 +359,8 @@ func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, re
 
 type deserializer[T any] func(io.Reader) (*T, error)
 
-func getCredentials[T any](c *ElementoClient, service, service_uuid string, deserialize deserializer[T]) (*T, error) {
-    url := "https://" + c.Host + ":7770/api/v1.0/" + service + "/credentials/" + service_uuid
+func getCredentials[T any](c *ElementoClient, urlSuffix, resourceName string, deserialize deserializer[T]) (*T, error) {
+    url := "https://" + c.Host + urlSuffix
 
     authToken, err := c.getAuth()
     if err != nil {
@@ -378,7 +380,7 @@ func getCredentials[T any](c *ElementoClient, service, service_uuid string, dese
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
-        return nil, fmt.Errorf("failed to get %s credentials: %s %s", service, resp.Status, string(body))
+        return nil, fmt.Errorf("failed to get %s credentials: %s %s", resourceName, resp.Status, string(body))
     }
 
     resource, err := deserialize(resp.Body)
@@ -519,7 +521,13 @@ func (c *ElementoClient) GetObjectStorageResource(service_uuid string) (*ObjectS
 }
 
 func (c *ElementoClient) GetObjectStorageCredentials(service_uuid string) (*ObjectStorageCredentials, error) {
-    return getCredentials[ObjectStorageCredentials](c, "objectstorage", service_uuid, KVDeserializer[ObjectStorageCredentials])
+    urlSuffix := ":7770/api/v1.0/objectstorage/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*ObjectStorageCredentials, error) {
+        return KVDeserializer[ObjectStorageCredentials](r, "=")
+    }
+
+    return getCredentials[ObjectStorageCredentials](c, urlSuffix, "objectstorage", serializer)
 }
 
 
@@ -550,7 +558,13 @@ func (c *ElementoClient) GetDBAASResource(service_uuid string) (*DBAASResponse, 
 }
 
 func (c *ElementoClient) GetDBAASCredentials(service_uuid string) (*DBAASCredentials, error) {
-    return getCredentials[DBAASCredentials](c, "dbaas", service_uuid, KVDeserializer[DBAASCredentials])
+    urlSuffix := ":7770/api/v1.0/dbaas/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*DBAASCredentials, error) {
+        return KVDeserializer[DBAASCredentials](r, "=")
+    }
+
+    return getCredentials[DBAASCredentials](c, urlSuffix, "dbaas", serializer)
 }
 
 
@@ -592,4 +606,31 @@ func (c *ElementoClient) GetKAASCredentials(service_uuid string) (*string, error
         return &creds, nil
     }
     return getCredentials[string](c, "kaas", service_uuid, deserializer)
+}
+
+
+func (c *ElementoClient) ListN8NResources() ([]ComputeListItem, error) {
+    ret, err := c.ListComputeResources()
+    if err != nil {
+        return nil, err
+    }
+
+    var resources []ComputeListItem
+    for _, item := range ret {
+        if slices.Contains(strings.Split(item.Tags, ":"), "n8n") {
+            resources = append(resources, item)
+        }
+    }
+
+    return resources, nil
+}
+
+func (c *ElementoClient) GetN8NCredentials(service_uuid string) (*N8NCredentials, error) {
+    urlSuffix := ":7777/api/v1.0/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*N8NCredentials, error) {
+        return KVDeserializer[N8NCredentials](r, ": ")
+    }
+
+    return getCredentials[N8NCredentials](c, urlSuffix, "n8n", serializer)
 }
