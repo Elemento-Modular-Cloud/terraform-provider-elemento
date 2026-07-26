@@ -9,7 +9,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -59,43 +65,89 @@ func volumeAttributes() map[string]schema.Attribute {
         "creator_uuid": schema.StringAttribute{
             Optional: true,
             Computed: true,
+            Description: "The UUID of the creator of the storage resource. If not provided, it will be set to the current user's UUID.",
         },
         "name": schema.StringAttribute{
             Required: true,
+            Description: "The name of the storage resource.",
+            PlanModifiers: []planmodifier.String {
+                stringplanmodifier.RequiresReplace(),
+            },
         },
         "size": schema.Int64Attribute{
             Required: true,
+            Description: "The size of the storage resource in bytes.",
+            PlanModifiers: []planmodifier.Int64 {
+                int64planmodifier.RequiresReplace(),
+            },
         },
         "private": schema.BoolAttribute{
 	       	Required: true,
+            Description: "Whether the storage resource is private.",
+            PlanModifiers: []planmodifier.Bool {
+                boolplanmodifier.RequiresReplace(),
+            },
         },
         "shareable": schema.BoolAttribute{
 	       	Required: true,
+			Description: "Whether the storage resource is shareable.",
+			PlanModifiers: []planmodifier.Bool {
+                boolplanmodifier.RequiresReplace(),
+            },
         },
         "bootable": schema.BoolAttribute{
 	       	Required: true,
+			Description: "Whether the storage resource is bootable.",
+			PlanModifiers: []planmodifier.Bool {
+                boolplanmodifier.RequiresReplace(),
+            },
         },
         "clonable": schema.BoolAttribute{
            	Optional: true,
             Computed: true,
+            Description: "Whether the storage resource is clonable.",
+            PlanModifiers: []planmodifier.Bool {
+                boolplanmodifier.RequiresReplace(),
+            },
         },
         "alg": schema.StringAttribute{
            	Optional: true,
-        },
+            Description: "The algorithm used for the storage resource clone.",
+            PlanModifiers: []planmodifier.String {
+                stringplanmodifier.RequiresReplace(),
+            },
+       },
         "format": schema.StringAttribute{
            	Optional: true,
+            Description: "The format of the storage resource.",
+            PlanModifiers: []planmodifier.String {
+                stringplanmodifier.RequiresReplace(),
+            },
         },
         "bus": schema.StringAttribute{
            	Optional: true,
+            Description: "The bus type of the storage resource.",
+            PlanModifiers: []planmodifier.String {
+                stringplanmodifier.RequiresReplace(),
+            },
         },
         "fs": schema.StringAttribute{
            	Optional: true,
+            Description: "The underlying filesystem type of the storage resource.",
+            PlanModifiers: []planmodifier.String {
+                stringplanmodifier.RequiresReplace(),
+            },
         },
         "hardware_device": schema.StringAttribute{
            	Optional: true,
+            Description: "Tne required underlying hardware device for the storage resource.",
+            PlanModifiers: []planmodifier.String {
+                stringplanmodifier.RequiresReplace(),
+            },
         },
         "tags": schema.ListAttribute{
             ElementType: types.StringType,
+            Description: "A list of tags associated with the storage resource.",
             Optional: true,
             Computed: true,
             Default: listdefault.StaticValue(
@@ -104,32 +156,52 @@ func volumeAttributes() map[string]schema.Attribute {
 					[]attr.Value{},
 				),
 			),
+            PlanModifiers: []planmodifier.List{
+                listplanmodifier.RequiresReplace(),
+            },
         },
         "region": schema.StringAttribute{
            	Optional: true,
             Computed: true,
+            Description: "The region where the storage resource is located.",
+            PlanModifiers: []planmodifier.String {
+                stringplanmodifier.RequiresReplace(),
+            },
         },
         "readonly": schema.BoolAttribute{
 	       	Required: true,
+            Description: "Whether the storage resource is read-only.",
+            PlanModifiers: []planmodifier.Bool {
+                boolplanmodifier.RequiresReplace(),
+            },
         },
         "priority": schema.Int32Attribute{
             Optional: true,
 	       	Computed: true,
+            Description: "The boot priority of the storage resource.",
+            PlanModifiers: []planmodifier.Int32 {
+                int32planmodifier.RequiresReplace(),
+            },
         },
         "volume_uuid": schema.StringAttribute{
  	       	Computed: true,
+            Description: "The UUID of the storage resource.",
         },
         "last_updated": schema.StringAttribute{
         	Computed: true,
+            Description: "The last time the storage resource was updated.",
         },
         "billing_frequency": schema.StringAttribute{
             Optional: true,
+            Description: "The frequency at which the compute resource should be billed. Valid values are 'day', 'week', 'month', and 'year'.",
         },
         "billing_uuid": schema.StringAttribute{
             Computed: true,
+            Description: "The billing UUID of the storage resource, assigned by the Elemento API after creation.",
         },
         "payment_url": schema.StringAttribute{
             Computed: true,
+            Description: "The payment URL for the storage resource, assigned by the Elemento API after creation.",
         },
     }
 }
@@ -138,9 +210,16 @@ func (r *storageResource) Schema(_ context.Context, _ resource.SchemaRequest, re
     attributes := volumeAttributes()
     attributes["region"] = schema.StringAttribute{
         Required: true,
+        PlanModifiers: []planmodifier.String {
+           stringplanmodifier.RequiresReplace(),
+        },
     }
     attributes["billing_frequency"] = schema.StringAttribute{
         Required: true,
+        Description: "The frequency at which the compute resource should be billed. Valid values are 'day', 'week', 'month', and 'year'.",
+        PlanModifiers: []planmodifier.String {
+           stringplanmodifier.RequiresReplace(),
+        },
     }
 
     resp.Schema = schema.Schema{

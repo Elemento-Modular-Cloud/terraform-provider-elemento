@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     elemento = {
-      source  = "hashicorp/elemento"
+      source = "hashicorp/elemento"
     }
   }
 }

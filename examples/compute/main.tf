@@ -1,7 +1,9 @@
+# Copyright (c) HashiCorp, Inc.
+
 terraform {
   required_providers {
     elemento = {
-      source  = "hashicorp/elemento"
+      source = "hashicorp/elemento"
     }
   }
 }
@@ -30,7 +32,7 @@ resource "elemento_compute" "n8n_cloudinit_test" {
     }
 
     memory = {
-      capacity   = 4096
+      capacity    = 4096
       require_ecc = false
     }
 

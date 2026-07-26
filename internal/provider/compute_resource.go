@@ -106,24 +106,30 @@ func (r *computeResource) Metadata(_ context.Context, req resource.MetadataReque
 
 func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "The elemento compute resource",
 		Attributes: map[string]schema.Attribute{
 			"requirements": schema.SingleNestedAttribute{
 				Required: true,
+				Description: "The elemento compute requirements",
 				Attributes: map[string]schema.Attribute{
 					"cpu": schema.SingleNestedAttribute{
 						Required: true,
+						Description: "The elemento compute cpu requirements",
 						Attributes: map[string]schema.Attribute{
 							"smt_enabled": schema.BoolAttribute{ // TODO: is this a dupe?
 								Required: true,
+								Description: "Whether SMT (Simultaneous Multithreading) is enabled for the CPU.",
 							},
 							"min_frequency": schema.Float64Attribute{
 								Optional: true,
+								Description: "The minimum frequency (in GHz) required for the CPU.",
 								Validators: []validator.Float64{
 									float64validator.AtLeast(0),
 								},
 							},
 							"arch": schema.ListAttribute{
 							    Required: true,
+								Description: "The list of alternative CPU architectures required for the compute resource. Valid values are 'X86_64' and 'arm64'.",
 								ElementType: types.StringType,
                                 Validators: []validator.List{
                                     listvalidator.SizeAtLeast(1),
@@ -137,6 +143,7 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							},
 							"flags": schema.ListAttribute{
 								ElementType: types.StringType,
+								Description: "The list of CPU flags required for the compute resource.",
 								Optional:    true,
 								Computed:    true,
 								Default:     listdefault.StaticValue(
@@ -147,6 +154,7 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 								),
 							},
 							"slots": schema.Int32Attribute{
+			                    Description: "The number of CPU slots required for the compute resource.",
 								Required: true,
 								Validators: []validator.Int32{
 									int32validator.AtLeast(1),
@@ -154,12 +162,15 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							},
 							"allow_smt": schema.BoolAttribute{
 								Required: true,
+								Description: "Whether SMT (Simultaneous Multithreading) is allowed for the CPU.",
 							},
 							"full_physical": schema.BoolAttribute{ // TODO: is this a dupe?
 								Required: true,
+								Description: "Whether the CPU slots should be a full physical CPU core (no hyperthreading).",
 							},
 							"max_overprovision": schema.Int32Attribute{
 								Required: true,
+								Description: "The maximum overprovisioning factor for the CPU slots.",
 								Validators: []validator.Int32{
 									int32validator.AtLeast(1),
 								},
@@ -168,23 +179,28 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 					"memory": schema.SingleNestedAttribute{
 						Required: true,
+						Description: "The elemento compute memory requirements",
 						Attributes: map[string]schema.Attribute{
 							"capacity": schema.Int32Attribute{
 								Required: true,
+								Description: "The memory capacity (in MB) required for the compute resource.",
 								Validators: []validator.Int32{
 									int32validator.AtLeast(1),
 								},
 							},
 							"require_ecc": schema.BoolAttribute{
 								Required: true,
+								Description: "Whether ECC (Error-Correcting Code) memory is required for the compute resource.",
 							},
 						},
 					},
 					"pci": schema.SingleNestedAttribute{
 						Required: true,
+						Description: "The elemento compute PCI requirements",
 						Attributes: map[string]schema.Attribute{
 							"devices": schema.MapAttribute{
 								Required: true,
+								Description: "A map of PCI device names to the number of devices required for the compute resource.",
 								ElementType: types.Int32Type,
 								Validators: []validator.Map{
 									mapvalidator.ValueInt32sAre(int32validator.AtLeast(0)),
@@ -194,8 +210,10 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 					"misc": schema.SingleNestedAttribute{
 						Required: true,
+						Description: "The elemento compute miscellaneous requirements",
 						Attributes: map[string]schema.Attribute{
 							"os_family": schema.StringAttribute{
+			                    Description: "The operating system family required for the compute resource. Valid values are 'linux', 'windows', and 'macos'.",
 								Optional: true,
 								Validators: []validator.String{
 									stringvalidator.OneOf(
@@ -206,6 +224,7 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 								},
 							},
 							"os_flavour": schema.StringAttribute{
+							    Description: "The operating system flavour required for the compute resource.",
 								Optional: true, // TODO: os_flavour validator based on iso-templates?
 							},
 						},
@@ -236,6 +255,7 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"volumes": schema.ListNestedAttribute{
 				Required: true,
+				Description: "The list of storage volumes required for the compute resource.",
 				NestedObject: schema.NestedAttributeObject{
                     Attributes: volumeAttributes(),
 				},
@@ -245,23 +265,28 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"vm_name": schema.StringAttribute{
 				Required: true,
+				Description: "The name of the virtual machine to be created.",
 				PlanModifiers: []planmodifier.String{
 				    stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"region": schema.StringAttribute{
 				Required: true,
+				Description: "The region in which the compute resource should be created.",
 				PlanModifiers: []planmodifier.String{
                     stringplanmodifier.RequiresReplace(),
                 },
 			},
 			"cloudinit": schema.SingleNestedAttribute{
 			    Optional: true,
+				Description: "The cloud-init configuration for the compute resource.",
 				Attributes: map[string]schema.Attribute{
 					"template": schema.StringAttribute{
+	                    Description: "The cloud-init template to be used for the compute resource.",
 						Required: true,
 					},
 					"variables": schema.MapAttribute{
+					    Description: "A map of variables to be used in the cloud-init template.",
 						Optional: true,
 						ElementType: types.StringType,
 					},
@@ -272,8 +297,10 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"additional_info": schema.SingleNestedAttribute{
 				Required: true,
+				Description: "Additional information for the compute resource.",
 				Attributes: map[string]schema.Attribute{
 					"service": schema.StringAttribute{
+					    Description: "The service for which the compute resource is being created.",
 						Required: true,
 					},
 				},
@@ -283,6 +310,7 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"billing_frequency": schema.StringAttribute{
 				Required: true,
+				Description: "The frequency at which the compute resource should be billed. Valid values are 'day', 'week', 'month', and 'year'.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						"day",
@@ -296,18 +324,23 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"billing_uuid": schema.StringAttribute{
                 Computed: true,
+                Description: "The billing UUID of the compute resource, assigned by the Elemento API after creation.",
             },
             "payment_url": schema.StringAttribute{
                 Computed: true,
+                Description: "The payment URL for the compute resource, assigned by the Elemento API after creation.",
             },
             "last_updated": schema.StringAttribute{
                 Computed: true,
+                Description: "The timestamp of the last update to the compute resource.",
             },
             "uuid": schema.StringAttribute{
                 Computed: true,
+                Description: "The UUID of the compute resource, assigned by the Elemento API after creation.",
             },
             "tags": schema.StringAttribute{
                 Computed: true,
+                Description: "The tags associated with the compute resource, assigned by the Elemento API after creation.",
             },
 		},
 	}

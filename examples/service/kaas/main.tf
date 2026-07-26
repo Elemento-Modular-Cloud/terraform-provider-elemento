@@ -1,7 +1,9 @@
+# Copyright (c) HashiCorp, Inc.
+
 terraform {
   required_providers {
     elemento = {
-      source  = "hashicorp/elemento"
+      source = "hashicorp/elemento"
     }
   }
 }

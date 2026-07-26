@@ -39,16 +39,20 @@ func (p *ElementoProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
     	Attributes: map[string]schema.Attribute{
      		"host": schema.StringAttribute{
        			Optional: true,
+                Description: "The Elemento API host. Can also be set via the ELEMENTO_HOST environment variable.",
        		},
          	"username": schema.StringAttribute{
        			Optional: true,
+                Description: "The Elemento API username. Can also be set via the ELEMENTO_USERNAME environment variable.",
        		},
          	"password": schema.StringAttribute{
 	   			Optional: true,
 				Sensitive: true,
+                Description: "The Elemento API password. Can also be set via the ELEMENTO_PASSWORD environment variable.",
 	   		},
 			"portal": schema.StringAttribute{
 				Optional: true,
+				Description: "The Elemento API portal. Can also be set via the ELEMENTO_PORTAL environment variable.",
 			},
      	},
     }
