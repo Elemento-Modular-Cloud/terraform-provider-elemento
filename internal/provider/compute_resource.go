@@ -51,6 +51,7 @@ type computeResourceModel struct {
     LastUpdated      types.String                `tfsdk:"last_updated"`
     UUID             types.String                `tfsdk:"uuid"`
     Tags             types.String                `tfsdk:"tags"`
+    Status           types.String                `tfsdk:"status"`
 }
 
 type computeRequirementsModel struct {
@@ -342,6 +343,10 @@ func (r *computeResource) Schema(_ context.Context, _ resource.SchemaRequest, re
                 Computed: true,
                 Description: "The tags associated with the compute resource, assigned by the Elemento API after creation.",
             },
+            "status": schema.StringAttribute{
+                Computed: true,
+                Description: "The status of the compute resource, assigned by the Elemento API after creation.",
+            },
 		},
 	}
 }
@@ -480,24 +485,35 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     }
 
     plan.BillingUUID = types.StringValue(response.BillingUUID)
-    plan.PaymentURL = types.StringValue(response.PaymentURL)
-    plan.UUID = types.StringNull()
-    plan.Tags = types.StringNull()
+    plan.PaymentURL  = types.StringValue(response.PaymentURL)
+    plan.UUID        = types.StringNull()
+    plan.Tags        = types.StringNull()
 
     for volumeIndex, volume := range plan.Volumes {
-        volume.Priority = types.Int32Null()
-        volume.Clonable = types.BoolNull()
-        volume.UUID = types.StringNull()
-        volume.LastUpdated = types.StringNull()
-        volume.BillingUUID = types.StringNull()
-        volume.CreatorUUID = types.StringNull()
-        volume.Region = types.StringNull()
-        volume.PaymentURL = types.StringNull()
-        volume.Tags = types.ListValueMust(types.StringType, []attr.Value{})
+        volume.Priority           = types.Int32Null()
+        volume.Clonable           = types.BoolNull()
+        volume.UUID               = types.StringNull()
+        volume.LastUpdated        = types.StringNull()
+        volume.BillingUUID        = types.StringNull()
+        volume.CreatorUUID        = types.StringNull()
+        volume.Region             = types.StringNull()
+        volume.PaymentURL         = types.StringNull()
+        volume.Tags               = types.ListValueMust(types.StringType, []attr.Value{})
         plan.Volumes[volumeIndex] = volume
     }
 
     plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+
+    status, err := r.client.GetResourceStatus(response.BillingUUID)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading Compute Resource Status",
+            "Could not read compute resource status: "+err.Error(),
+        )
+        return
+    }
+
+    plan.Status = types.StringValue(*status)
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
@@ -531,7 +547,16 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
         }
     }
 
-    if resource == nil {
+    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading Compute Resource Status",
+            "Could not read compute resource status: "+err.Error(),
+        )
+        return
+    }
+
+    if resource == nil && (*status == "deleted" || *status == "error") {
         resp.State.RemoveResource(ctx)
         return
     }
@@ -576,6 +601,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     }
     state.Volumes = volumes
 
+    state.Status      = types.StringValue(*status)
     state.VMName      = types.StringValue(resource.Requirements.VMName)
     state.Region      = types.StringValue(resource.Region)
     state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))

@@ -40,6 +40,7 @@ type n8nResourceModel struct {
     UUID             types.String                `tfsdk:"uuid"`
     State            types.String                `tfsdk:"state"`
     ServiceURL       types.String                `tfsdk:"service_url"`
+    Status           types.String                `tfsdk:"status"`
 }
 
 func (r *n8nResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -91,6 +92,9 @@ func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
                 Computed: true,
             },
             "state": schema.StringAttribute{
+                Computed: true,
+            },
+            "status": schema.StringAttribute{
                 Computed: true,
             },
 		},
@@ -179,7 +183,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
     canCreateResponse, err := r.client.CanCreateComputeResource(n8nResource)
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error Checking N8N Resource Creation",
+            "Error Checking n8n Resource Creation",
             "Could not check if n8n resource can be created, unexpected error: " + err.Error(),
         )
         return
@@ -188,7 +192,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
     if !canCreateResponse.CanCreate {
         for field, reason := range canCreateResponse.Reasons {
             resp.Diagnostics.AddError(
-                "N8N Resource Creation Not Allowed",
+                "n8n Resource Creation Not Allowed",
                 fmt.Sprintf("Cannot create n8n resource for field '%s': %s", field, reason),
             )
         }
@@ -198,7 +202,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
     response, err := r.client.CreateComputeResource(n8nResource)
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error Creating N8N Resource",
+            "Error Creating n8n Resource",
             "Could not create n8n resource, unexpected error: " + err.Error(),
         )
         return
@@ -211,6 +215,17 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 
     plan.State       = types.StringNull()
     plan.ServiceURL  = types.StringNull()
+
+    status, err := r.client.GetResourceStatus(response.BillingUUID)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading n8n Resource Status",
+            "Could not read n8n resource status: "+err.Error(),
+        )
+        return
+    }
+
+    plan.Status = types.StringValue(*status)
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
@@ -230,7 +245,7 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
     resources, err := r.client.ListN8NResources()
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error Reading N8N Resources",
+            "Error Reading n8n Resources",
             "Could not list n8n resources: "+err.Error(),
         )
         return
@@ -244,11 +259,21 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
         }
     }
 
-    if resource == nil {
+    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading n8n Resource Status",
+            "Could not read n8n resource status: "+err.Error(),
+        )
+        return
+    }
+
+    if resource == nil && (*status == "deleted" || *status == "error") {
         resp.State.RemoveResource(ctx)
         return
     }
 
+    state.Status      = types.StringValue(*status)
     state.VMName      = types.StringValue(resource.Requirements.VMName)
     state.CPUCores    = types.Int32Value(int32(resource.Requirements.Slots))
     state.RAMSizeMB   = types.Int32Value(int32(resource.Requirements.RamSize))
@@ -261,7 +286,7 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
     credentials, err := r.client.GetN8NCredentials(resource.UUID)
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error Reading N8N Credentials",
+            "Error Reading n8n Credentials",
             "Could not read n8n credentials: "+err.Error(),
         )
         return
@@ -292,7 +317,7 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
     err := r.client.DeleteComputeResource(state.UUID.ValueString())
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error Deleting N8N Resource",
+            "Error Deleting n8n Resource",
             "Could not delete n8n resource, unexpected error: " + err.Error(),
         )
         return

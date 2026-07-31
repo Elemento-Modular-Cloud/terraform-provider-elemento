@@ -39,6 +39,7 @@ type objectStorageResourceModel struct {
     ContainerName    types.String   `tfsdk:"container_name"`
     SasToken         types.String   `tfsdk:"sas_token"`
     AzureCliCommand  types.String   `tfsdk:"azure_cli_command"`
+    Status           types.String   `tfsdk:"status"`
 }
 
 func (r *objectStorageResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -88,6 +89,9 @@ func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaReque
                 Computed: true,
             },
             "azure_cli_command": schema.StringAttribute{
+                Computed: true,
+            },
+            "status": schema.StringAttribute{
                 Computed: true,
             },
         },
@@ -167,6 +171,17 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
     plan.SasToken = types.StringNull()
     plan.AzureCliCommand = types.StringNull()
 
+    status, err := r.client.GetResourceStatus(response.BillingUUID)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading ObjectStorage Resource Status",
+            "Could not read objectstorage resource status: "+err.Error(),
+        )
+        return
+    }
+
+    plan.Status = types.StringValue(*status)
+
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
@@ -211,11 +226,21 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
         resource = res
     }
 
-    if resource == nil {
+    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading ObjectStorage Resource Status",
+            "Could not read objectstorage resource status: "+err.Error(),
+        )
+        return
+    }
+
+    if resource == nil && (*status == "deleted" || *status == "error") {
         resp.State.RemoveResource(ctx)
         return
     }
 
+    state.Status        = types.StringValue(*status)
     state.Name          = types.StringValue(resource.Name)
     state.ActiveStorage = types.Int32Value(int32(resource.ActiveStorage))
     state.Endpoint      = types.StringValue(resource.Endpoint)

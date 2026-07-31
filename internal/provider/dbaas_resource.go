@@ -46,6 +46,7 @@ type dbaasResourceModel struct {
     DatabaseName     types.String   `tfsdk:"database_name"`
     DatabaseSSLMode  types.String   `tfsdk:"database_ssl_mode"`
     PublicURI        types.String   `tfsdk:"public_uri"`
+    Status           types.String   `tfsdk:"status"`
 }
 
 func (r *dbaasResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -118,6 +119,9 @@ func (r *dbaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
                 Computed: true,
             },
             "public_uri": schema.StringAttribute{
+                Computed: true,
+            },
+            "status": schema.StringAttribute{
                 Computed: true,
             },
         },
@@ -204,6 +208,17 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
     plan.DatabaseSSLMode = types.StringNull()
     plan.PublicURI = types.StringNull()
 
+    status, err := r.client.GetResourceStatus(response.BillingUUID)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading DBAAS Resource Status",
+            "Could not read dbaas resource status: "+err.Error(),
+        )
+        return
+    }
+
+    plan.Status = types.StringValue(*status)
+
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
@@ -248,22 +263,32 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         resource = res
     }
 
-    if resource == nil {
+    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading DBAAS Resource Status",
+            "Could not read dbaas resource status: "+err.Error(),
+        )
+        return
+    }
+
+    if resource == nil && (*status == "deleted" || *status == "error") {
         resp.State.RemoveResource(ctx)
         return
     }
 
-    state.Name          = types.StringValue(resource.Name)
-    state.Region      = types.StringValue(resource.Region)
-    state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-    state.UUID        = types.StringValue(resource.UUID)
-    state.CreatorUUID = types.StringValue(resource.CreatorUUID)
+    state.Status       = types.StringValue(*status)
+    state.Name         = types.StringValue(resource.Name)
+    state.Region       = types.StringValue(resource.Region)
+    state.LastUpdated  = types.StringValue(time.Now().Format(time.RFC850))
+    state.UUID         = types.StringValue(resource.UUID)
+    state.CreatorUUID  = types.StringValue(resource.CreatorUUID)
     state.CreationDate = types.StringValue(resource.CreationDate)
-    state.BackupTime = types.StringValue(resource.BackupTime)
-    state.DiskSizeGB = types.Int64Value(resource.DiskSizeGB)
-    state.NodesNumber = types.Int32Value(resource.NodesNumber)
-    state.Engine = types.StringValue(resource.Engine)
-    state.PaymentURL  = types.StringNull()
+    state.BackupTime   = types.StringValue(resource.BackupTime)
+    state.DiskSizeGB   = types.Int64Value(resource.DiskSizeGB)
+    state.NodesNumber  = types.Int32Value(resource.NodesNumber)
+    state.Engine       = types.StringValue(resource.Engine)
+    state.PaymentURL   = types.StringNull()
 
     credentials, err := r.client.GetDBAASCredentials(resource.UUID)
     if err != nil {

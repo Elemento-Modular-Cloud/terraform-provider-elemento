@@ -39,9 +39,10 @@ type kaasResourceModel struct {
     KubernetesVersion     types.String      `tfsdk:"kubernetes_version"`
     ControlPlaneHAEnabled types.Bool        `tfsdk:"control_plane_ha_enabled"`
     ClusterName           types.String      `tfsdk:"cluster_name"`
-    Status                types.String      `tfsdk:"status"`
+    ClusterStatus         types.String      `tfsdk:"cluster_status"`
     Endpoint              types.String      `tfsdk:"endpoint"`
     KubeConfig            types.String      `tfsdk:"kube_config"`
+    Status                types.String      `tfsdk:"status"`
 }
 
 type nodePoolModel struct {
@@ -158,13 +159,16 @@ func (r *kaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
             "cluster_name": schema.StringAttribute{
                 Computed: true,
             },
-            "status": schema.StringAttribute{
+            "cluster_status": schema.StringAttribute{
                 Computed: true,
             },
             "endpoint": schema.StringAttribute{
                 Computed: true,
             },
             "kube_config": schema.StringAttribute{
+                Computed: true,
+            },
+            "status": schema.StringAttribute{
                 Computed: true,
             },
         },
@@ -262,10 +266,20 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
     plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
     plan.CreatorUUID = types.StringNull()
 
-    plan.ClusterName = types.StringNull()
-    plan.Status = types.StringNull()
-    plan.Endpoint = types.StringNull()
-    plan.KubeConfig = types.StringNull()
+    plan.ClusterName   = types.StringNull()
+    plan.ClusterStatus = types.StringNull()
+    plan.Endpoint      = types.StringNull()
+    plan.KubeConfig    = types.StringNull()
+
+    status, err := r.client.GetResourceStatus(response.BillingUUID)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading KAAS Resource Status",
+            "Could not read kaas resource status: "+err.Error(),
+        )
+        return
+    }
+    plan.Status = types.StringValue(*status)
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
@@ -311,11 +325,21 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
         resource = res
     }
 
-    if resource == nil {
+    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading KAAS Resource Status",
+            "Could not read kaas resource status: "+err.Error(),
+        )
+        return
+    }
+
+    if resource == nil && (*status == "deleted" || *status == "error") {
         resp.State.RemoveResource(ctx)
         return
     }
 
+    state.Status      = types.StringValue(*status)
     state.Name        = types.StringValue(resource.Name)
     state.Region      = types.StringValue(resource.Region)
     state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
@@ -323,10 +347,10 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
     state.CreatorUUID = types.StringValue(resource.CreatorUUID)
     state.PaymentURL  = types.StringNull()
 
-    state.ClusterName = types.StringValue(resource.ClusterName)
-    state.Status      = types.StringValue(resource.Status)
-    state.Endpoint    = types.StringValue(resource.Endpoint)
-    state.KubeConfig  = types.StringValue(resource.KubeConfig)
+    state.ClusterName   = types.StringValue(resource.ClusterName)
+    state.ClusterStatus = types.StringValue(resource.Status)
+    state.Endpoint      = types.StringValue(resource.Endpoint)
+    state.KubeConfig    = types.StringValue(resource.KubeConfig)
 
     // credentials, err := r.client.GetKAASCredentials(resource.UUID)
     // if err != nil {

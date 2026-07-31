@@ -221,6 +221,38 @@ func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName
     return &response, nil
 }
 
+func (c *ElementoClient) GetResourceStatus(billing_uuid string) (*string, error) {
+    url := "https://" + c.Portal + "/api/v2/billing/" + billing_uuid + "/status"
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+    }
+
+    resp, err := c.request("GET", url, headers, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to get client UUID: %s %s", resp.Status, string(body))
+    }
+
+    var statusResponse struct {
+        Status string `json:"billing_status"`
+    }
+    err = json.NewDecoder(resp.Body).Decode(&statusResponse)
+    if err != nil {
+        return nil, err
+    }
+
+    return &statusResponse.Status, nil
+}
 
 func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName string) (*CreateResponse, error) {
     url := "https://" + c.Host + urlSuffix
