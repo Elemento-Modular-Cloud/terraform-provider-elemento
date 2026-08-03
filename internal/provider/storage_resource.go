@@ -292,7 +292,40 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
         BillingFrequency: plan.BillingFrequency.ValueString(),
     }
 
-    // TODO: Add cancreate handling
+
+    canCreateRequest := client.CanCreateStorageRequest{
+        Size:             int(plan.Size.ValueInt64()),
+        Region:           plan.Region.ValueString(),
+        BillingFrequency: plan.BillingFrequency.ValueString(),
+        Benchmark:        client.CanCreateStorageBenchmark{
+            ReadIOPS:         0,
+            WriteIOPS:        0,
+            ReadMBBandwidth:  0,
+            WriteMBBandwidth: 0,
+        },
+        HardwareDevice:   plan.HardwareDevice.ValueStringPointer(),
+        Filesystem:       plan.FS.ValueStringPointer(),
+        Ceph:             nil,
+    }
+
+    canCreateResponse, err := r.client.CanCreateStorageResource(canCreateRequest)
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Checking Storage Resource Creation",
+            "Could not check if storage resource can be created, unexpected error: " + err.Error(),
+        )
+        return
+    }
+
+    if !canCreateResponse.CanCreate {
+        for field, reason := range canCreateResponse.Reasons {
+            resp.Diagnostics.AddError(
+                "Storage Resource Creation Not Allowed",
+                fmt.Sprintf("Cannot create storage resource due to field '%s' value: %s", field, reason),
+            )
+        }
+        return
+    }
 
     response, err := r.client.CreateStorageResource(storageResource)
     if err != nil {

@@ -144,7 +144,7 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
         for field, reason := range canCreateResponse.Reasons {
             resp.Diagnostics.AddError(
                 "ObjectStorage Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create objectstorage resource for field '%s': %s", field, reason),
+                fmt.Sprintf("Cannot create objectstorage resource due to field '%s value': %s", field, reason),
             )
         }
         return

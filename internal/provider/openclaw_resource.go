@@ -198,7 +198,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
         for field, reason := range canCreateResponse.Reasons {
             resp.Diagnostics.AddError(
                 "OpenClaw Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create openclaw resource for field '%s': %s", field, reason),
+                fmt.Sprintf("Cannot create openclaw resource due to field '%s' value: %s", field, reason),
             )
         }
         return

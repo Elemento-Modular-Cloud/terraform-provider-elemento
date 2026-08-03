@@ -193,7 +193,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
         for field, reason := range canCreateResponse.Reasons {
             resp.Diagnostics.AddError(
                 "n8n Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create n8n resource for field '%s': %s", field, reason),
+                fmt.Sprintf("Cannot create n8n resource due to field '%s' value: %s", field, reason),
             )
         }
         return

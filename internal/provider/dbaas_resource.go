@@ -178,7 +178,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
         for field, reason := range canCreateResponse.Reasons {
             resp.Diagnostics.AddError(
                 "DBAAS Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create dbaas resource for field '%s': %s", field, reason),
+                fmt.Sprintf("Cannot create dbaas resource due to field '%s' value: %s", field, reason),
             )
         }
         return

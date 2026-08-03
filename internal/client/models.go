@@ -88,10 +88,13 @@ type StorageResource struct {
 }
 
 type CanCreateStorageRequest struct {
-    Size             int    `json:"size"`
-    Region           string `json:"region"`
-    BillingFrequency string `json:"billing_frequency"`
-    Benchmark        bool   `json:"benchmark"`
+    Size             int                        `json:"size"`
+    Region           string                     `json:"region"`
+    BillingFrequency string                     `json:"billing_frequency"`
+    Benchmark        CanCreateStorageBenchmark  `json:"benchmark"`
+    HardwareDevice   *string                    `json:"hw_device"`
+    Filesystem       *string                    `json:"fs"`
+    Ceph             *bool                      `json:"ceph"`
 }
 
 type CanCreateStorageBenchmark struct {
