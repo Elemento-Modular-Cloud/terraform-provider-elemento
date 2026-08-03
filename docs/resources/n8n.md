@@ -17,23 +17,24 @@ description: |-
 
 ### Required
 
-- `billing_frequency` (String)
-- `cpu_cores` (Number)
-- `password` (String, Sensitive)
-- `ram_size_mb` (Number)
-- `region` (String)
-- `username` (String)
-- `vm_name` (String)
+- `billing_frequency` (String) The billing frequency for the n8n resource (e.g., 'hour', 'month').
+- `cpu_cores` (Number) The number of CPU cores for the n8n resource.
+- `password` (String, Sensitive) The password for the n8n resource.
+- `ram_size_mb` (Number) The amount of RAM in MB for the n8n resource.
+- `region` (String) The region where the n8n resource will be created.
+- `username` (String) The username for the n8n resource.
+- `vm_name` (String) The name of the virtual machine for the n8n resource.
 
 ### Optional
 
-- `ssh_key` (String, Sensitive)
+- `ssh_key` (String, Sensitive) The SSH key for the n8n resource.
 
 ### Read-Only
 
-- `billing_uuid` (String)
-- `last_updated` (String)
-- `payment_url` (String)
-- `service_url` (String)
-- `state` (String)
-- `uuid` (String)
+- `billing_uuid` (String) The billing UUID for the n8n resource, assigned after creation.
+- `last_updated` (String) The timestamp of the last update to the n8n resource.
+- `payment_url` (String) The payment URL for the n8n resource, assigned after creation.
+- `service_url` (String) The service URL for the n8n resource, assigned after creation.
+- `state` (String) The state of the n8n resource (e.g., 'ERROR', 'SUCCESS').
+- `status` (String) The status of the n8n resource (e.g., 'paid', 'provisioning', 'running').
+- `uuid` (String) The UUID of the n8n resource, assigned after creation.

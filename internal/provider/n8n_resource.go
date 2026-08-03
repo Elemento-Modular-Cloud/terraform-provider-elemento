@@ -9,6 +9,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -52,50 +55,90 @@ func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 		Attributes: map[string]schema.Attribute{
 		    "vm_name": schema.StringAttribute{
 				Required: true,
+				Description: "The name of the virtual machine for the n8n resource.",
+				PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"cpu_cores": schema.Int32Attribute{
                 Required: true,
+                Description: "The number of CPU cores for the n8n resource.",
+                PlanModifiers: []planmodifier.Int32{
+                    int32planmodifier.RequiresReplace(),
+                },
             },
             "ram_size_mb": schema.Int32Attribute{
                 Required: true,
+                Description: "The amount of RAM in MB for the n8n resource.",
+                PlanModifiers: []planmodifier.Int32{
+                    int32planmodifier.RequiresReplace(),
+                },
             },
             "username": schema.StringAttribute{
                 Required: true,
+                Description: "The username for the n8n resource.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "password": schema.StringAttribute{
                 Required: true,
                 Sensitive: true,
+                Description: "The password for the n8n resource.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "ssh_key": schema.StringAttribute{
                 Optional: true,
                 Sensitive: true,
+                Description: "The SSH key for the n8n resource.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "region": schema.StringAttribute{
                 Required: true,
+                Description: "The region where the n8n resource will be created.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "billing_frequency": schema.StringAttribute{
                 Required: true,
+                Description: "The billing frequency for the n8n resource (e.g., 'hour', 'month').",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "billing_uuid": schema.StringAttribute{
                 Computed: true,
+                Description: "The billing UUID for the n8n resource, assigned after creation.",
+
             },
             "payment_url": schema.StringAttribute{
                 Computed: true,
+                Description: "The payment URL for the n8n resource, assigned after creation.",
             },
             "last_updated": schema.StringAttribute{
                 Computed: true,
+                Description: "The timestamp of the last update to the n8n resource.",
             },
             "uuid": schema.StringAttribute{
                 Computed: true,
+                Description: "The UUID of the n8n resource, assigned after creation.",
             },
             "service_url": schema.StringAttribute{
                 Computed: true,
+                Description: "The service URL for the n8n resource, assigned after creation.",
             },
             "state": schema.StringAttribute{
                 Computed: true,
+                Description: "The state of the n8n resource (e.g., 'ERROR', 'SUCCESS').",
             },
             "status": schema.StringAttribute{
                 Computed: true,
+                Description: "The status of the n8n resource (e.g., 'paid', 'provisioning', 'running').",
             },
 		},
 	}

@@ -8,6 +8,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -58,71 +62,114 @@ func (r *dbaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
         Attributes: map[string]schema.Attribute{
             "creator_uuid": schema.StringAttribute{
                 Computed: true,
+                Description: "The UUID of the creator of the resource.",
             },
             "name": schema.StringAttribute{
                 Required: true,
+                Description: "The name of the DBAAS resource.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "engine": schema.StringAttribute{
                 Required: true,
+                Description: "The database engine for the DBAAS resource (e.g., 'postgres', 'mysql').",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "backup_time": schema.StringAttribute{
                 Required: true,
+                Description: "The time for the daily backup in HH:MM format.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "disk_size_gb": schema.Int64Attribute{
                 Required: true,
+                Description: "The size of the disk in GB for the DBAAS resource.",
+                PlanModifiers: []planmodifier.Int64{
+                    int64planmodifier.RequiresReplace(),
+                },
             },
             "password": schema.StringAttribute{
                 Required: true,
                 Sensitive: true,
+                Description: "The password for the DBAAS resource.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "nodes_number": schema.Int32Attribute{
                 Required: true,
+                Description: "The number of nodes for the DBAAS resource.",
+                PlanModifiers: []planmodifier.Int32{
+                    int32planmodifier.RequiresReplace(),
+                },
             },
             "region": schema.StringAttribute{
                 Required: true,
+                Description: "The region where the DBAAS resource is located.",
+                PlanModifiers: []planmodifier.String{
+                    stringplanmodifier.RequiresReplace(),
+                },
             },
             "creation_date": schema.StringAttribute{
                 Computed: true,
+                Description: "The creation date of the DBAAS resource.",
             },
             "uuid": schema.StringAttribute{
            	    Computed: true,
+                Description: "The UUID of the DBAAS resource.",
             },
             "last_updated": schema.StringAttribute{
                	Computed: true,
+                Description: "The last updated timestamp of the DBAAS resource.",
             },
             "billing_frequency": schema.StringAttribute{
                 Required: true,
+                Description: "The billing frequency for the DBAAS resource (e.g., 'monthly', 'yearly').",
             },
             "billing_uuid": schema.StringAttribute{
                 Computed: true,
+                Description: "The UUID of the billing information for the DBAAS resource.",
             },
             "payment_url": schema.StringAttribute{
                 Computed: true,
+                Description: "The URL for the payment information for the DBAAS resource.",
             },
             "database_host": schema.StringAttribute{
                 Computed: true,
+                Description: "The host address of the database for the DBAAS resource.",
             },
             "database_port": schema.StringAttribute{
                 Computed: true,
+                Description: "The port number of the database for the DBAAS resource.",
             },
             "database_user": schema.StringAttribute{
                 Computed: true,
+                Description: "The username for the database of the DBAAS resource.",
             },
             "database_password": schema.StringAttribute{
                 Computed: true,
                 Sensitive: true,
+                Description: "The password for the database of the DBAAS resource.",
             },
             "database_name": schema.StringAttribute{
                 Computed: true,
+                Description: "The name of the database for the DBAAS resource.",
             },
             "database_ssl_mode": schema.StringAttribute{
                 Computed: true,
+                Description: "The SSL mode for the database connection of the DBAAS resource.",
             },
             "public_uri": schema.StringAttribute{
                 Computed: true,
+                Description: "The public URI for accessing the DBAAS resource.",
             },
             "status": schema.StringAttribute{
                 Computed: true,
+                Description: "The status of the DBAAS resource.",
             },
         },
 	}

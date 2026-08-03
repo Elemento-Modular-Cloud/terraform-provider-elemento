@@ -17,27 +17,28 @@ description: |-
 
 ### Required
 
-- `backup_time` (String)
-- `billing_frequency` (String)
-- `disk_size_gb` (Number)
-- `engine` (String)
-- `name` (String)
-- `nodes_number` (Number)
-- `password` (String, Sensitive)
-- `region` (String)
+- `backup_time` (String) The time for the daily backup in HH:MM format.
+- `billing_frequency` (String) The billing frequency for the DBAAS resource (e.g., 'monthly', 'yearly').
+- `disk_size_gb` (Number) The size of the disk in GB for the DBAAS resource.
+- `engine` (String) The database engine for the DBAAS resource (e.g., 'postgres', 'mysql').
+- `name` (String) The name of the DBAAS resource.
+- `nodes_number` (Number) The number of nodes for the DBAAS resource.
+- `password` (String, Sensitive) The password for the DBAAS resource.
+- `region` (String) The region where the DBAAS resource is located.
 
 ### Read-Only
 
-- `billing_uuid` (String)
-- `creation_date` (String)
-- `creator_uuid` (String)
-- `database_host` (String)
-- `database_name` (String)
-- `database_password` (String, Sensitive)
-- `database_port` (String)
-- `database_ssl_mode` (String)
-- `database_user` (String)
-- `last_updated` (String)
-- `payment_url` (String)
-- `public_uri` (String)
-- `uuid` (String)
+- `billing_uuid` (String) The UUID of the billing information for the DBAAS resource.
+- `creation_date` (String) The creation date of the DBAAS resource.
+- `creator_uuid` (String) The UUID of the creator of the resource.
+- `database_host` (String) The host address of the database for the DBAAS resource.
+- `database_name` (String) The name of the database for the DBAAS resource.
+- `database_password` (String, Sensitive) The password for the database of the DBAAS resource.
+- `database_port` (String) The port number of the database for the DBAAS resource.
+- `database_ssl_mode` (String) The SSL mode for the database connection of the DBAAS resource.
+- `database_user` (String) The username for the database of the DBAAS resource.
+- `last_updated` (String) The last updated timestamp of the DBAAS resource.
+- `payment_url` (String) The URL for the payment information for the DBAAS resource.
+- `public_uri` (String) The public URI for accessing the DBAAS resource.
+- `status` (String) The status of the DBAAS resource.
+- `uuid` (String) The UUID of the DBAAS resource.

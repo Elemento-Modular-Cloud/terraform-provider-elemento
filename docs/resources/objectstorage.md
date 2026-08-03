@@ -17,20 +17,21 @@ description: |-
 
 ### Required
 
-- `billing_frequency` (String)
-- `name` (String)
-- `region` (String)
-- `size_tb` (Number)
+- `billing_frequency` (String) The billing frequency for the object storage resource (e.g., 'monthly', 'yearly').
+- `name` (String) The name of the object storage resource.
+- `region` (String) The region where the object storage resource will be created.
+- `size_tb` (Number) The size of the object storage resource in TB.
 
 ### Read-Only
 
-- `account_name` (String)
-- `active_storage` (Number)
-- `azure_cli_command` (String)
-- `billing_uuid` (String)
-- `container_name` (String)
-- `endpoint` (String)
-- `last_updated` (String)
-- `payment_url` (String)
-- `sas_token` (String)
-- `uuid` (String)
+- `account_name` (String) The name of the storage account.
+- `active_storage` (Number) The amount of active storage in the object storage resource.
+- `azure_cli_command` (String) The Azure CLI command to access the storage account.
+- `billing_uuid` (String) The billing UUID for the object storage resource.
+- `container_name` (String) The name of the storage container.
+- `endpoint` (String) The endpoint URL for the object storage resource.
+- `last_updated` (String) The timestamp of the last update to the object storage resource.
+- `payment_url` (String) The payment URL for the object storage resource.
+- `sas_token` (String) The SAS token for accessing the storage account.
+- `status` (String) The current status of the object storage resource.
+- `uuid` (String) The UUID for the object storage resource.

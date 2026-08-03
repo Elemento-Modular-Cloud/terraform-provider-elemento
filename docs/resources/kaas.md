@@ -17,37 +17,38 @@ description: |-
 
 ### Required
 
-- `billing_frequency` (String)
-- `control_plane_ha_enabled` (Boolean)
-- `kubernetes_version` (String)
-- `name` (String)
-- `node_pools` (Attributes List) (see [below for nested schema](#nestedatt--node_pools))
+- `billing_frequency` (String) The billing frequency for the KAAS resource (e.g., 'month', 'year').
+- `control_plane_ha_enabled` (Boolean) Whether high availability is enabled for the control plane.
+- `kubernetes_version` (String) The Kubernetes version for the KAAS resource.
+- `name` (String) The name of the KAAS resource.
+- `node_pools` (Attributes List) A list of node pools for the KAAS resource. (see [below for nested schema](#nestedatt--node_pools))
 - `nodes_subnet` (Attributes) (see [below for nested schema](#nestedatt--nodes_subnet))
-- `region` (String)
-- `update_policy` (String)
+- `region` (String) The region where the KAAS resource will be created.
+- `update_policy` (String) The update policy for the KAAS resource (e.g., 'ALWAYS').
 
 ### Read-Only
 
-- `billing_uuid` (String)
-- `cluster_name` (String)
-- `creator_uuid` (String)
-- `endpoint` (String)
-- `kube_config` (String)
-- `last_updated` (String)
-- `payment_url` (String)
-- `status` (String)
-- `uuid` (String)
+- `billing_uuid` (String) The billing UUID associated with the KAAS resource.
+- `cluster_name` (String) The name of the Kubernetes cluster associated with the KAAS resource.
+- `cluster_status` (String) The status of the Kubernetes cluster associated with the KAAS resource.
+- `creator_uuid` (String) The UUID of the user who created the KAAS resource.
+- `endpoint` (String) The endpoint for the KAAS resource.
+- `kube_config` (String) The kubeconfig for the Kubernetes cluster associated with the KAAS resource.
+- `last_updated` (String) The timestamp of the last update to the KAAS resource.
+- `payment_url` (String) The payment URL for the KAAS resource, assigned by the Elemento API after creation.
+- `status` (String) The status of the KAAS resource.
+- `uuid` (String) The unique identifier of the KAAS resource.
 
 <a id="nestedatt--node_pools"></a>
 ### Nested Schema for `node_pools`
 
 Required:
 
-- `auto_scale` (Boolean)
-- `max_nodes` (Number)
-- `min_nodes` (Number)
-- `name` (String)
-- `shared_storage_gb` (Number)
+- `auto_scale` (Boolean) Whether auto-scaling is enabled for the node pool.
+- `max_nodes` (Number) The maximum number of nodes in the node pool.
+- `min_nodes` (Number) The minimum number of nodes in the node pool.
+- `name` (String) The name of the node pool.
+- `shared_storage_gb` (Number) The amount of shared storage in GB for the node pool.
 - `specs` (Attributes) (see [below for nested schema](#nestedatt--node_pools--specs))
 
 <a id="nestedatt--node_pools--specs"></a>
@@ -55,10 +56,10 @@ Required:
 
 Required:
 
-- `cpu_cores` (Number)
-- `disk_size_gb` (Number)
-- `gpus` (Number)
-- `memory_gb` (Number)
+- `cpu_cores` (Number) The number of CPU cores for the node pool.
+- `disk_size_gb` (Number) The size of the disk in GB for the node pool.
+- `gpus` (Number) The number of GPUs for the node pool.
+- `memory_gb` (Number) The amount of memory in GB for the node pool.
 
 
 
@@ -67,5 +68,5 @@ Required:
 
 Required:
 
-- `cidr` (String)
-- `dhcp_enabled` (Boolean)
+- `cidr` (String) The CIDR block for the nodes subnet.
+- `dhcp_enabled` (Boolean) Whether DHCP is enabled for the nodes subnet.

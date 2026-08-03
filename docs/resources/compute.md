@@ -34,6 +34,7 @@ The elemento compute resource
 - `billing_uuid` (String) The billing UUID of the compute resource, assigned by the Elemento API after creation.
 - `last_updated` (String) The timestamp of the last update to the compute resource.
 - `payment_url` (String) The payment URL for the compute resource, assigned by the Elemento API after creation.
+- `status` (String) The status of the compute resource, assigned by the Elemento API after creation.
 - `tags` (String) The tags associated with the compute resource, assigned by the Elemento API after creation.
 - `uuid` (String) The UUID of the compute resource, assigned by the Elemento API after creation.
 

@@ -51,48 +51,63 @@ func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaReque
         Attributes: map[string]schema.Attribute{
             "name": schema.StringAttribute{
                 Required: true,
+                Description: "The name of the object storage resource.",
             },
             "size_tb": schema.Int64Attribute{
                 Required: true,
+                Description: "The size of the object storage resource in TB.",
             },
             "region": schema.StringAttribute{
                 Required: true,
+                Description: "The region where the object storage resource will be created.",
             },
             "uuid": schema.StringAttribute{
            	    Computed: true,
+                Description: "The UUID for the object storage resource.",
             },
             "last_updated": schema.StringAttribute{
                	Computed: true,
+                Description: "The timestamp of the last update to the object storage resource.",
             },
             "billing_frequency": schema.StringAttribute{
                 Required: true,
+                Description: "The billing frequency for the object storage resource (e.g., 'monthly', 'yearly').",
             },
             "billing_uuid": schema.StringAttribute{
                 Computed: true,
+                Description: "The billing UUID for the object storage resource.",
             },
             "payment_url": schema.StringAttribute{
                 Computed: true,
+                Description: "The payment URL for the object storage resource.",
             },
             "active_storage": schema.Int32Attribute{
                 Computed: true,
+                Description: "The amount of active storage in the object storage resource.",
             },
             "endpoint": schema.StringAttribute{
                 Computed: true,
+                Description: "The endpoint URL for the object storage resource.",
             },
             "account_name": schema.StringAttribute{
                 Computed: true,
+                Description: "The name of the storage account.",
             },
             "container_name": schema.StringAttribute{
                 Computed: true,
+                Description: "The name of the storage container.",
             },
             "sas_token": schema.StringAttribute{
                 Computed: true,
+                Description: "The SAS token for accessing the storage account.",
             },
             "azure_cli_command": schema.StringAttribute{
                 Computed: true,
+                Description: "The Azure CLI command to access the storage account.",
             },
             "status": schema.StringAttribute{
                 Computed: true,
+                Description: "The current status of the object storage resource.",
             },
         },
 	}
