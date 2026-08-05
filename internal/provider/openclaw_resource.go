@@ -318,7 +318,7 @@ func (r *openclawResource) Read(ctx context.Context, req resource.ReadRequest, r
         return
     }
 
-    if resource == nil && (*status == "deleted" || *status == "error") {
+    if resource == nil && (*status == "deleted" || *status == "error" || *status == "canceled") {
         resp.State.RemoveResource(ctx)
         return
     }

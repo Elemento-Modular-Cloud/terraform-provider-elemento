@@ -319,7 +319,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         return
     }
 
-    if resource == nil && (*status == "deleted" || *status == "error") {
+    if resource == nil && (*status == "deleted" || *status == "error" || *status == "canceled") {
         resp.State.RemoveResource(ctx)
         return
     }
