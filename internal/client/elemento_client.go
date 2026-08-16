@@ -43,16 +43,6 @@ func NewElementoClient(host, username, password, portal string) *ElementoClient 
 	}
 }
 
-type ComputeResponse struct {
-    PaymentURL  string `json:"payment_url"`
-    BillingUUID string `json:"billing_uuid"`
-}
-
-type CreateResponse struct {
-    PaymentURL  string `json:"payment_url"`
-    BillingUUID string `json:"billing_uuid"`
-}
-
 type CanCreateBilling struct {
     BillingUUID string `json:"billing_uuid"`
     PaymentURL  string `json:"payment_url"`
