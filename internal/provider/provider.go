@@ -14,48 +14,63 @@ import (
 )
 
 var (
-    _ provider.Provider = &ElementoProvider{}
+	_ provider.Provider = &ElementoProvider{}
 )
 
 func New(version string) func() provider.Provider {
-    return func() provider.Provider {
-        return &ElementoProvider{
-            version: version,
-        }
-    }
+	return func() provider.Provider {
+		return &ElementoProvider{
+			version: version,
+		}
+	}
 }
 
 type ElementoProvider struct {
-    version string
+	version string
 }
 
 func (p *ElementoProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-    resp.TypeName = "elemento"
-    resp.Version = p.version
+	resp.TypeName = "elemento"
+	resp.Version = p.version
 }
 
 func (p *ElementoProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
-    resp.Schema = schema.Schema{
-    	Attributes: map[string]schema.Attribute{
-     		"host": schema.StringAttribute{
-       			Optional: true,
-                Description: "The Elemento API host. Can also be set via the ELEMENTO_HOST environment variable.",
-       		},
-         	"username": schema.StringAttribute{
-       			Optional: true,
-                Description: "The Elemento API username. Can also be set via the ELEMENTO_USERNAME environment variable.",
-       		},
-         	"password": schema.StringAttribute{
-	   			Optional: true,
-				Sensitive: true,
-                Description: "The Elemento API password. Can also be set via the ELEMENTO_PASSWORD environment variable.",
-	   		},
-			"portal": schema.StringAttribute{
-				Optional: true,
-				Description: "The Elemento API portal. Can also be set via the ELEMENTO_PORTAL environment variable.",
+	resp.Schema = schema.Schema{
+		Description: "The Elemento provider manages infrastructure across every Atomosphere-connected cloud through a single Terraform schema. The target cloud is selected by host.",
+		MarkdownDescription: "The Elemento provider is the Terraform interface to [Elemento Modular Cloud](https://elemento.cloud). " +
+			"It replaces the *many clouds, many providers* model with **one provider** and a destination cloud passed as an argument.\n\n" +
+			"Set `host` to the [Atomosphere](https://elemento.cloud/atomosphere.html) (Meson) endpoint for the backend you intend to use " +
+			"(for example `azure.dev.meson.elemento.cloud` or `upcloud.dev.meson.elemento.cloud`). " +
+			"Resource types stay the same across clouds. Use provider aliases to target more than one cloud in a single root module.\n\n" +
+			"Use the [Portal](https://elemento.cloud) for identity and billing (`portal`) and the Meson host for resource operations (`host`). " +
+			"Arguments may also be supplied with `ELEMENTO_HOST`, `ELEMENTO_USERNAME`, `ELEMENTO_PASSWORD`, and `ELEMENTO_PORTAL`.\n\n" +
+			"```terraform\n" +
+			"provider \"elemento\" {\n" +
+			"  host     = \"azure.dev.meson.elemento.cloud\"\n" +
+			"  username = var.elemento_username\n" +
+			"  password = var.elemento_password\n" +
+			"}\n" +
+			"```\n",
+		Attributes: map[string]schema.Attribute{
+			"host": schema.StringAttribute{
+				Optional:    true,
+				Description: "Meson / Atomosphere hostname for the target cloud (for example azure.dev.meson.elemento.cloud). Can also be set via the ELEMENTO_HOST environment variable.",
 			},
-     	},
-    }
+			"username": schema.StringAttribute{
+				Optional:    true,
+				Description: "The Elemento API username. Can also be set via the ELEMENTO_USERNAME environment variable.",
+			},
+			"password": schema.StringAttribute{
+				Optional:    true,
+				Sensitive:   true,
+				Description: "The Elemento API password. Can also be set via the ELEMENTO_PASSWORD environment variable.",
+			},
+			"portal": schema.StringAttribute{
+				Optional:    true,
+				Description: "Portal hostname for authentication and billing. Defaults to portal.elemento.cloud. Can also be set via the ELEMENTO_PORTAL environment variable.",
+			},
+		},
+	}
 }
 
 type ElementoProviderModel struct {
@@ -79,8 +94,8 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("host"),
 			"Unknown Elemento API Host",
-			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API host. " +
-			    "Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_HOST environment variable.",
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API host. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_HOST environment variable.",
 		)
 	}
 
@@ -88,7 +103,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("username"),
 			"Unknown Elemento API Username",
-			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API username. " +
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API username. "+
 				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_USERNAME environment variable.",
 		)
 	}
@@ -97,7 +112,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("password"),
 			"Unknown Elemento API Password",
-			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API password. " +
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API password. "+
 				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_PASSWORD environment variable.",
 		)
 	}
@@ -106,7 +121,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("portal"),
 			"Unknown Elemento API Portal",
-			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API portal. " +
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API portal. "+
 				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_PORTAL environment variable.",
 		)
 	}
@@ -128,7 +143,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	if !config.Username.IsNull() {
-		username = config.Username.ValueString();
+		username = config.Username.ValueString()
 	}
 
 	if !config.Password.IsNull() {
@@ -143,9 +158,9 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("host"),
 			"Missing Elemento API Host",
-            "The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API host. "+
-                "Set the host value in the configuration or use the ELEMENTO_HOST environment variable. "+
-                "If either is already set, ensure the value is not empty.",
+			"The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API host. "+
+				"Set the host value in the configuration or use the ELEMENTO_HOST environment variable. "+
+				"If either is already set, ensure the value is not empty.",
 		)
 	}
 
@@ -153,9 +168,9 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("username"),
 			"Missing Elemento API username",
-            "The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API username. "+
-            	"Set the username value in the configuration or use the ELEMENTO_USERNAME environment variable. "+
-                "If either is already set, ensure the value is not empty.",
+			"The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API username. "+
+				"Set the username value in the configuration or use the ELEMENTO_USERNAME environment variable. "+
+				"If either is already set, ensure the value is not empty.",
 		)
 	}
 
@@ -163,14 +178,14 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		resp.Diagnostics.AddAttributeError(
 			path.Root("password"),
 			"Missing Elemento API password",
-            "The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API password. "+
-            	"Set the password value in the configuration or use the ELEMENTO_PASSWORD environment variable. "+
-        	    "If either is already set, ensure the value is not empty.",
+			"The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API password. "+
+				"Set the password value in the configuration or use the ELEMENTO_PASSWORD environment variable. "+
+				"If either is already set, ensure the value is not empty.",
 		)
 	}
 
 	if portal == "" {
-	    portal = "portal.elemento.cloud"
+		portal = "portal.elemento.cloud"
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -187,13 +202,13 @@ func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.Da
 }
 
 func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resource {
-    return []func() resource.Resource{
-    	NewComputeResource,
-        NewStorageResource,
-        NewObjectStorageResource,
-        NewDBAASResource,
-        NewKAASResource,
-        NewN8NResource,
-        NewOpenClawResource,
+	return []func() resource.Resource{
+		NewComputeResource,
+		NewStorageResource,
+		NewObjectStorageResource,
+		NewDBAASResource,
+		NewKAASResource,
+		NewN8NResource,
+		NewOpenClawResource,
 	}
 }
