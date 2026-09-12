@@ -170,17 +170,11 @@ Not every Atomosphere-connected cloud exposes every service. Terraform resource 
 
 ## Supported clouds
 
-Atomosphere is the source of truth for which clouds are connected and which services they offer. The live matrix is published on the [Atomosphere page](https://elemento.cloud/atomosphere.html).
+The Terraform provider supports every backend exposed through Atomosphere/Meson. Service availability varies by backend.
 
-**Production**
+See the live [Atomosphere compatibility matrix](https://elemento.cloud/atomosphere.html).
 
-AWS · Azure · Google · IBM Cloud · OVH · Scaleway · Hetzner · UpCloud · Leaseweb · Wasabi · Impossible Cloud
-
-**In development**
-
-Oracle · Linode · Clastix · Cubbit · IONOS · Aruba · Gigas
-
-The provider is cloud-agnostic by construction: a new production backend is a new `host`, not a new Terraform provider. Examples in this repository currently demonstrate Azure (`azure.dev.meson.elemento.cloud`) and UpCloud (`upcloud.dev.meson.elemento.cloud`).
+The provider is cloud-agnostic by construction: a new backend is a new `host`, not a new Terraform provider. Examples in this repository currently demonstrate Azure (`azure.dev.meson.elemento.cloud`) and UpCloud (`upcloud.dev.meson.elemento.cloud`).
 
 ---
 
