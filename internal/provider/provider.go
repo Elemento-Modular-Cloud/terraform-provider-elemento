@@ -198,7 +198,13 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 }
 
 func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		NewComputeDataSource,
+		NewStorageDataSource,
+		NewObjectStorageDataSource,
+		NewDBAASDataSource,
+		NewKAASDataSource,
+	}
 }
 
 func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resource {

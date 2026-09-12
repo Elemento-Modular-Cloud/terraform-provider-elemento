@@ -140,6 +140,28 @@ What changes with the cloud is the `host` value and the region identifier that c
 | [n8n](docs/resources/n8n.md) | `elemento_n8n` | Opinionated n8n service on compute |
 | [OpenClaw](docs/resources/openclaw.md) | `elemento_openclaw` | Opinionated OpenClaw service on compute |
 
+### Data sources
+
+Each managed type has a matching singular data source for infrastructure that already exists on the Meson host selected by `host`. Set exactly one of `uuid` (or `volume_uuid` for storage), `billing_uuid`, or `name` / `vm_name`. Names are not unique: multiple matches return an error.
+
+| Data source | Looks up |
+| --- | --- |
+| [Compute](docs/data-sources/compute.md) | `data.elemento_compute` |
+| [Block storage](docs/data-sources/storage.md) | `data.elemento_storage` |
+| [Object storage](docs/data-sources/objectstorage.md) | `data.elemento_objectstorage` |
+| [DBaaS](docs/data-sources/dbaas.md) | `data.elemento_dbaas` |
+| [Kubernetes](docs/data-sources/kaas.md) | `data.elemento_kaas` |
+
+```hcl
+data "elemento_dbaas" "app" {
+  uuid = var.existing_db_uuid
+}
+
+output "db_host" {
+  value = data.elemento_dbaas.app.database_host
+}
+```
+
 Schema reference for every type lives under [`docs/`](docs/). Working configurations live under [`examples/`](examples/).
 
 Not every Atomosphere-connected cloud exposes every service. Terraform resource coverage follows the [Atomosphere integration matrix](https://elemento.cloud/atomosphere.html). The resource *types* do not change when a capability is added on a new backend.

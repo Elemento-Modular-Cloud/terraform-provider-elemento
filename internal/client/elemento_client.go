@@ -149,6 +149,11 @@ func (c *ElementoClient) getAuth() (*string, error) {
     return c.cachedToken, nil
 }
 
+// ClientUUID returns the authenticated account UUID from the Portal.
+func (c *ElementoClient) ClientUUID() (*string, error) {
+    return c.getClientUUID()
+}
+
 func (c *ElementoClient) getClientUUID() (*string, error) {
     if c.cachedUUID != nil {
         return c.cachedUUID, nil
