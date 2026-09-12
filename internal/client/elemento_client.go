@@ -110,6 +110,16 @@ func (c *ElementoClient) request(
     return resp, nil
 }
 
+// closeResponseBody drains and closes an HTTP response body so the
+// underlying connection can be reused by the client transport.
+func closeResponseBody(resp *http.Response) {
+    if resp == nil || resp.Body == nil {
+        return
+    }
+    _, _ = io.Copy(io.Discard, resp.Body)
+    _ = resp.Body.Close()
+}
+
 func (c *ElementoClient) getAuth() (*string, error) {
     if c.cachedToken != nil && c.cachedTokenExpiry > time.Now().Unix() {
         return c.cachedToken, nil
@@ -131,7 +141,7 @@ func (c *ElementoClient) getAuth() (*string, error) {
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -173,7 +183,7 @@ func (c *ElementoClient) getClientUUID() (*string, error) {
     if err != nil {
         return nil, err
     }
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -210,7 +220,7 @@ func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -241,7 +251,7 @@ func (c *ElementoClient) GetResourceStatus(billing_uuid string) (*string, error)
     if err != nil {
         return nil, err
     }
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -276,7 +286,7 @@ func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName st
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -309,7 +319,7 @@ func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, re
         return err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
 
     if resp.StatusCode >= 400 {
@@ -340,7 +350,7 @@ func listResources[T any](c *ElementoClient, listRequest any, method, urlSuffix,
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -377,7 +387,7 @@ func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, re
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -413,7 +423,7 @@ func getCredentials[T any](c *ElementoClient, urlSuffix, resourceName string, de
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
@@ -453,7 +463,7 @@ func (c *ElementoClient) ListComputeResources() ([]ComputeListItem, error) {
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
