@@ -484,10 +484,30 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         return
     }
 
-    plan.BillingUUID = types.StringValue(response.BillingUUID)
-    plan.PaymentURL  = types.StringValue(response.PaymentURL)
-    plan.UUID        = types.StringNull()
-    plan.Tags        = types.StringNull()
+    switch res := response.(type) {
+        case *client.PublicCreateResponse:
+            plan.BillingUUID = types.StringValue(res.BillingUUID)
+            plan.PaymentURL  = types.StringValue(res.PaymentURL)
+            plan.UUID        = types.StringNull()
+
+            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            if err != nil {
+                resp.Diagnostics.AddError(
+                    "Error Reading Compute Resource Status",
+                    "Could not read compute resource status: "+err.Error(),
+                )
+                return
+            }
+
+            plan.Status = types.StringValue(*status)
+        case *client.PrivateCreateResponse:
+            plan.BillingUUID = types.StringNull()
+            plan.PaymentURL  = types.StringNull()
+            plan.UUID        = types.StringValue(res.ServiceUUID)
+            plan.Status      = types.StringValue(res.Status)
+    }
+
+    plan.Tags = types.StringNull()
 
     for volumeIndex, volume := range plan.Volumes {
         volume.Priority           = types.Int32Null()
@@ -503,17 +523,6 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     }
 
     plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-
-    status, err := r.client.GetResourceStatus(response.BillingUUID)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading Compute Resource Status",
-            "Could not read compute resource status: "+err.Error(),
-        )
-        return
-    }
-
-    plan.Status = types.StringValue(*status)
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
@@ -541,22 +550,28 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
 
     var resource *client.ComputeListItem;
     for _, res := range resources {
-        if res.BillingUUID == state.BillingUUID.ValueString() {
+        if res.BillingUUID == state.BillingUUID.ValueString() || res.UUID == state.UUID.ValueString() {
             resource = &res
             break
         }
     }
 
-    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading Compute Resource Status",
-            "Could not read compute resource status: "+err.Error(),
-        )
-        return
+    billing_uuid := state.BillingUUID.ValueStringPointer()
+    var status *string
+    if billing_uuid != nil && *billing_uuid != "" {
+        status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+        if err != nil {
+            resp.Diagnostics.AddError(
+                "Error Reading Compute Resource Status",
+                "Could not read compute resource status: "+err.Error(),
+            )
+            return
+        }
+    } else {
+        status = nil
     }
 
-    if resource == nil && (*status == "deleted" || *status == "error" || *status == "canceled") {
+    if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
         resp.State.RemoveResource(ctx)
         return
     }

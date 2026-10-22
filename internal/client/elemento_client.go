@@ -250,8 +250,8 @@ func (c *ElementoClient) GetResourceStatus(billing_uuid string) (*string, error)
 	return &statusResponse.Status, nil
 }
 
-func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName string) (*CreateResponse, error) {
-	url := "https://" + c.Host + urlSuffix
+func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName string) (CreateResponse, error) {
+    url := "https://" + c.Host + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
@@ -274,13 +274,23 @@ func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName st
 		return nil, fmt.Errorf("failed to create %s resource: %s %s", resourceName, resp.Status, string(body))
 	}
 
-	var response CreateResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		return nil, err
-	}
+    if resp.StatusCode == 202 {
+        var response PublicCreateResponse
+        err = json.NewDecoder(resp.Body).Decode(&response)
+        if err != nil {
+            return nil, err
+        }
+        return response, nil
+    } else if resp.StatusCode == 200 {
+        var response PrivateCreateResponse
+        err = json.NewDecoder(resp.Body).Decode(&response)
+        if err != nil {
+            return nil, err
+        }
+        return response, nil
+    }
 
-	return &response, nil
+    return nil, fmt.Errorf("unexpected status code %d when creating %s resource", resp.StatusCode, resourceName)
 }
 
 func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, resourceName string) error {
@@ -422,8 +432,8 @@ func (c *ElementoClient) CanCreateComputeResource(computeResource ComputeResourc
 	return c.canCreate(computeResource, "GET", ":7777/api/v1.0/canallocate", "compute")
 }
 
-func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) (*CreateResponse, error) {
-	return c.createResource(computeResource, ":7777/api/v1.0/register", "compute")
+func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) (CreateResponse, error) {
+    return c.createResource(computeResource, ":7777/api/v1.0/register", "compute")
 }
 
 func (c *ElementoClient) ListComputeResources() ([]ComputeListItem, error) {
@@ -474,12 +484,12 @@ func (c *ElementoClient) CanCreateStorageResource(req CanCreateStorageRequest) (
 	return c.canCreate(req, "GET", ":7772/api/v1.0/cancreate", "storage")
 }
 
-func (c *ElementoClient) CreateStorageResource(storageResource StorageResource) (*CreateResponse, error) {
-	uuid, err := c.getClientUUID()
-	if err != nil {
-		return nil, err
-	}
-	storageResource.CreatorUUID = *uuid
+func (c *ElementoClient) CreateStorageResource(storageResource *StorageResource) (CreateResponse, error) {
+    uuid, err := c.getClientUUID()
+    if err != nil {
+        return nil, err
+    }
+    storageResource.CreatorUUID = *uuid
 
 	return c.createResource(storageResource, ":7772/api/v1.0/create", "storage")
 }
@@ -522,8 +532,8 @@ func (c *ElementoClient) CanCreateObjectStorageResource(objectStorageResource Ob
 	return c.canCreate(objectStorageResource, "POST", ":7770/api/v1.0/objectstorage/cancreate", "objectstorage")
 }
 
-func (c *ElementoClient) CreateObjectStorageResource(objectStorageResource ObjectStorageRequest) (*CreateResponse, error) {
-	return c.createResource(objectStorageResource, ":7770/api/v1.0/objectstorage/create", "objectstorage")
+func (c *ElementoClient) CreateObjectStorageResource(objectStorageResource ObjectStorageRequest) (CreateResponse, error) {
+    return c.createResource(objectStorageResource, ":7770/api/v1.0/objectstorage/create", "objectstorage")
 }
 
 func (c *ElementoClient) DeleteObjectStorageResource(service_uuid string) error {
@@ -558,8 +568,8 @@ func (c *ElementoClient) CanCreateDBAASResource(dbaasResource DBAASRequest) (*Ca
 	return c.canCreate(dbaasResource, "POST", ":7770/api/v1.0/dbaas/cancreate", "dbaas")
 }
 
-func (c *ElementoClient) CreateDBAASResource(dbaasResource DBAASRequest) (*CreateResponse, error) {
-	return c.createResource(dbaasResource, ":7770/api/v1.0/dbaas/create", "dbaas")
+func (c *ElementoClient) CreateDBAASResource(dbaasResource DBAASRequest) (CreateResponse, error) {
+    return c.createResource(dbaasResource, ":7770/api/v1.0/dbaas/create", "dbaas")
 }
 
 func (c *ElementoClient) DeleteDBAASResource(service_uuid string) error {
@@ -594,8 +604,8 @@ func (c *ElementoClient) CanCreateKAASResource(kaasResource KAASRequest) (*CanCr
 	return c.canCreate(kaasResource, "POST", ":7770/api/v1.0/kaas/cancreate", "kaas")
 }
 
-func (c *ElementoClient) CreateKAASResource(kaasResource KAASRequest) (*CreateResponse, error) {
-	return c.createResource(kaasResource, ":7770/api/v1.0/kaas/create", "kaas")
+func (c *ElementoClient) CreateKAASResource(kaasResource KAASRequest) (CreateResponse, error) {
+    return c.createResource(kaasResource, ":7770/api/v1.0/kaas/create", "kaas")
 }
 
 func (c *ElementoClient) DeleteKAASResource(service_uuid string) error {
