@@ -16,3 +16,17 @@ type PrivateCreateResponse struct {
 
 func (r PublicCreateResponse) isCreateResponse() {}
 func (r PrivateCreateResponse) isCreateResponse() {}
+
+type TargetGrantsResponse struct {
+	Targets []struct {
+		UUID         string `json:"target_id"`
+		OrgUUID      string `json:"org_id"`
+		TargetType   string `json:"target_type"`
+		TargetName   string `json:"target_name"`
+		TargetConfig struct {
+			IPList   []string `json:"ips"`
+			Provider *string  `json:"provider"`
+			Host     *string  `json:"host"`
+		} `json:"target_config"`
+	} `json:"targets"`
+}

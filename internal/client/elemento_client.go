@@ -15,30 +15,31 @@ import (
 )
 
 type ElementoClient struct {
-	Host              string
-	Username          string
-	Password          string
-	Portal            string
-	httpClient        *http.Client
-	cachedToken       *string
-	cachedTokenExpiry int64
-	cachedUUID        *string
+	Target           	 string
+	Username         	 string
+	Password          	 string
+	Portal            	 string
+	httpClient       	 *http.Client
+	cachedToken       	 *string
+	cachedTokenExpiry    int64
+	cachedUUID           *string
+	cachedGrantedTargets *TargetGrantsResponse
 }
 
-func NewElementoClient(host, username, password, portal string) *ElementoClient {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-			},
-		},
-	}
+func NewElementoClient(target, username, password, portal string) *ElementoClient {
+    httpClient := &http.Client{
+        Transport: &http.Transport{
+            TLSClientConfig: &tls.Config{
+                InsecureSkipVerify: true,
+            },
+        },
+    }
 
-	return &ElementoClient{
-		Host:       host,
-		Username:   username,
-		Password:   password,
-		Portal:     portal,
+    return &ElementoClient{
+		Target:     target,
+		Username: username,
+		Password: password,
+		Portal:   portal,
 		httpClient: httpClient,
 	}
 }
@@ -184,8 +185,12 @@ func (c *ElementoClient) getClientUUID() (*string, error) {
 	return c.cachedUUID, nil
 }
 
-func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName string) (*CanCreateResponse, error) {
-	url := "https://" + c.Host + urlSuffix
+func (c *ElementoClient) getGrantedTargets() (*TargetGrantsResponse, error) {
+	if c.cachedGrantedTargets != nil {
+		return c.cachedGrantedTargets, nil
+	}
+
+	url := "https://" + c.Portal + "/api/v2/grants/me"
 
 	authToken, err := c.getAuth()
 	if err != nil {
@@ -193,13 +198,86 @@ func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName
 	}
 
 	headers := map[string]string{
-		"Content-Type":  "application/json",
 		"Authorization": "Bearer " + *authToken,
 	}
-	resp, err := c.request(method, url, headers, resource)
+
+	resp, err := c.request("GET", url, headers, nil)
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to get granted targets: %s %s", resp.Status, string(body))
+	}
+
+	var response TargetGrantsResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	c.cachedGrantedTargets = &response
+
+	return &response, nil
+}
+
+func (c *ElementoClient) getHost() (*string, error) {
+	targetGrants, err := c.getGrantedTargets()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, target := range targetGrants.Targets {
+		if target.TargetName == c.Target {
+			return &target.TargetConfig.IPList[0], nil
+		}
+	}
+	return nil, fmt.Errorf("failed to get host: client does not have access to target %s", c.Target)
+}
+
+func (c *ElementoClient) getTargetUUID() (*string, error) {
+	targetGrants, err := c.getGrantedTargets()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, target := range targetGrants.Targets {
+		if target.TargetName == c.Target {
+			return &target.UUID, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to get host: client does not have access to target %s", c.Target)
+}
+
+func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName string) (*CanCreateResponse, error) {
+	host, err := c.getHost()
+	if err != nil {
+		return nil, err
+	}
+    url := "https://" + *host + urlSuffix
+
+	authToken, err := c.getAuth()
+	if err != nil {
+		return nil, err
+	}
+
+    target_uuid, err := c.getTargetUUID()
+    if err != nil {
+    	return nil, err
+    }
+
+    headers := map[string]string{
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + *authToken,
+        "X-Target-UUID": *target_uuid,
+    }
+    resp, err := c.request(method, url, headers, resource)
+    if err != nil {
+        return nil, err
+    }
 
     defer closeResponseBody(resp)
 
@@ -251,21 +329,31 @@ func (c *ElementoClient) GetResourceStatus(billing_uuid string) (*string, error)
 }
 
 func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName string) (CreateResponse, error) {
-    url := "https://" + c.Host + urlSuffix
+	host, err := c.getHost()
+	if err != nil {
+		return nil, err
+	}
+    url := "https://" + *host + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
 		return nil, err
 	}
 
-	headers := map[string]string{
-		"Content-Type":  "application/json",
-		"Authorization": "Bearer " + *authToken,
-	}
-	resp, err := c.request("POST", url, headers, resource)
-	if err != nil {
-		return nil, err
-	}
+    target_uuid, err := c.getTargetUUID()
+    if err != nil {
+    	return nil, err
+    }
+
+    headers := map[string]string{
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + *authToken,
+        "X-Target-UUID": *target_uuid,
+    }
+    resp, err := c.request("POST", url, headers, resource)
+    if err != nil {
+        return nil, err
+    }
 
     defer closeResponseBody(resp)
 
@@ -294,7 +382,7 @@ func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName st
 }
 
 func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, resourceName string) error {
-	url := "https://" + c.Host + urlSuffix
+    url := "https://" + c.Target + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
@@ -321,7 +409,7 @@ func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, re
 }
 
 func listResources[T any](c *ElementoClient, listRequest any, method, urlSuffix, resourceName string) ([]T, error) {
-	url := "https://" + c.Host + urlSuffix
+    url := "https://" + c.Target + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
@@ -358,7 +446,7 @@ func listResources[T any](c *ElementoClient, listRequest any, method, urlSuffix,
 }
 
 func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, resourceName string) (*T, error) {
-	url := "https://" + c.Host + urlSuffix
+    url := "https://" + c.Target + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
@@ -397,7 +485,7 @@ func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, re
 type deserializer[T any] func(io.Reader) (*T, error)
 
 func getCredentials[T any](c *ElementoClient, urlSuffix, resourceName string, deserialize deserializer[T]) (*T, error) {
-	url := "https://" + c.Host + urlSuffix
+    url := "https://" + c.Target + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
@@ -437,7 +525,7 @@ func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) 
 }
 
 func (c *ElementoClient) ListComputeResources() ([]ComputeListItem, error) {
-	url := "https://" + c.Host + ":7777/api/v1.0/running"
+    url := "https://" + c.Target + ":7777/api/v1.0/running"
 
 	authToken, err := c.getAuth()
 	if err != nil {

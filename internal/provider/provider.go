@@ -36,25 +36,23 @@ func (p *ElementoProvider) Metadata(_ context.Context, _ provider.MetadataReques
 
 func (p *ElementoProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "The Elemento provider manages infrastructure across every Atomosphere-connected cloud through a single Terraform schema. The target cloud is selected by host.",
+		Description: "The Elemento provider manages infrastructure across every Atomosphere-connected cloud through a single Terraform schema.",
 		MarkdownDescription: "The Elemento provider is the Terraform interface to [Elemento Modular Cloud](https://elemento.cloud). " +
 			"It replaces the *many clouds, many providers* model with **one provider** and a destination cloud passed as an argument.\n\n" +
-			"Set `host` to the [Atomosphere](https://elemento.cloud/atomosphere.html) (Meson) endpoint for the backend you intend to use " +
-			"(for example `azure.dev.meson.elemento.cloud` or `upcloud.dev.meson.elemento.cloud`). " +
+			"Set `target` to the [Atomosphere](https://elemento.cloud/atomosphere.html) target name for the backend you intend to use. " +
 			"Resource types stay the same across clouds. Use provider aliases to target more than one cloud in a single root module.\n\n" +
-			"Use the [Portal](https://elemento.cloud) for identity and billing (`portal`) and the Meson host for resource operations (`host`). " +
-			"Arguments may also be supplied with `ELEMENTO_HOST`, `ELEMENTO_USERNAME`, `ELEMENTO_PASSWORD`, and `ELEMENTO_PORTAL`.\n\n" +
+			"Arguments may also be supplied with `ELEMENTO_TARGET`, `ELEMENTO_USERNAME`, `ELEMENTO_PASSWORD`, and `ELEMENTO_PORTAL`.\n\n" +
 			"```terraform\n" +
 			"provider \"elemento\" {\n" +
-			"  host     = \"azure.dev.meson.elemento.cloud\"\n" +
+			"  target     = \"azure.dev.meson.elemento.cloud\"\n" +
 			"  username = var.elemento_username\n" +
 			"  password = var.elemento_password\n" +
 			"}\n" +
 			"```\n",
 		Attributes: map[string]schema.Attribute{
-			"host": schema.StringAttribute{
+			"target": schema.StringAttribute{
 				Optional:    true,
-				Description: "Meson / Atomosphere hostname for the target cloud (for example azure.dev.meson.elemento.cloud). Can also be set via the ELEMENTO_HOST environment variable.",
+				Description: "The elemento API target name. Can also be set via the ELEMENTO_TARGET environment variable.",
 			},
 			"username": schema.StringAttribute{
 				Optional:    true,
@@ -74,7 +72,7 @@ func (p *ElementoProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 }
 
 type ElementoProviderModel struct {
-	Host     types.String `tfsdk:"host"`
+	Target   types.String `tfsdk:"target"`
 	Username types.String `tfsdk:"username"`
 	Password types.String `tfsdk:"password"`
 	Portal   types.String `tfsdk:"portal"`
@@ -90,12 +88,12 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 
 	// If practitioner provided a configuration value for any of the attributes, it must be a known value.
 
-	if config.Host.IsUnknown() {
+	if config.Target.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("host"),
-			"Unknown Elemento API Host",
-			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API host. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_HOST environment variable.",
+			path.Root("target"),
+			"Unknown Elemento API Target",
+			"The provider cannot create the Elemento API client as there is an unknown configuration value for the Elemento API target. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the ELEMENTO_TARGET environment variable.",
 		)
 	}
 
@@ -133,13 +131,13 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 	// Default values to environment variables, but override
 	// with Terraform configuration value if set.
 
-	host := os.Getenv("ELEMENTO_HOST")
+	target   := os.Getenv("ELEMENTO_TARGET")
 	username := os.Getenv("ELEMENTO_USERNAME")
 	password := os.Getenv("ELEMENTO_PASSWORD")
-	portal := os.Getenv("ELEMENTO_PORTAL")
+	portal   := os.Getenv("ELEMENTO_PORTAL")
 
-	if !config.Host.IsNull() {
-		host = config.Host.ValueString()
+	if !config.Target.IsNull() {
+		target = config.Target.ValueString()
 	}
 
 	if !config.Username.IsNull() {
@@ -154,12 +152,12 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		portal = config.Portal.ValueString()
 	}
 
-	if host == "" {
+	if target == "" {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("host"),
-			"Missing Elemento API Host",
-			"The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API host. "+
-				"Set the host value in the configuration or use the ELEMENTO_HOST environment variable. "+
+			path.Root("target"),
+			"Missing Elemento API Target",
+			"The provider cannot create the Elemento API client as there is a missing or empty value for the Elemento API target. "+
+				"Set the target value in the configuration or use the ELEMENTO_TARGET environment variable. "+
 				"If either is already set, ensure the value is not empty.",
 		)
 	}
@@ -192,7 +190,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	client := client.NewElementoClient(host, username, password, portal)
+	client := client.NewElementoClient(target, username, password, portal)
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }
