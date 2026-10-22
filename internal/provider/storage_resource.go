@@ -204,6 +204,10 @@ func volumeAttributes() map[string]schema.Attribute {
             Computed: true,
             Description: "The payment URL for the storage resource, assigned by the Elemento API after creation.",
         },
+        "status": schema.StringAttribute{
+            Computed: true,
+            Description: "The current status of the storage resource, computed by the Elemento API.",
+        },
     }
 }
 
@@ -221,10 +225,6 @@ func (r *storageResource) Schema(_ context.Context, _ resource.SchemaRequest, re
         PlanModifiers: []planmodifier.String {
            stringplanmodifier.RequiresReplace(),
         },
-    }
-    attributes["status"] = schema.StringAttribute{
-        Computed: true,
-        Description: "The current status of the storage resource, computed by the Elemento API.",
     }
 
     resp.Schema = schema.Schema{
