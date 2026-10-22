@@ -327,7 +327,7 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
         return
     }
 
-    response, err := r.client.CreateStorageResource(storageResource)
+    response, err := r.client.CreateStorageResource(&storageResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating Storage Resource",
@@ -336,22 +336,31 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
         return
     }
 
-    plan.BillingUUID = types.StringValue(response.BillingUUID)
-    plan.PaymentURL = types.StringValue(response.PaymentURL)
-    plan.UUID = types.StringNull()
-    plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-    plan.CreatorUUID = types.StringNull()
+    switch res := response.(type) {
+        case *client.PublicCreateResponse:
+            plan.BillingUUID = types.StringValue(res.BillingUUID)
+            plan.PaymentURL  = types.StringValue(res.PaymentURL)
+            plan.UUID        = types.StringNull()
 
-    status, err := r.client.GetResourceStatus(response.BillingUUID)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading Storage Resource Status",
-            "Could not read storage resource status: "+err.Error(),
-        )
-        return
+            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            if err != nil {
+                resp.Diagnostics.AddError(
+                    "Error Reading Storage Resource Status",
+                    "Could not read storage resource status: "+err.Error(),
+                )
+                return
+            }
+
+            plan.Status = types.StringValue(*status)
+        case *client.PrivateCreateResponse:
+            plan.BillingUUID = types.StringNull()
+            plan.PaymentURL  = types.StringNull()
+            plan.UUID        = types.StringValue(res.ServiceUUID)
+            plan.Status      = types.StringValue(res.Status)
     }
 
-    plan.Status = types.StringValue(*status)
+    plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+    plan.CreatorUUID = types.StringNull()
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)

@@ -313,9 +313,29 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
         return
     }
 
-    plan.BillingUUID = types.StringValue(response.BillingUUID)
-    plan.PaymentURL  = types.StringValue(response.PaymentURL)
-    plan.UUID        = types.StringNull()
+    switch res := response.(type) {
+        case *client.PublicCreateResponse:
+            plan.BillingUUID = types.StringValue(res.BillingUUID)
+            plan.PaymentURL  = types.StringValue(res.PaymentURL)
+            plan.UUID        = types.StringNull()
+
+            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            if err != nil {
+                resp.Diagnostics.AddError(
+                    "Error Reading KAAS Resource Status",
+                    "Could not read kaas resource status: "+err.Error(),
+                )
+                return
+            }
+
+            plan.Status = types.StringValue(*status)
+        case *client.PrivateCreateResponse:
+            plan.BillingUUID = types.StringNull()
+            plan.PaymentURL  = types.StringNull()
+            plan.UUID        = types.StringValue(res.ServiceUUID)
+            plan.Status      = types.StringValue(res.Status)
+    }
+
     plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
     plan.CreatorUUID = types.StringNull()
 
@@ -323,16 +343,6 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
     plan.ClusterStatus = types.StringNull()
     plan.Endpoint      = types.StringNull()
     plan.KubeConfig    = types.StringNull()
-
-    status, err := r.client.GetResourceStatus(response.BillingUUID)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading KAAS Resource Status",
-            "Could not read kaas resource status: "+err.Error(),
-        )
-        return
-    }
-    plan.Status = types.StringValue(*status)
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
