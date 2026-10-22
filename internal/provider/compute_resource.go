@@ -576,7 +576,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
         return
     }
 
-    state.Requirements.CPU.Arch, diags = types.ListValueFrom(ctx, types.StringType, []string{resource.Requirements.Arch})
+    state.Requirements.CPU.Arch, diags = types.ListValueFrom(ctx, types.StringType, resource.Requirements.Arch)
     resp.Diagnostics.Append(diags...)
 
     state.Requirements.CPU.Flags, diags = types.ListValueFrom(ctx, types.StringType, resource.Requirements.Flags)

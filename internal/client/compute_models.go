@@ -74,7 +74,7 @@ type ComputeReqResponse struct {
     Slots                int                          `json:"slots"`
     Overprovision        int                          `json:"overprovision"`
     AllowSMT             bool                         `json:"allowSMT"`
-    Arch                 string                       `json:"arch"`
+    Arch                 []string                     `json:"arch"`
     Flags                []string                     `json:"flags"`
     RamSize              float64                      `json:"ramsize"`
     RequireECC           bool                         `json:"reqECC"`
