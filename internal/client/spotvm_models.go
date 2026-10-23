@@ -23,20 +23,19 @@ type SpotVMResource struct {
 		Devices []SpotVMPCIDev `json:"devices"`
 	} `json:"pci"`
 	Networks []SpotVMNetwork `json:"networks"`
-	Auth struct {
+	Auth     struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 		SSHKey   string `json:"ssh_key"`
 	} `json:"auth"`
 	Tags            []string `json:"tags"`
 	CloudInitBase64 string   `json:"cloud_init_b64"`
-	region          string
 }
 
 type SpotVMVolume struct {
 	UUID   *string `json:"volume_uuid,omitempty"`
-	Name   string `json:"name"`
-	SizeGB int    `json:"size_gb"`
+	Name   string  `json:"name"`
+	SizeGB int     `json:"size_gb"`
 }
 
 type SpotVMPCIDev struct {
@@ -47,6 +46,15 @@ type SpotVMPCIDev struct {
 
 type SpotVMNetwork struct {
 	Kind string `json:"kind"`
+}
+
+type SpotVMListItem struct {
+	SpotVMResource
+	UUID        string `json:"vm_uuid"`
+	Status      string `json:"status"`
+	Region      string `json:"region"`
+	BillingUUID string `json:"billing_uuid"`
+	ServerURL   string `json:"serverurl"`
 }
 
 func (r *ComputeResource) toSpotVM() SpotVMResource {
@@ -89,7 +97,7 @@ func (r *ComputeResource) toSpotVM() SpotVMResource {
 		Devices: []SpotVMPCIDev{},
 	}
 
-	spot.Networks = []SpotVMNetwork {
+	spot.Networks = []SpotVMNetwork{
 		{Kind: "natted"},
 	}
 
@@ -103,7 +111,57 @@ func (r *ComputeResource) toSpotVM() SpotVMResource {
 
 	// TODO: CloudInit
 
-	spot.region = r.Region
-
 	return spot
+}
+
+type SpotVMListResponse struct {
+	VMS []SpotVMListItem `json:"vms"`
+}
+
+func spotVMVolumeToResponseMin(v SpotVMVolume, bootable bool) StorageResourceResponseMin {
+	vol := StorageResourceResponseMin{
+		Name:     v.Name,
+		Size:     v.SizeGB,
+		Bootable: bootable,
+		Tags:     []string{},
+	}
+	if v.UUID != nil {
+		vol.UUID = *v.UUID
+	}
+	return vol
+}
+
+func (r *SpotVMListResponse) toComputeListResponse() ComputeListResponse {
+	items := make([]ComputeListItem, 0, len(r.VMS))
+
+	for _, vm := range r.VMS {
+		volumes := make([]StorageResourceResponseMin, 0, 1+len(vm.Storage.Data))
+		volumes = append(volumes, spotVMVolumeToResponseMin(vm.Storage.Boot, true))
+		for _, dv := range vm.Storage.Data {
+			volumes = append(volumes, spotVMVolumeToResponseMin(dv, false))
+		}
+
+		req := ComputeReqResponse{
+			Slots:     vm.CPU.Slots,
+			AllowSMT:  vm.CPU.SharedCores,
+			Arch:      vm.CPU.Arch,
+			RamSize:   float64(vm.Mem.CapacityMB),
+			OSFamily:  vm.OS.Family,
+			OSFlavour: vm.OS.Flavour,
+			VMName:    vm.VMName,
+			Volumes:   volumes,
+		}
+
+		item := ComputeListItem{
+			Requirements: req,
+			UUID:         vm.UUID,
+			BillingUUID:  vm.BillingUUID,
+			Region:       vm.Region,
+			ServiceUUID:  vm.UUID,
+		}
+
+		items = append(items, item)
+	}
+
+	return ComputeListResponse{VMS: items}
 }

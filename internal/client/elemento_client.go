@@ -613,6 +613,11 @@ func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) 
 }
 
 func (c *ElementoClient) ListComputeResources() ([]ComputeListItem, error) {
+	targetData, err := c.getTargetData()
+	if err != nil {
+		return nil, err
+	}
+
 	host, err := c.getHost()
 	if err != nil {
 		return nil, err
@@ -649,14 +654,21 @@ func (c *ElementoClient) ListComputeResources() ([]ComputeListItem, error) {
 		return nil, fmt.Errorf("failed to list compute resources: %s %s", resp.Status, string(body))
 	}
 
-	var computeResources struct {
-		VMS []ComputeListItem `json:"vms"`
+	if targetData.TargetType == "meson_public" || targetData.TargetType == "meson_private" {
+		var computeResources SpotVMListResponse
+	    err = json.NewDecoder(resp.Body).Decode(&computeResources)
+	    if err != nil {
+	        return nil, err
+	    }
+
+	    return computeResources.toComputeListResponse().VMS, nil
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&computeResources)
-	if err != nil {
-		return nil, err
-	}
+    var computeResources ComputeListResponse
+    err = json.NewDecoder(resp.Body).Decode(&computeResources)
+    if err != nil {
+        return nil, err
+    }
 
 	return computeResources.VMS, nil
 }

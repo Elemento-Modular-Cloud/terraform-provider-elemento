@@ -121,3 +121,7 @@ type PrivateNetworkConfig struct {
 
 type Network struct {
 }
+
+type ComputeListResponse struct {
+	VMS []ComputeListItem `json:"vms"`
+}
