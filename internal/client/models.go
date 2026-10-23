@@ -36,3 +36,28 @@ type TargetGrantsResponse struct {
 type ActiveTargetsResponse struct {
 	Targets []TargetGrant `json:"active_target_grants"`
 }
+
+type CanCreateBilling struct {
+    BillingUUID string `json:"billing_uuid"`
+    PaymentURL  string `json:"payment_url"`
+}
+
+type CanCreateResponse struct {
+    CanCreate bool               `json:"cancreate"`
+    Billing   []CanCreateBilling `json:"billing"`
+    Provider  string             `json:"provider"`
+    Reasons   map[string]string  `json:"reasons"`
+}
+
+type authRequest struct {
+    Username string `json:"username"`
+    Password string `json:"password"`
+}
+
+type authResponse struct {
+    Username       string `json:"username"`
+    AccessToken    string `json:"access_token"`
+    RefreshToken   string `json:"refresh_token"`
+    AccessTokenIAT int64  `json:"access_token_iat"`
+    AccessTokenExp int64  `json:"access_token_exp"`
+}
