@@ -15,15 +15,15 @@ import (
 )
 
 type ElementoClient struct {
-	Target           	 string
-	Username         	 string
-	Password          	 string
-	Portal            	 string
-	httpClient       	 *http.Client
-	cachedToken       	 *string
-	cachedTokenExpiry    int64
-	cachedUUID           *string
-	cachedGrantedTargets *TargetGrantsResponse
+	Target            string
+	Username          string
+	Password          string
+	Portal            string
+	httpClient        *http.Client
+	cachedToken       *string
+	cachedTokenExpiry int64
+	cachedUUID        *string
+	targetData        *TargetGrant
 }
 
 func NewElementoClient(target, username, password, portal string) *ElementoClient {
@@ -185,9 +185,9 @@ func (c *ElementoClient) getClientUUID() (*string, error) {
 	return c.cachedUUID, nil
 }
 
-func (c *ElementoClient) getGrantedTargets() (*TargetGrantsResponse, error) {
-	if c.cachedGrantedTargets != nil {
-		return c.cachedGrantedTargets, nil
+func (c *ElementoClient) getTargetData() (*TargetGrant, error) {
+	if c.targetData != nil {
+		return c.targetData, nil
 	}
 
 	url := "https://" + c.Portal + "/api/v2/grants/me"
@@ -213,44 +213,77 @@ func (c *ElementoClient) getGrantedTargets() (*TargetGrantsResponse, error) {
 		return nil, fmt.Errorf("failed to get granted targets: %s %s", resp.Status, string(body))
 	}
 
-	var response TargetGrantsResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
+	var targetGrantsResponse TargetGrantsResponse
+	err = json.NewDecoder(resp.Body).Decode(&targetGrantsResponse)
 	if err != nil {
 		return nil, err
 	}
 
-	c.cachedGrantedTargets = &response
+	var target *TargetGrant
 
-	return &response, nil
+	for _, grantedTarget := range targetGrantsResponse.Targets {
+		if grantedTarget.TargetName == c.Target {
+			target = &grantedTarget
+			break
+		}
+	}
+
+	if target == nil {
+		return nil, fmt.Errorf("client does not have access to target %s", c.Target)
+	}
+
+	url = "https://" + c.Portal + "/api/v2/connections/me"
+	resp, err = c.request("GET", url, headers, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to get active targets: %s %s", resp.Status, string(body))
+	}
+
+	var activeTargetsResponse ActiveTargetsResponse
+	err = json.NewDecoder(resp.Body).Decode(&activeTargetsResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	isActiveTarget := false
+	for _, activeTarget := range activeTargetsResponse.Targets {
+		if activeTarget.UUID == target.UUID {
+			isActiveTarget = true
+			break
+		}
+	}
+
+	if !isActiveTarget {
+		return nil, fmt.Errorf("target %s is not currently active", c.Target)
+	}
+
+	return target, nil
 }
 
 func (c *ElementoClient) getHost() (*string, error) {
-	targetGrants, err := c.getGrantedTargets()
+	targetData, err := c.getTargetData()
 	if err != nil {
 		return nil, err
 	}
 
-	for _, target := range targetGrants.Targets {
-		if target.TargetName == c.Target {
-			return &target.TargetConfig.IPList[0], nil
-		}
-	}
-	return nil, fmt.Errorf("failed to get host: client does not have access to target %s", c.Target)
+	return &targetData.TargetConfig.IPList[0], nil
 }
 
 func (c *ElementoClient) getTargetUUID() (*string, error) {
-	targetGrants, err := c.getGrantedTargets()
+	targetData, err := c.getTargetData()
 	if err != nil {
 		return nil, err
 	}
 
-	for _, target := range targetGrants.Targets {
-		if target.TargetName == c.Target {
-			return &target.UUID, nil
-		}
-	}
-	return nil, fmt.Errorf("failed to get host: client does not have access to target %s", c.Target)
+	return &targetData.UUID, nil
 }
+
 
 func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName string) (*CanCreateResponse, error) {
 	host, err := c.getHost()
