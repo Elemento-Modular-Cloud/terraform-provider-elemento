@@ -623,7 +623,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     }
     state.Volumes = volumes
 
-    state.Status      = types.StringValue(*status)
+    state.Status      = types.StringPointerValue(status)
     state.VMName      = types.StringValue(resource.Requirements.VMName)
     state.Region      = types.StringValue(resource.Region)
     state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
