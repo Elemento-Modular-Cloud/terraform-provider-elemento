@@ -466,6 +466,13 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     }
 
     if !canCreateResponse.CanCreate {
+    	if len(canCreateResponse.Reasons) == 0 {
+			resp.Diagnostics.AddError(
+				"Compute Resource Creation Not Allowed",
+				"Cannot create compute resource due to an unknown reason. Please contact the devs or try again later.",
+			)
+     	}
+
         for field, reason := range canCreateResponse.Reasons {
             resp.Diagnostics.AddError(
                 "Compute Resource Creation Not Allowed",
