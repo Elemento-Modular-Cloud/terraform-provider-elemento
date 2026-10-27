@@ -375,23 +375,29 @@ func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName st
 		return nil, fmt.Errorf("failed to create %s resource: %s %s", resourceName, resp.Status, string(body))
 	}
 
-    if resp.StatusCode == 202 {
-        var response PublicCreateResponse
-        err = json.NewDecoder(resp.Body).Decode(&response)
-        if err != nil {
-            return nil, err
-        }
-        return response, nil
-    } else if resp.StatusCode == 200 {
-        var response PrivateCreateResponse
-        err = json.NewDecoder(resp.Body).Decode(&response)
-        if err != nil {
-            return nil, err
-        }
-        return response, nil
+    targetData, err := c.getTargetData()
+    if err != nil {
+    	return nil, err
     }
 
-    return nil, fmt.Errorf("unexpected status code %d when creating %s resource", resp.StatusCode, resourceName)
+    switch targetData.TargetType {
+    	case "meson_private":
+	        var response PrivateCreateResponse
+	        err = json.NewDecoder(resp.Body).Decode(&response)
+	        if err != nil {
+	            return nil, err
+	        }
+	        return response, nil
+     	case "meson_public":
+			var response PublicCreateResponse
+			err = json.NewDecoder(resp.Body).Decode(&response)
+			if err != nil {
+			    return nil, err
+			}
+			return response, nil
+		default:
+			return nil, fmt.Errorf("unexpected status code %d when creating %s resource", resp.StatusCode, resourceName)
+    }
 }
 
 func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, resourceName string, headers map[string]string) error {
