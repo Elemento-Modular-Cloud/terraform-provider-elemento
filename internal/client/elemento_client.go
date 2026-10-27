@@ -900,3 +900,40 @@ func (c *ElementoClient) GetOpenClawCredentials(service_uuid string) (*OpenClawC
 
     return getCredentials[OpenClawCredentials](c, urlSuffix, "openclaw", serializer, nil)
 }
+
+
+func (c *ElementoClient) CanCreateFileStorageResource(fileStorageResource FileStorageRequest) (*CanCreateResponse, error) {
+    return c.canCreate(fileStorageResource, "POST", ":7770/api/v1.0/filestorage/cancreate", "filestorage", nil)
+}
+
+func (c *ElementoClient) CreateFileStorageResource(fileStorageResource FileStorageRequest) (CreateResponse, error) {
+    return c.createResource(fileStorageResource, ":7770/api/v1.0/filestorage/create", "filestorage", nil)
+}
+
+func (c *ElementoClient) DeleteFileStorageResource(service_uuid string) error {
+    delRequest := struct {
+        UUID       string `json:"service_uuid"`
+    }{
+        UUID: service_uuid,
+    }
+
+    return c.deleteResource(delRequest, "DELETE", ":7770/api/v1.0/filestorage/delete", "filestorage", nil)
+}
+
+func (c *ElementoClient) ListFileStorageResources() ([]FileStorageResponse, error) {
+    return listResources[FileStorageResponse](c, nil, "GET", ":7770/api/v1.0/filestorage/running", "filestorage", nil)
+}
+
+func (c *ElementoClient) GetFileStorageResource(service_uuid string) (*FileStorageResponse, int, error) {
+    return getResource[FileStorageResponse](c, nil, "GET", ":7770/api/v1.0/filestorage/running/" + service_uuid, "filestorage", nil)
+}
+
+func (c *ElementoClient) GetFileStorageCredentials(service_uuid string) (*FileStorageCredentials, error) {
+    urlSuffix := ":7770/api/v1.0/filestorage/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*FileStorageCredentials, error) {
+        return KVDeserializer[FileStorageCredentials](r, "=")
+    }
+
+    return getCredentials[FileStorageCredentials](c, urlSuffix, "filestorage", serializer, nil)
+}

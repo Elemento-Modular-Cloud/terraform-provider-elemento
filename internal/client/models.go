@@ -61,3 +61,16 @@ type authResponse struct {
     AccessTokenIAT int64  `json:"access_token_iat"`
     AccessTokenExp int64  `json:"access_token_exp"`
 }
+
+type BaseRequest struct {
+	Region string `json:"region"`
+	BillingFrequency *string `json:"billing_frequency,omitempty"`
+}
+
+type baseResponse struct {
+	CreatorUUID  string `json:"client_uuid"`
+	BillingUUID  string `json:"billing_uuid"`
+	ServiceUUID  string `json:"service_uuid"`
+	Region       string `json:"region"`
+	CreationDate string `json:"creation_date"`
+}
