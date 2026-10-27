@@ -937,3 +937,40 @@ func (c *ElementoClient) GetFileStorageCredentials(service_uuid string) (*FileSt
 
     return getCredentials[FileStorageCredentials](c, urlSuffix, "filestorage", serializer, nil)
 }
+
+
+func (c *ElementoClient) CanCreatePrivateNetworkResource(privateNetworkResource PrivateNetworkRequest) (*CanCreateResponse, error) {
+    return c.canCreate(privateNetworkResource, "POST", ":7770/api/v1.0/privatenetwork/cancreate", "privatenetwork", nil)
+}
+
+func (c *ElementoClient) CreatePrivateNetworkResource(privateNetworkResource PrivateNetworkRequest) (CreateResponse, error) {
+    return c.createResource(privateNetworkResource, ":7770/api/v1.0/privatenetwork/create", "privatenetwork", nil)
+}
+
+func (c *ElementoClient) DeletePrivateNetworkResource(service_uuid string) error {
+    delRequest := struct {
+        UUID       string `json:"service_uuid"`
+    }{
+        UUID: service_uuid,
+    }
+
+    return c.deleteResource(delRequest, "DELETE", ":7770/api/v1.0/privatenetwork/delete", "privatenetwork", nil)
+}
+
+func (c *ElementoClient) ListPrivateNetworkResources() ([]PrivateNetworkResponse, error) {
+    return listResources[PrivateNetworkResponse](c, nil, "GET", ":7770/api/v1.0/privatenetwork/running", "privatenetwork", nil)
+}
+
+func (c *ElementoClient) GetPrivateNetworkResource(service_uuid string) (*PrivateNetworkResponse, int, error) {
+    return getResource[PrivateNetworkResponse](c, nil, "GET", ":7770/api/v1.0/privatenetwork/running/" + service_uuid, "privatenetwork", nil)
+}
+
+func (c *ElementoClient) GetPrivateNetworkCredentials(service_uuid string) (*PrivateNetworkCredentials, error) {
+    urlSuffix := ":7770/api/v1.0/privatenetwork/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*PrivateNetworkCredentials, error) {
+        return KVDeserializer[PrivateNetworkCredentials](r, "=")
+    }
+
+    return getCredentials[PrivateNetworkCredentials](c, urlSuffix, "privatenetwork", serializer, nil)
+}

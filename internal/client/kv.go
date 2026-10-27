@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -36,12 +37,12 @@ func KVDeserializer[T any](r io.Reader, sep string) (*T, error) {
 		key = strings.TrimSpace(key)
 		val = strings.TrimSpace(val)
 
-		idx, ok := fieldByTag[key]
+		fieldSettings, ok := fieldByTag[key]
 		if !ok {
 			continue // unknown key: ignore
 		}
 
-		if err := setField(v.Field(idx), val); err != nil {
+		if err := setField(v.Field(fieldSettings.index), val); err != nil {
 			return &out, fmt.Errorf("kv: field %q: %w", key, err)
 		}
 	}
@@ -52,19 +53,34 @@ func KVDeserializer[T any](r io.Reader, sep string) (*T, error) {
 	return &out, nil
 }
 
+type fieldIndexSettings struct {
+	index int
+	csv bool
+}
+
 // buildFieldIndex maps tag name -> field index for direct field lookup.
-func buildFieldIndex(t reflect.Type) map[string]int {
-	m := make(map[string]int, t.NumField())
+func buildFieldIndex(t reflect.Type) map[string]fieldIndexSettings {
+	m := make(map[string]fieldIndexSettings, t.NumField())
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		tag := f.Tag.Get(tagName)
 		if tag == "" || tag == "-" {
 			continue
 		}
-		// TODO: support `kv:"name,omitempty"`-style tags if needed later;
-		// for now just take the first comma-separated part
-		name, _, _ := strings.Cut(tag, ",")
-		m[name] = i
+
+		components := strings.Split(tag, ",")
+		name := components[0]
+		rest := components[1:]
+
+		settings := fieldIndexSettings {
+			index: i,
+			csv: false,
+		}
+		if slices.Contains(rest, "csv") {
+			settings.csv = true
+		}
+
+		m[name] = settings
 	}
 	return m
 }
@@ -106,6 +122,16 @@ func setField(field reflect.Value, val string) error {
 			return err
 		}
 		field.SetFloat(f)
+
+	case reflect.Slice:
+		elemType := field.Type().Elem()
+		if elemType.Kind() != reflect.String {
+			return fmt.Errorf("unsupported slice element kind: %s", elemType.Kind())
+		}
+
+		items := strings.Split(val, ",")
+		sliceVal := reflect.ValueOf(items).Convert(field.Type())
+		field.Set(sliceVal)
 
 	default:
 		return fmt.Errorf("unsupported field kind %s", field.Kind())
