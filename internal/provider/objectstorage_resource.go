@@ -271,7 +271,7 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
 		return
 	}
 
-    state.Status        = types.StringValue(*status)
+    state.Status        = types.StringPointerValue(status)
     state.Name          = types.StringValue(resource.Name)
     state.ActiveStorage = types.Int32Value(int32(resource.ActiveStorage))
     state.Endpoint      = types.StringValue(resource.Endpoint)

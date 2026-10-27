@@ -427,7 +427,7 @@ func (r *storageResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-    state.Status      = types.StringValue(*status)
+    state.Status      = types.StringPointerValue(status)
     state.Name        = types.StringValue(resource.Name)
     state.Private     = types.BoolValue(resource.Private)
     state.Shareable   = types.BoolValue(resource.Shareable)

@@ -409,7 +409,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-    state.Status      = types.StringValue(*status)
+    state.Status      = types.StringPointerValue(status)
     state.Name        = types.StringValue(resource.Name)
     state.Region      = types.StringValue(resource.Region)
     state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
