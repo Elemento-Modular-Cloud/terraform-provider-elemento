@@ -482,21 +482,21 @@ func listResources[T any](c *ElementoClient, listRequest any, method, urlSuffix,
 	return resources, nil
 }
 
-func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, resourceName string, headers map[string]string) (*T, error) {
+func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, resourceName string, headers map[string]string) (*T, int, error) {
 	host, err := c.getHost()
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
     url := "https://" + *host + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
 
     target_uuid, err := c.getTargetUUID()
     if err != nil {
-    	return nil, err
+    	return nil, -1, err
     }
 
     if headers == nil {
@@ -511,24 +511,24 @@ func getResource[T any](c *ElementoClient, getRequest any, method, urlSuffix, re
 
 	resp, err := c.request(method, url, headers, getRequest)
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
 
     defer closeResponseBody(resp)
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("failed to get %s resource: %s %s", resourceName, resp.Status, string(body))
+		return nil, resp.StatusCode, fmt.Errorf("failed to get %s resource: %s %s", resourceName, resp.Status, string(body))
 	}
 
 	var resource T
 
 	err = json.NewDecoder(resp.Body).Decode(&resource)
 	if err != nil {
-		return nil, err
+		return nil, -1, err
 	}
 
-	return &resource, nil
+	return &resource, resp.StatusCode, nil
 }
 
 type deserializer[T any] func(io.Reader) (*T, error)
@@ -718,7 +718,7 @@ func (c *ElementoClient) ListStorageResources(client_uuid string) ([]StorageReso
     return listResources[StorageResourceResponse](c, listRequest, "POST", ":7772/api/v1.0/accessible", "storage", nil)
 }
 
-func (c *ElementoClient) GetStorageResource(client_uuid, volume_uuid string) (*StorageResourceResponse, error) {
+func (c *ElementoClient) GetStorageResource(client_uuid, volume_uuid string) (*StorageResourceResponse, int, error) {
 	var getRequest = struct {
 		ClientUUID string `json:"client_uid"`
 		VolumeUUID string `json:"volume_id"`
@@ -752,7 +752,7 @@ func (c *ElementoClient) ListObjectStorageResources() ([]ObjectStorageResponse, 
     return listResources[ObjectStorageResponse](c, nil, "GET", ":7770/api/v1.0/objectstorage/running", "objectstorage", nil)
 }
 
-func (c *ElementoClient) GetObjectStorageResource(service_uuid string) (*ObjectStorageResponse, error) {
+func (c *ElementoClient) GetObjectStorageResource(service_uuid string) (*ObjectStorageResponse, int, error) {
     return getResource[ObjectStorageResponse](c, nil, "GET", ":7770/api/v1.0/objectstorage/running/" + service_uuid, "objectstorage", nil)
 }
 
@@ -788,7 +788,7 @@ func (c *ElementoClient) ListDBAASResources() ([]DBAASResponse, error) {
     return listResources[DBAASResponse](c, nil, "GET", ":7770/api/v1.0/dbaas/running", "dbaas", nil)
 }
 
-func (c *ElementoClient) GetDBAASResource(service_uuid string) (*DBAASResponse, error) {
+func (c *ElementoClient) GetDBAASResource(service_uuid string) (*DBAASResponse, int, error) {
     return getResource[DBAASResponse](c, nil, "GET", ":7770/api/v1.0/dbaas/running/" + service_uuid, "dbaas", nil)
 }
 
@@ -801,6 +801,8 @@ func (c *ElementoClient) GetDBAASCredentials(service_uuid string) (*DBAASCredent
 
     return getCredentials[DBAASCredentials](c, urlSuffix, "dbaas", serializer, nil)
 }
+
+
 
 func (c *ElementoClient) CanCreateKAASResource(kaasResource KAASRequest) (*CanCreateResponse, error) {
     return c.canCreate(kaasResource, "POST", ":7770/api/v1.0/kaas/cancreate", "kaas", nil)
@@ -824,7 +826,7 @@ func (c *ElementoClient) ListKAASResources() ([]KAASResponse, error) {
     return listResources[KAASResponse](c, nil, "GET", ":7770/api/v1.0/kaas/running", "kaas", nil)
 }
 
-func (c *ElementoClient) GetKAASResource(service_uuid string) (*KAASResponse, error) {
+func (c *ElementoClient) GetKAASResource(service_uuid string) (*KAASResponse, int, error) {
     return getResource[KAASResponse](c, nil, "GET", ":7770/api/v1.0/kaas/running/" + service_uuid, "kaas", nil)
 }
 

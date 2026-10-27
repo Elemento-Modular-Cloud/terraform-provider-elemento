@@ -377,8 +377,8 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
             }
         }
     } else {
-        res, err := r.client.GetKAASResource(state.UUID.ValueString())
-        if err != nil {
+        res, code, err := r.client.GetKAASResource(state.UUID.ValueString())
+        if err != nil && code != 404 {
             resp.Diagnostics.AddError(
                 "Error Reading KAAS Resource",
                 "Could not read kaas resource: "+err.Error(),
@@ -388,19 +388,26 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
         resource = res
     }
 
-    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading KAAS Resource Status",
-            "Could not read kaas resource status: "+err.Error(),
-        )
-        return
-    }
+    billing_uuid := state.BillingUUID.ValueStringPointer()
+	var status *string
+	if billing_uuid != nil && *billing_uuid != "" {
+		var err error
+		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Compute Resource Status",
+				"Could not read compute resource status: "+err.Error(),
+			)
+			return
+		}
+	} else {
+		status = nil
+	}
 
-    if resource == nil && (*status == "deleted" || *status == "error" || *status == "canceled") {
-        resp.State.RemoveResource(ctx)
-        return
-    }
+	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 
     state.Status      = types.StringValue(*status)
     state.Name        = types.StringValue(resource.Name)

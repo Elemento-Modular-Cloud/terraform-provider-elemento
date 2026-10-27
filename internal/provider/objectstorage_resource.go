@@ -239,8 +239,8 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
             }
         }
     } else {
-        res, err := r.client.GetObjectStorageResource(state.UUID.ValueString())
-        if err != nil {
+        res, code, err := r.client.GetObjectStorageResource(state.UUID.ValueString())
+        if err != nil && code != 404 {
             resp.Diagnostics.AddError(
                 "Error Reading ObjectStorage Resource",
                 "Could not read objectstorage resource: "+err.Error(),
@@ -250,19 +250,26 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
         resource = res
     }
 
-    status, err := r.client.GetResourceStatus(state.BillingUUID.ValueString())
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading ObjectStorage Resource Status",
-            "Could not read objectstorage resource status: "+err.Error(),
-        )
-        return
-    }
+    billing_uuid := state.BillingUUID.ValueStringPointer()
+	var status *string
+	if billing_uuid != nil && *billing_uuid != "" {
+		var err error
+		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading Compute Resource Status",
+				"Could not read compute resource status: "+err.Error(),
+			)
+			return
+		}
+	} else {
+		status = nil
+	}
 
-    if resource == nil && (*status == "deleted" || *status == "error" || *status == "canceled") {
-        resp.State.RemoveResource(ctx)
-        return
-    }
+	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 
     state.Status        = types.StringValue(*status)
     state.Name          = types.StringValue(resource.Name)
