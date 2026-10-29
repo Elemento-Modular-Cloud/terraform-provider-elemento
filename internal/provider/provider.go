@@ -216,5 +216,6 @@ func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resour
 		NewOpenClawResource,
 		NewFileStorageResource,
 		NewPrivateNetworkResource,
+		NewPublicIPResource,
 	}
 }

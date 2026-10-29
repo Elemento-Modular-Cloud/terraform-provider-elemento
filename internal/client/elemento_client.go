@@ -974,3 +974,32 @@ func (c *ElementoClient) GetPrivateNetworkCredentials(service_uuid string) (*Pri
 
     return getCredentials[PrivateNetworkCredentials](c, urlSuffix, "privatenetwork", serializer, nil)
 }
+
+
+func (c *ElementoClient) CanCreateResource(resource resourceWithCanCreate) (*CanCreateResponse, error) {
+	cfg := resource.canCreateConfig()
+    return c.canCreate(resource, cfg.Method, cfg.UrlSuffix, cfg.ResourceName, cfg.Headers)
+}
+
+func (c *ElementoClient) CreateResource(resource resourceWithCreate) (CreateResponse, error) {
+	cfg := resource.createConfig()
+    return c.createResource(resource, cfg.UrlSuffix, cfg.ResourceName, cfg.Headers)
+}
+
+func (c *ElementoClient) DeleteResource(service_uuid string, resourceName string) error {
+    delRequest := struct {
+        UUID       string `json:"service_uuid"`
+    }{
+        UUID: service_uuid,
+    }
+
+    return c.deleteResource(delRequest, "DELETE", fmt.Sprintf(":7770/api/v1.0/%s/delete", resourceName), resourceName, nil)
+}
+
+func ListResources[T any](c *ElementoClient, resourceName string) ([]T, error) {
+    return listResources[T](c, nil, "GET", fmt.Sprintf(":7770/api/v1.0/%s/running", resourceName), resourceName, nil)
+}
+
+func GetResource[T any](c *ElementoClient, service_uuid string, resourceName string) (*T, int, error) {
+    return getResource[T](c, nil, "GET", fmt.Sprintf(":7770/api/v1.0/%s/running/%s", resourceName, service_uuid), resourceName, nil)
+}

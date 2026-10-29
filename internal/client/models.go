@@ -74,3 +74,18 @@ type baseResponse struct {
 	Region       string `json:"region"`
 	CreationDate string `json:"creation_date"`
 }
+
+type RequestConfig struct {
+	Method       string
+	UrlSuffix    string
+	ResourceName string
+	Headers      map[string]string
+}
+
+type resourceWithCanCreate interface {
+	canCreateConfig() RequestConfig
+}
+
+type resourceWithCreate interface {
+	createConfig() RequestConfig
+}
