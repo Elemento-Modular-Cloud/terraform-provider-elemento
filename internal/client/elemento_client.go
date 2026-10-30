@@ -1003,3 +1003,13 @@ func ListResources[T any](c *ElementoClient, resourceName string) ([]T, error) {
 func GetResource[T any](c *ElementoClient, service_uuid string, resourceName string) (*T, int, error) {
     return getResource[T](c, nil, "GET", fmt.Sprintf(":7770/api/v1.0/%s/running/%s", resourceName, service_uuid), resourceName, nil)
 }
+
+func (c *ElementoClient) GetRegistryCredentials(service_uuid string) (*RegistryCredentials, error) {
+    urlSuffix := ":7770/api/v1.0/registry/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*RegistryCredentials, error) {
+        return KVDeserializer[RegistryCredentials](r, "=")
+    }
+
+    return getCredentials[RegistryCredentials](c, urlSuffix, "registry", serializer, nil)
+}

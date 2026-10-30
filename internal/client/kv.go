@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"reflect"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -39,7 +40,24 @@ func KVDeserializer[T any](r io.Reader, sep string) (*T, error) {
 
 		fieldSettings, ok := fieldByTag[key]
 		if !ok {
-			continue // unknown key: ignore
+			// If direct indexing fails, try regexes
+			regexFound := false
+			for k, v := range fieldByTag {
+				if !v.regex {
+					continue
+				}
+
+				r, _ := regexp.Compile(k)
+				if r.MatchString(key) {
+					fieldSettings = v
+					regexFound = true
+					break
+				}
+			}
+
+			if !regexFound{
+				continue // unknown key: ignore
+			}
 		}
 
 		if err := setField(v.Field(fieldSettings.index), val); err != nil {
@@ -56,6 +74,7 @@ func KVDeserializer[T any](r io.Reader, sep string) (*T, error) {
 type fieldIndexSettings struct {
 	index int
 	csv bool
+	regex bool
 }
 
 // buildFieldIndex maps tag name -> field index for direct field lookup.
@@ -75,9 +94,12 @@ func buildFieldIndex(t reflect.Type) map[string]fieldIndexSettings {
 		settings := fieldIndexSettings {
 			index: i,
 			csv: false,
+			regex: false,
 		}
 		if slices.Contains(rest, "csv") {
 			settings.csv = true
+		} else if slices.Contains(rest, "regex") {
+			settings.regex = true
 		}
 
 		m[name] = settings
