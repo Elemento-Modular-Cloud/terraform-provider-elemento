@@ -91,7 +91,7 @@ func (r *privateNetworkResource) Schema(_ context.Context, _ resource.SchemaRequ
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the DNS associated with the resource.",
+		Description: "The state of the resource.",
 	}
 	attributes["subnets"] = schema.ListNestedAttribute{
 		Computed:    true,

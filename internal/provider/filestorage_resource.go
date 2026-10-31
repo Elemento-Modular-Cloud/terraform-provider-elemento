@@ -80,7 +80,7 @@ func (r *fileStorageResource) Schema(_ context.Context, _ resource.SchemaRequest
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the DNS associated with the resource.",
+		Description: "The state of the resource.",
 	}
 	attributes["nfs_host"] = schema.StringAttribute{
 		Computed:    true,

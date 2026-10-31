@@ -104,7 +104,7 @@ func (r *loadBalancerResource) Schema(_ context.Context, _ resource.SchemaReques
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the DNS associated with the resource.",
+		Description: "The state of the resource.",
 	}
 
 	resp.Schema = schema.Schema{

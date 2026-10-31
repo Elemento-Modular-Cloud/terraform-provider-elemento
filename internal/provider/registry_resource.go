@@ -90,7 +90,7 @@ func (r *registryResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the DNS associated with the resource.",
+		Description: "The state of the resource.",
 	}
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
