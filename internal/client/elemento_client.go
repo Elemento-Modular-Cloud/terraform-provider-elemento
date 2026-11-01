@@ -1082,3 +1082,13 @@ func (c *ElementoClient) GetAIServerlessCredentials(service_uuid string) (*AISer
 
     return getCredentials[AIServerlessCredentials](c, urlSuffix, "aiserverless", serializer, nil)
 }
+
+func (c *ElementoClient) GetQueueAASCredentials(service_uuid string) (*QueueAASCredentials, error) {
+    urlSuffix := ":7770/api/v1.0/queueaas/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*QueueAASCredentials, error) {
+        return KVDeserializer[QueueAASCredentials](r, "=")
+    }
+
+    return getCredentials[QueueAASCredentials](c, urlSuffix, "queueaas", serializer, nil)
+}
