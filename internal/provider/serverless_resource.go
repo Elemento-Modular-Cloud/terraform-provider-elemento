@@ -305,7 +305,6 @@ func (r *serverlessResource) Read(ctx context.Context, req resource.ReadRequest,
 	state.State = types.StringValue(resource.State)
 	state.PaymentURL = types.StringNull()
 
-	// NOTE: Serverless credentials contain no useful extra information
 	credentials, err := r.client.GetServerlessCredentials(resource.ServiceUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
