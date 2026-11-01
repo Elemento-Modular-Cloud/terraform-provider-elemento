@@ -220,5 +220,6 @@ func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resour
 		NewRegistryResource,
 		NewLoadBalancerResource,
 		NewPublicGatewayResource,
+		NewServerlessResource,
 	}
 }

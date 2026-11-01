@@ -1013,3 +1013,13 @@ func (c *ElementoClient) GetRegistryCredentials(service_uuid string) (*RegistryC
 
     return getCredentials[RegistryCredentials](c, urlSuffix, "registry", serializer, nil)
 }
+
+func (c *ElementoClient) GetServerlessCredentials(service_uuid string) (*ServerlessCredentials, error) {
+    urlSuffix := ":7770/api/v1.0/serverless/credentials/" + service_uuid
+
+    serializer := func (r io.Reader) (*ServerlessCredentials, error) {
+        return KVDeserializer[ServerlessCredentials](r, "=")
+    }
+
+    return getCredentials[ServerlessCredentials](c, urlSuffix, "serverless", serializer, nil)
+}
