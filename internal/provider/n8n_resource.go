@@ -315,7 +315,7 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
         return
     }
 
-    state.Status      = types.StringValue(*status)
+    state.Status      = types.StringPointerValue(status)
     state.VMName      = types.StringValue(resource.Requirements.VMName)
     state.CPUCores    = types.Int32Value(int32(resource.Requirements.Slots))
     state.RAMSizeMB   = types.Int32Value(int32(resource.Requirements.RamSize))
