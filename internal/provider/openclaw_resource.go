@@ -242,7 +242,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
     }
 
     switch res := response.(type) {
-        case *client.PublicCreateResponse:
+        case client.PublicCreateResponse:
             plan.BillingUUID = types.StringValue(res.BillingUUID)
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
@@ -257,7 +257,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
             }
 
             plan.Status = types.StringValue(*status)
-        case *client.PrivateCreateResponse:
+        case client.PrivateCreateResponse:
             plan.BillingUUID = types.StringNull()
             plan.PaymentURL  = types.StringNull()
             plan.UUID        = types.StringValue(res.ServiceUUID)
