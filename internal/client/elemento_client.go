@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"slices"
-	"strings"
+	// "slices"
+	// "strings"
 	"time"
 	// "github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/golang-jwt/jwt/v5"
@@ -849,21 +849,22 @@ func (c *ElementoClient) GetKAASCredentials(service_uuid string) (*string, error
     return getCredentials[string](c, "kaas", service_uuid, deserializer, nil)
 }
 
-func (c *ElementoClient) ListN8NResources() ([]ComputeListItem, error) {
-	ret, err := c.ListComputeResources()
-	if err != nil {
-		return nil, err
-	}
 
-	var resources []ComputeListItem
-	for _, item := range ret {
-		if slices.Contains(strings.Split(item.Tags, ":"), "n8n") {
-			resources = append(resources, item)
-		}
-	}
+// func (c *ElementoClient) ListN8NResources() ([]ComputeListItem, error) {
+//     ret, err := c.ListComputeResources()
+//     if err != nil {
+//         return nil, err
+//     }
 
-	return resources, nil
-}
+//     var resources []ComputeListItem
+//     for _, item := range ret {
+//         if slices.Contains(strings.Split(item.Tags, ":"), "n8n") {
+//             resources = append(resources, item)
+//         }
+//     }
+
+//     return resources, nil
+// }
 
 func (c *ElementoClient) GetN8NCredentials(service_uuid string) (*N8NCredentials, error) {
 	urlSuffix := ":7777/api/v1.0/credentials/" + service_uuid
@@ -875,21 +876,22 @@ func (c *ElementoClient) GetN8NCredentials(service_uuid string) (*N8NCredentials
     return getCredentials[N8NCredentials](c, urlSuffix, "n8n", serializer, nil)
 }
 
-func (c *ElementoClient) ListOpenClawResources() ([]ComputeListItem, error) {
-	ret, err := c.ListComputeResources()
-	if err != nil {
-		return nil, err
-	}
 
-	var resources []ComputeListItem
-	for _, item := range ret {
-		if slices.Contains(strings.Split(item.Tags, ":"), "openclaw") {
-			resources = append(resources, item)
-		}
-	}
+// func (c *ElementoClient) ListOpenClawResources() ([]ComputeListItem, error) {
+//     ret, err := c.ListComputeResources()
+//     if err != nil {
+//         return nil, err
+//     }
 
-	return resources, nil
-}
+//     var resources []ComputeListItem
+//     for _, item := range ret {
+//         if slices.Contains(strings.Split(item.Tags, ":"), "openclaw") {
+//             resources = append(resources, item)
+//         }
+//     }
+
+//     return resources, nil
+// }
 
 func (c *ElementoClient) GetOpenClawCredentials(service_uuid string) (*OpenClawCredentials, error) {
 	urlSuffix := ":7777/api/v1.0/credentials/" + service_uuid

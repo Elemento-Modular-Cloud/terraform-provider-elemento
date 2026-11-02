@@ -285,7 +285,7 @@ func (r *openclawResource) Read(ctx context.Context, req resource.ReadRequest, r
         return
     }
 
-    resources, err := r.client.ListOpenClawResources()
+    resources, err := r.client.ListComputeResources()
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Reading OpenClaw Resources",

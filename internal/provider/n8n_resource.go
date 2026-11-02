@@ -278,7 +278,7 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
         return
     }
 
-    resources, err := r.client.ListN8NResources()
+    resources, err := r.client.ListComputeResources()
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Reading n8n Resources",
