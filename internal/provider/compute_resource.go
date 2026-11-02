@@ -457,30 +457,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     }
 
     canCreateResponse, err := r.client.CanCreateComputeResource(computeResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Checking Compute Resource Creation",
-            "Could not check if compute resource can be created, unexpected error: " + err.Error(),
-        )
-        return
-    }
-
-    if !canCreateResponse.CanCreate {
-    	if len(canCreateResponse.Reasons) == 0 {
-			resp.Diagnostics.AddError(
-				"Compute Resource Creation Not Allowed",
-				"Cannot create compute resource due to an unknown reason. Please contact the devs or try again later.",
-			)
-     	}
-
-        for field, reason := range canCreateResponse.Reasons {
-            resp.Diagnostics.AddError(
-                "Compute Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create compute resource due to field '%s' value: %s", field, reason),
-            )
-        }
-        return
-    }
+	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Compute", err)
 
     response, err := r.client.CreateComputeResource(computeResource)
     if err != nil {

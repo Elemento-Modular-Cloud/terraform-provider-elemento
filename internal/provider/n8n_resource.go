@@ -224,23 +224,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
     }
 
     canCreateResponse, err := r.client.CanCreateComputeResource(n8nResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Checking n8n Resource Creation",
-            "Could not check if n8n resource can be created, unexpected error: " + err.Error(),
-        )
-        return
-    }
-
-    if !canCreateResponse.CanCreate {
-        for field, reason := range canCreateResponse.Reasons {
-            resp.Diagnostics.AddError(
-                "n8n Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create n8n resource due to field '%s' value: %s", field, reason),
-            )
-        }
-        return
-    }
+    ValidateCanCreate(canCreateResponse, &diags, "n8n", err)
 
     response, err := r.client.CreateComputeResource(n8nResource)
     if err != nil {

@@ -286,23 +286,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
     }
 
     canCreateResponse, err := r.client.CanCreateKAASResource(kaasResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Checking KAAS Resource Creation",
-            "Could not check if kaas resource can be created, unexpected error: " + err.Error(),
-        )
-        return
-    }
-
-    if !canCreateResponse.CanCreate {
-        for field, reason := range canCreateResponse.Reasons {
-            resp.Diagnostics.AddError(
-                "KAAS Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create kaas resource due to field '%s' value: %s", field, reason),
-            )
-        }
-        return
-    }
+    ValidateCanCreate(canCreateResponse, &diags, "KAAS", err)
 
     response, err := r.client.CreateKAASResource(kaasResource)
     if err != nil {

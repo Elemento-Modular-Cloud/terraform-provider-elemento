@@ -147,23 +147,7 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
     }
 
     canCreateResponse, err := r.client.CanCreateObjectStorageResource(objectStorageResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Checking ObjectStorage Resource Creation",
-            "Could not check if objectstorage resource can be created, unexpected error: " + err.Error(),
-        )
-        return
-    }
-
-    if !canCreateResponse.CanCreate {
-        for field, reason := range canCreateResponse.Reasons {
-            resp.Diagnostics.AddError(
-                "ObjectStorage Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create objectstorage resource due to field '%s value': %s", field, reason),
-            )
-        }
-        return
-    }
+    ValidateCanCreate(canCreateResponse, &diags, "ObjectStorage", err)
 
     response, err := r.client.CreateObjectStorageResource(objectStorageResource)
     if err != nil {

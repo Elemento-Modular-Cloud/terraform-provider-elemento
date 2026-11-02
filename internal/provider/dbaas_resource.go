@@ -213,23 +213,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
     }
 
     canCreateResponse, err := r.client.CanCreateDBAASResource(dbaasResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Checking DBAAS Resource Creation",
-            "Could not check if dbaas resource can be created, unexpected error: " + err.Error(),
-        )
-        return
-    }
-
-    if !canCreateResponse.CanCreate {
-        for field, reason := range canCreateResponse.Reasons {
-            resp.Diagnostics.AddError(
-                "DBAAS Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create dbaas resource due to field '%s' value: %s", field, reason),
-            )
-        }
-        return
-    }
+    ValidateCanCreate(canCreateResponse, &diags, "DBAAS", err)
 
     response, err := r.client.CreateDBAASResource(dbaasResource)
     if err != nil {

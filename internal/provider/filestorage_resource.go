@@ -140,23 +140,7 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	canCreateResponse, err := r.client.CanCreateFileStorageResource(fileStorageResource)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Checking FileStorage Resource Creation",
-			"Could not check if filestorage resource can be created, unexpected error: "+err.Error(),
-		)
-		return
-	}
-
-	if !canCreateResponse.CanCreate {
-		for field, reason := range canCreateResponse.Reasons {
-			resp.Diagnostics.AddError(
-				"FileStorage Resource Creation Not Allowed",
-				fmt.Sprintf("Cannot create filestorage resource due to field '%s' value: %s", field, reason),
-			)
-		}
-		return
-	}
+    ValidateCanCreate(canCreateResponse, &diags, "FileStorage", err)
 
 	response, err := r.client.CreateFileStorageResource(fileStorageResource)
 	if err != nil {

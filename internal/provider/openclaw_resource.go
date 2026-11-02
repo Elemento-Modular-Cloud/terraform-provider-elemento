@@ -230,23 +230,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
     }
 
     canCreateResponse, err := r.client.CanCreateComputeResource(openclawResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Checking OpenClaw Resource Creation",
-            "Could not check if openclaw resource can be created, unexpected error: " + err.Error(),
-        )
-        return
-    }
-
-    if !canCreateResponse.CanCreate {
-        for field, reason := range canCreateResponse.Reasons {
-            resp.Diagnostics.AddError(
-                "OpenClaw Resource Creation Not Allowed",
-                fmt.Sprintf("Cannot create openclaw resource due to field '%s' value: %s", field, reason),
-            )
-        }
-        return
-    }
+    ValidateCanCreate(canCreateResponse, &diags, "OpenClaw", err)
 
     response, err := r.client.CreateComputeResource(openclawResource)
     if err != nil {

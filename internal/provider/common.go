@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 	"terraform-provider-elemento/internal/client"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -92,21 +93,39 @@ func (r *baseResource) Configure(_ context.Context, req resource.ConfigureReques
 	r.client = client
 }
 
-// TODO: use in older resources
 func ValidateCanCreate(check *client.CanCreateResponse, diags *diag.Diagnostics, resourceName string, err error) bool {
 	if err != nil {
 		diags.AddError(
 			fmt.Sprintf("Error Checking %s Resource Creation", resourceName),
-			fmt.Sprintf("Could not check if %s resource can be created, unexpected error: %s", resourceName, err.Error()),
+			fmt.Sprintf(
+				"Could not check if %s resource can be created, unexpected error: %s",
+				strings.ToLower(resourceName),
+				err.Error(),
+			),
 		)
 		return false
 	}
 
 	if !check.CanCreate {
+		if len(check.Reasons) == 0 {
+			diags.AddError(
+				fmt.Sprintf("%s Resource Creation Not Allowed", resourceName),
+				fmt.Sprintf(
+					"Cannot create %s resource due to an unknown reason. Please contact the devs or try again later.",
+					strings.ToLower(resourceName),
+				),
+			)
+		}
+
 		for field, reason := range check.Reasons {
 			diags.AddError(
 				fmt.Sprintf("%s Resource Creation Not Allowed", resourceName),
-				fmt.Sprintf("Cannot create %s resource due to field '%s' value: %s", resourceName, field, reason),
+				fmt.Sprintf(
+					"Cannot create %s resource due to field '%s' value: %s",
+					strings.ToLower(resourceName),
+					field,
+					reason,
+				),
 			)
 		}
 		return false
