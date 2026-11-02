@@ -1,20 +1,20 @@
 package client
 
 type CreateResponse interface {
-    isCreateResponse()
+	isCreateResponse()
 }
 
 type PublicCreateResponse struct {
-    PaymentURL  string `json:"payment_url"`
-    BillingUUID string `json:"billing_uuid"`
+	PaymentURL  string `json:"payment_url"`
+	BillingUUID string `json:"billing_uuid"`
 }
 
 type PrivateCreateResponse struct {
-    ServiceUUID string `json:"service_uuid"`
-    Status      string `json:"status"`
+	ServiceUUID string `json:"service_uuid"`
+	Status      string `json:"status"`
 }
 
-func (r PublicCreateResponse) isCreateResponse() {}
+func (r PublicCreateResponse) isCreateResponse()  {}
 func (r PrivateCreateResponse) isCreateResponse() {}
 
 type TargetGrant struct {
@@ -38,32 +38,32 @@ type ActiveTargetsResponse struct {
 }
 
 type CanCreateBilling struct {
-    BillingUUID string `json:"billing_uuid"`
-    PaymentURL  string `json:"payment_url"`
+	BillingUUID string `json:"billing_uuid"`
+	PaymentURL  string `json:"payment_url"`
 }
 
 type CanCreateResponse struct {
-    CanCreate bool               `json:"cancreate"`
-    Billing   []CanCreateBilling `json:"billing"`
-    Provider  string             `json:"provider"`
-    Reasons   map[string]string  `json:"reasons"`
+	CanCreate bool               `json:"cancreate"`
+	Billing   []CanCreateBilling `json:"billing"`
+	Provider  string             `json:"provider"`
+	Reasons   map[string]string  `json:"reasons"`
 }
 
 type authRequest struct {
-    Username string `json:"username"`
-    Password string `json:"password"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type authResponse struct {
-    Username       string `json:"username"`
-    AccessToken    string `json:"access_token"`
-    RefreshToken   string `json:"refresh_token"`
-    AccessTokenIAT int64  `json:"access_token_iat"`
-    AccessTokenExp int64  `json:"access_token_exp"`
+	Username       string `json:"username"`
+	AccessToken    string `json:"access_token"`
+	RefreshToken   string `json:"refresh_token"`
+	AccessTokenIAT int64  `json:"access_token_iat"`
+	AccessTokenExp int64  `json:"access_token_exp"`
 }
 
 type BaseRequest struct {
-	Region string `json:"region"`
+	Region           string  `json:"region"`
 	BillingFrequency *string `json:"billing_frequency,omitempty"`
 }
 
@@ -88,4 +88,19 @@ type resourceWithCanCreate interface {
 
 type resourceWithCreate interface {
 	createConfig() RequestConfig
+}
+
+type renderCloudinitRequest struct {
+	Service   string            `json:"service"`
+	Variables map[string]string `json:"variables"`
+}
+
+type renderCloudinitResponse struct {
+	Service   string            `json:"service"`
+	Cloudinit string            `json:"cloudinit"`
+	Metadata  map[string]any `json:"metadata"`
+	Source    struct {
+		Repo   string `json:"repo"`
+		Commit string `json:"commit"`
+	} `json:"source"`
 }

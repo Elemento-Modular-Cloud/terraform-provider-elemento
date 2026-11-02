@@ -259,6 +259,45 @@ func (c *ElementoClient) getTargetUUID() (*string, error) {
 	return &targetData.UUID, nil
 }
 
+func (c *ElementoClient) renderCloudinit(service string, variables map[string]string) (*string, error) {
+	authToken, err := c.getAuth()
+	if err != nil {
+		return nil, err
+	}
+
+	url := "https://spacedock.elemento.cloud/v1/marketplace/render"
+
+	headers := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer " + *authToken,
+	}
+
+	request := renderCloudinitRequest{
+		Service:   service,
+		Variables: variables,
+	}
+
+	resp, err := c.request("POST", url, headers, request)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("failed to render cloudinit: %s %s", resp.Status, string(body))
+	}
+
+	var response renderCloudinitResponse
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Cloudinit, nil
+
+}
 
 func (c *ElementoClient) canCreate(resource any, method, urlSuffix, resourceName string, headers map[string]string) (*CanCreateResponse, error) {
 	host, err := c.getHost()
@@ -591,7 +630,11 @@ func (c *ElementoClient) CanCreateComputeResource(computeResource ComputeResourc
 	var resource any
 	var headers map[string]string
 	if targetData.TargetType == "meson_public" || targetData.TargetType == "meson_private" {
-		resource = computeResource.toSpotVM()
+		cloudinit, err := c.renderCloudinit(computeResource.CloudInit.Template, computeResource.CloudInit.Variables)
+		if err != nil {
+			return nil, err
+		}
+		resource = computeResource.toSpotVM(cloudinit)
 		headers = map[string]string{"X-Region": computeResource.Region}
 	} else {
 		resource = computeResource
@@ -609,7 +652,11 @@ func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) 
 	var resource any
 	var headers map[string]string
 	if targetData.TargetType == "meson_public" || targetData.TargetType == "meson_private" {
-		resource = computeResource.toSpotVM()
+		cloudinit, err := c.renderCloudinit(computeResource.CloudInit.Template, computeResource.CloudInit.Variables)
+		if err != nil {
+			return nil, err
+		}
+		resource = computeResource.toSpotVM(cloudinit)
 		headers = map[string]string{"X-Region": computeResource.Region}
 	} else {
 		resource = computeResource

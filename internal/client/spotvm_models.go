@@ -1,5 +1,7 @@
 package client
 
+import "encoding/base64"
+
 type SpotVMResource struct {
 	VMName string `json:"vm_name"`
 	CPU    struct {
@@ -57,7 +59,7 @@ type SpotVMListItem struct {
 	ServerURL   string `json:"serverurl"`
 }
 
-func (r *ComputeResource) toSpotVM() SpotVMResource {
+func (r *ComputeResource) toSpotVM(cloudinit *string) SpotVMResource {
 	spot := SpotVMResource{}
 
 	spot.VMName = r.VMName
@@ -109,7 +111,7 @@ func (r *ComputeResource) toSpotVM() SpotVMResource {
 		}
 	}
 
-	// TODO: CloudInit
+	spot.CloudInitBase64 = base64.StdEncoding.EncodeToString([]byte(*cloudinit))
 
 	return spot
 }
