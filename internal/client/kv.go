@@ -24,6 +24,8 @@ func KVDeserializer[T any](r io.Reader, sep string) (*T, error) {
 
 	fieldByTag := buildFieldIndex(v.Type())
 
+	separatorRegex := regexp.MustCompile(sep)
+
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -31,12 +33,13 @@ func KVDeserializer[T any](r io.Reader, sep string) (*T, error) {
 			continue
 		}
 
-		key, val, ok := strings.Cut(line, sep)
-		if !ok {
+		parts := separatorRegex.Split(line, 2)
+		if len(parts) < 2 {
 			return &out, fmt.Errorf("kv: malformed line %q", line)
 		}
-		key = strings.TrimSpace(key)
-		val = strings.TrimSpace(val)
+
+		key := strings.TrimSpace(parts[0])
+		val := strings.TrimSpace(parts[1])
 
 		fieldSettings, ok := fieldByTag[key]
 		if !ok {

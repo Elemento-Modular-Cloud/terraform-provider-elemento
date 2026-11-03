@@ -917,7 +917,7 @@ func (c *ElementoClient) GetN8NCredentials(service_uuid string) (*N8NCredentials
 	urlSuffix := ":7777/api/v1.0/credentials/" + service_uuid
 
 	serializer := func(r io.Reader) (*N8NCredentials, error) {
-		return KVDeserializer[N8NCredentials](r, ": ")
+		return KVDeserializer[N8NCredentials](r, ": |=")
 	}
 
     return getCredentials[N8NCredentials](c, urlSuffix, "n8n", serializer, nil)
@@ -944,7 +944,7 @@ func (c *ElementoClient) GetOpenClawCredentials(service_uuid string) (*OpenClawC
 	urlSuffix := ":7777/api/v1.0/credentials/" + service_uuid
 
 	serializer := func(r io.Reader) (*OpenClawCredentials, error) {
-		return KVDeserializer[OpenClawCredentials](r, ": ")
+		return KVDeserializer[OpenClawCredentials](r, ": |=")
 	}
 
     return getCredentials[OpenClawCredentials](c, urlSuffix, "openclaw", serializer, nil)
