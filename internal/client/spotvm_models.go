@@ -2,42 +2,49 @@ package client
 
 import "encoding/base64"
 
-type SpotVMResource struct {
-	VMName string `json:"vm_name"`
-	CPU    struct {
-		Slots       int      `json:"slots"`
-		SharedCores bool     `json:"shared_cores"`
-		Arch        []string `json:"arch"`
-	} `json:"cpu"`
-	Mem struct {
-		CapacityMB int `json:"capacity_mb"`
-	} `json:"mem"`
-	OS struct {
-		Family  string `json:"family"`
-		Flavour string `json:"flavour"`
-		Version string `json:"version"`
-	} `json:"os"`
-	Storage struct {
-		Boot SpotVMVolume   `json:"boot"`
-		Data []SpotVMVolume `json:"data"`
-	} `json:"storage"`
-	PCI struct {
-		Devices []SpotVMPCIDev `json:"devices"`
-	} `json:"pci"`
-	Networks []SpotVMNetwork `json:"networks"`
-	Auth     struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-		SSHKey   string `json:"ssh_key"`
-	} `json:"auth"`
-	Tags            []string `json:"tags"`
-	CloudInitBase64 string   `json:"cloud_init_b64"`
+type SpotVMRequest struct {
+	BaseRequest
+	VMName          string          `json:"vm_name"`
+	CPU             SpotVMCPU       `json:"cpu"`
+	Mem             SpotVMMemory    `json:"mem"`
+	OS              SpotVMOS        `json:"os"`
+	Storage         SpotVMStorage   `json:"storage"`
+	PCI             SpotVMPCI       `json:"pci"`
+	Networks        []SpotVMNetwork `json:"networks"`
+	Auth            SpotVMAuth      `json:"auth"`
+	Tags            []string        `json:"tags"`
+	CloudInitBase64 string          `json:"cloud_init_b64"`
+}
+
+type SpotVMCPU struct {
+	Slots       int      `json:"slots"`
+	SharedCores bool     `json:"shared_cores"`
+	Arch        []string `json:"arch"`
+}
+
+type SpotVMMemory struct {
+	CapacityMB int `json:"capacity_mb"`
+}
+
+type SpotVMOS struct {
+	Family  string `json:"family"`
+	Flavour string `json:"flavour"`
+	Version string `json:"version"`
+}
+
+type SpotVMStorage struct {
+	Boot SpotVMVolume   `json:"boot"`
+	Data []SpotVMVolume `json:"data"`
 }
 
 type SpotVMVolume struct {
 	UUID   *string `json:"volume_uuid,omitempty"`
 	Name   string  `json:"name"`
 	SizeGB int     `json:"size_gb"`
+}
+
+type SpotVMPCI struct {
+	Devices []SpotVMPCIDev `json:"devices"`
 }
 
 type SpotVMPCIDev struct {
@@ -47,11 +54,19 @@ type SpotVMPCIDev struct {
 }
 
 type SpotVMNetwork struct {
-	Kind string `json:"kind"`
+	Kind string  `json:"kind"`
+	IPv4 *string `json:"ipv4,omitempty"`
+	MAC  *string `json:"mac,omitempty"`
+}
+
+type SpotVMAuth struct {
+	Username string  `json:"username"`
+	Password string  `json:"password"`
+	SSHKey   *string `json:"ssh_key,omitempty"`
 }
 
 type SpotVMListItem struct {
-	SpotVMResource
+	SpotVMRequest
 	UUID        string `json:"vm_uuid"`
 	Status      string `json:"status"`
 	Region      string `json:"region"`
@@ -59,8 +74,8 @@ type SpotVMListItem struct {
 	ServerURL   string `json:"serverurl"`
 }
 
-func (r *ComputeResource) toSpotVM(cloudinit *string) SpotVMResource {
-	spot := SpotVMResource{}
+func (r *ComputeResource) toSpotVM(cloudinit *string) SpotVMRequest {
+	spot := SpotVMRequest{}
 
 	spot.VMName = r.VMName
 
@@ -107,7 +122,7 @@ func (r *ComputeResource) toSpotVM(cloudinit *string) SpotVMResource {
 		spot.Auth.Username = auth.Username
 		spot.Auth.Password = auth.Password
 		if auth.SSHKey != nil {
-			spot.Auth.SSHKey = *auth.SSHKey
+			spot.Auth.SSHKey = auth.SSHKey
 		}
 	}
 
@@ -166,4 +181,26 @@ func (r *SpotVMListResponse) toComputeListResponse() ComputeListResponse {
 	}
 
 	return ComputeListResponse{VMS: items}
+}
+
+func (r SpotVMRequest) canCreateConfig() RequestConfig {
+	return RequestConfig{
+		Method:       "GET",
+		UrlSuffix:    ":7777/api/v1.0/canallocate",
+		ResourceName: "spotvm",
+		Headers: map[string]string{
+			"X-Region": r.Region,
+		},
+	}
+}
+
+func (r SpotVMRequest) createConfig() RequestConfig {
+	return RequestConfig{
+		Method:       "POST",
+		UrlSuffix:    ":7777/api/v1.0/register",
+		ResourceName: "spotvm",
+		Headers: map[string]string{
+			"X-Region": r.Region,
+		},
+	}
 }

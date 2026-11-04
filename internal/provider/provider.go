@@ -190,7 +190,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	client := client.NewElementoClient(target, username, password, portal)
+	client := client.NewElementoClient(ctx, target, username, password, portal)
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }
@@ -207,7 +207,8 @@ func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.Da
 
 func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewComputeResource,
+		// NewComputeResource,
+		NewSpotVMResource,
 		NewStorageResource,
 		NewObjectStorageResource,
 		NewDBAASResource,

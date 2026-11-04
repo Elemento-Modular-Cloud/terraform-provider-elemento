@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,7 @@ type ElementoClient struct {
 	Username          string
 	Password          string
 	Portal            string
+	context           context.Context
 	httpClient        *http.Client
 	cachedToken       *string
 	cachedTokenExpiry int64
@@ -26,7 +28,7 @@ type ElementoClient struct {
 	targetData        *TargetGrant
 }
 
-func NewElementoClient(target, username, password, portal string) *ElementoClient {
+func NewElementoClient(ctx context.Context, target, username, password, portal string) *ElementoClient {
     httpClient := &http.Client{
         Transport: &http.Transport{
             TLSClientConfig: &tls.Config{
@@ -41,6 +43,7 @@ func NewElementoClient(target, username, password, portal string) *ElementoClien
 		Password: password,
 		Portal:   portal,
 		httpClient: httpClient,
+		context: ctx,
 	}
 }
 
@@ -1091,4 +1094,60 @@ func (c *ElementoClient) GetQueueAASCredentials(service_uuid string) (*QueueAASC
     }
 
     return getCredentials[QueueAASCredentials](c, urlSuffix, "queueaas", serializer, nil)
+}
+
+
+func (c *ElementoClient) ListSpotVMResources() ([]SpotVMListItem, error) {
+	host, err := c.getHost()
+	if err != nil {
+		return nil, err
+	}
+
+	// Legacy compute handling needs special handling as the return payload
+	// is in the form of {VMS: [VMItem]} rather than just [VMItem]
+    url := "https://" + *host + ":7777/api/v1.0/running"
+
+    authToken, err := c.getAuth()
+    if err != nil {
+        return nil, err
+    }
+
+    target_uuid, err := c.getTargetUUID()
+    if err != nil {
+    	return nil, err
+    }
+
+    headers := map[string]string{
+        "Authorization": "Bearer " + *authToken,
+        "X-Target-UUID": *target_uuid,
+    }
+
+    resp, err := c.request("GET", url, headers, nil)
+    if err != nil {
+        return nil, err
+    }
+
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("failed to list compute resources: %s %s", resp.Status, string(body))
+    }
+
+	var computeResources SpotVMListResponse
+    err = json.NewDecoder(resp.Body).Decode(&computeResources)
+    if err != nil {
+        return nil, err
+    }
+
+    return computeResources.VMS, nil
+}
+
+func (c *ElementoClient) DeleteSpotVMResource(uuid string) error {
+    delRequest := struct {
+        UUID string `json:"vm_uid"`
+    }{
+        UUID: uuid,
+    }
+    return c.deleteResource(delRequest, "DELETE", ":7777/api/v1.0/unregister", "spotvm", nil)
 }
