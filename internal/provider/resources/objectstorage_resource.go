@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"terraform-provider-elemento/internal/client"
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
@@ -13,7 +12,7 @@ import (
 )
 
 var (
-	_ resource.Resource = &objectStorageResource{}
+	_ resource.Resource              = &objectStorageResource{}
 	_ resource.ResourceWithConfigure = &objectStorageResource{}
 )
 
@@ -21,26 +20,8 @@ func NewObjectStorageResource() resource.Resource {
 	return &objectStorageResource{}
 }
 
-type objectStorageResource struct{
+type objectStorageResource struct {
 	common.BaseResource
-}
-
-type objectStorageResourceModel struct {
-    ActiveStorage    types.Int32    `tfsdk:"active_storage"`
-    Name             types.String   `tfsdk:"name"`
-    SizeTB           types.Int64    `tfsdk:"size_tb"`
-    Region           types.String   `tfsdk:"region"`
-    UUID             types.String   `tfsdk:"uuid"`
-    Endpoint         types.String   `tfsdk:"endpoint"`
-    LastUpdated      types.String   `tfsdk:"last_updated"`
-    BillingFrequency types.String   `tfsdk:"billing_frequency"`
-    BillingUUID      types.String   `tfsdk:"billing_uuid"`
-    PaymentURL       types.String   `tfsdk:"payment_url"`
-    AccountName      types.String   `tfsdk:"account_name"`
-    ContainerName    types.String   `tfsdk:"container_name"`
-    SasToken         types.String   `tfsdk:"sas_token"`
-    AzureCliCommand  types.String   `tfsdk:"azure_cli_command"`
-    Status           types.String   `tfsdk:"status"`
 }
 
 func (r *objectStorageResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -48,262 +29,149 @@ func (r *objectStorageResource) Metadata(_ context.Context, req resource.Metadat
 }
 
 func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-    resp.Schema = schema.Schema{
-        Attributes: map[string]schema.Attribute{
-            "name": schema.StringAttribute{
-                Required: true,
-                Description: "The name of the object storage resource.",
-            },
-            "size_tb": schema.Int64Attribute{
-                Required: true,
-                Description: "The size of the object storage resource in TB.",
-            },
-            "region": schema.StringAttribute{
-                Required: true,
-                Description: "The region where the object storage resource will be created.",
-            },
-            "uuid": schema.StringAttribute{
-           	    Computed: true,
-                Description: "The UUID for the object storage resource.",
-            },
-            "last_updated": schema.StringAttribute{
-               	Computed: true,
-                Description: "The timestamp of the last update to the object storage resource.",
-            },
-            "billing_frequency": schema.StringAttribute{
-                Required: true,
-                Description: "The billing frequency for the object storage resource (e.g., 'monthly', 'yearly').",
-            },
-            "billing_uuid": schema.StringAttribute{
-                Computed: true,
-                Description: "The billing UUID for the object storage resource.",
-            },
-            "payment_url": schema.StringAttribute{
-                Computed: true,
-                Description: "The payment URL for the object storage resource.",
-            },
-            "active_storage": schema.Int32Attribute{
-                Computed: true,
-                Description: "The amount of active storage in the object storage resource.",
-            },
-            "endpoint": schema.StringAttribute{
-                Computed: true,
-                Description: "The endpoint URL for the object storage resource.",
-            },
-            "account_name": schema.StringAttribute{
-                Computed: true,
-                Description: "The name of the storage account.",
-            },
-            "container_name": schema.StringAttribute{
-                Computed: true,
-                Description: "The name of the storage container.",
-            },
-            "sas_token": schema.StringAttribute{
-                Computed: true,
-                Description: "The SAS token for accessing the storage account.",
-            },
-            "azure_cli_command": schema.StringAttribute{
-                Computed: true,
-                Description: "The Azure CLI command to access the storage account.",
-            },
-            "status": schema.StringAttribute{
-                Computed: true,
-                Description: "The current status of the object storage resource.",
-            },
-        },
-	}
-}
+	attributes := common.BaseSchema()
 
-func (r *objectStorageResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
+	attributes["name"] = schema.StringAttribute{
+		Required:    true,
+		Description: "The name of the object storage resource.",
+	}
+	attributes["size_tb"] = schema.Int64Attribute{
+		Required:    true,
+		Description: "The size of the object storage resource in TB.",
+	}
+	attributes["active_storage"] = schema.Int32Attribute{
+		Computed:    true,
+		Description: "The amount of active storage in the object storage resource.",
+	}
+	attributes["endpoint"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "The endpoint URL for the object storage resource.",
+	}
+	attributes["account_name"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "The name of the storage account.",
+	}
+	attributes["container_name"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "The name of the storage container.",
+	}
+	attributes["sas_token"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "The SAS token for accessing the storage account.",
+	}
+	attributes["azure_cli_command"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "The Azure CLI command to access the storage account.",
 	}
 
-	client, ok := req.ProviderData.(*client.ElementoClient)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Provider Data Type",
-			fmt.Sprintf("Expected *ElementoClient, got %T. Please report this issue to the provider developer.", req.ProviderData),
-		)
-
-		return
+	resp.Schema = schema.Schema{
+		Attributes: attributes,
 	}
-	r.Client = client
 }
 
 func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-    var plan objectStorageResourceModel
-    diags := req.Plan.Get(ctx, &plan)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
-
-    objectStorageResource := client.ObjectStorageRequest{
-        Name:             plan.Name.ValueString(),
-        SizeTB:           int(plan.SizeTB.ValueInt64()),
-        Region:           plan.Region.ValueString(),
-        BillingFrequency: plan.BillingFrequency.ValueString(),
-    }
-
-    canCreateResponse, err := r.Client.CanCreateObjectStorageResource(objectStorageResource)
-    common.ValidateCanCreate(canCreateResponse, &diags, "ObjectStorage", err)
-
-    response, err := r.Client.CreateObjectStorageResource(objectStorageResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Creating ObjectStorage Resource",
-            "Could not create objectstorage resource, unexpected error: " + err.Error(),
-        )
-        return
-    }
-
-    switch res := response.(type) {
-        case client.PublicCreateResponse:
-            plan.BillingUUID = types.StringValue(res.BillingUUID)
-            plan.PaymentURL  = types.StringValue(res.PaymentURL)
-            plan.UUID        = types.StringNull()
-
-            status, err := r.Client.GetResourceStatus(res.BillingUUID)
-            if err != nil {
-                resp.Diagnostics.AddError(
-                    "Error Reading ObjectStorage Resource Status",
-                    "Could not read objectstorage resource status: "+err.Error(),
-                )
-                return
-            }
-
-            plan.Status = types.StringValue(*status)
-        case client.PrivateCreateResponse:
-            plan.BillingUUID = types.StringNull()
-            plan.PaymentURL  = types.StringNull()
-            plan.UUID        = types.StringValue(res.ServiceUUID)
-            plan.Status      = types.StringValue(res.Status)
-    }
-
-    plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-
-    plan.ActiveStorage = types.Int32Null()
-    plan.Endpoint = types.StringNull()
-    plan.AccountName = types.StringNull()
-    plan.ContainerName = types.StringNull()
-    plan.SasToken = types.StringNull()
-    plan.AzureCliCommand = types.StringNull()
-
-    diags = resp.State.Set(ctx, plan)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
-}
-
-func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-    var state objectStorageResourceModel
-    diags := req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
-
-    var resource *client.ObjectStorageResponse
-    if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-        resources, err := r.Client.ListObjectStorageResources()
-        if err != nil {
-            resp.Diagnostics.AddError(
-                "Error Reading ObjectStorage Resources",
-                "Could not list objectstorage resources: "+err.Error(),
-            )
-            return
-        }
-
-        for _, res := range resources {
-            if res.BillingUUID == state.BillingUUID.ValueString() {
-                resource = &res
-                break
-            }
-        }
-    } else {
-        res, code, err := r.Client.GetObjectStorageResource(state.UUID.ValueString())
-        if err != nil && code != 404 {
-            resp.Diagnostics.AddError(
-                "Error Reading ObjectStorage Resource",
-                "Could not read objectstorage resource: "+err.Error(),
-            )
-            return
-        }
-        resource = res
-    }
-
-    billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
+	var plan common.ObjectStorageResourceModel
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-    state.Status        = types.StringPointerValue(status)
-    state.Name          = types.StringValue(resource.Name)
-    state.ActiveStorage = types.Int32Value(int32(resource.ActiveStorage))
-    state.Endpoint      = types.StringValue(resource.Endpoint)
-    state.Region        = types.StringValue(resource.Region)
-    state.LastUpdated   = types.StringValue(time.Now().Format(time.RFC850))
-    state.UUID          = types.StringValue(resource.UUID)
-    state.PaymentURL    = types.StringNull()
+	objectStorageResource := client.ObjectStorageRequest{
+		Name:             plan.Name.ValueString(),
+		SizeTB:           int(plan.SizeTB.ValueInt64()),
+		Region:           plan.Region.ValueString(),
+		BillingFrequency: plan.BillingFrequency.ValueString(),
+	}
 
-    credentials, err := r.Client.GetObjectStorageCredentials(resource.UUID)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading ObjectStorage Credentials",
-            "Could not read objectstorage credentials: "+err.Error(),
-        )
-        return
-    }
+	canCreateResponse, err := r.Client.CanCreateObjectStorageResource(objectStorageResource)
+	common.ValidateCanCreate(canCreateResponse, &diags, "ObjectStorage", err)
 
-    state.AccountName = types.StringValue(credentials.AccountName)
-    state.ContainerName = types.StringValue(credentials.ContainerName)
-    state.SasToken = types.StringValue(credentials.SasToken)
-    state.AzureCliCommand = types.StringValue(credentials.AzureCliCommand)
+	response, err := r.Client.CreateObjectStorageResource(objectStorageResource)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Creating ObjectStorage Resource",
+			"Could not create objectstorage resource, unexpected error: "+err.Error(),
+		)
+		return
+	}
 
-    diags = resp.State.Set(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	switch res := response.(type) {
+	case client.PublicCreateResponse:
+		plan.BillingUUID = types.StringValue(res.BillingUUID)
+		plan.PaymentURL = types.StringValue(res.PaymentURL)
+		plan.UUID = types.StringNull()
+
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading ObjectStorage Resource Status",
+				"Could not read objectstorage resource status: "+err.Error(),
+			)
+			return
+		}
+
+		plan.Status = types.StringValue(*status)
+	case client.PrivateCreateResponse:
+		plan.BillingUUID = types.StringNull()
+		plan.PaymentURL = types.StringNull()
+		plan.UUID = types.StringValue(res.ServiceUUID)
+		plan.Status = types.StringValue(res.Status)
+	}
+
+	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+
+	plan.ActiveStorage = types.Int32Null()
+	plan.Endpoint = types.StringNull()
+	plan.AccountName = types.StringNull()
+	plan.ContainerName = types.StringNull()
+	plan.SasToken = types.StringNull()
+	plan.AzureCliCommand = types.StringNull()
+
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+}
+
+func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var model common.ObjectStorageResourceModel
+	diags := req.State.Get(ctx, &model)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	diags = model.Read(ctx, *r.Client, common.RemoveResource(resp))
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *objectStorageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-    // TODO: Implement update if the API supports it. For now, we mark everything as needing replacement.
+	// TODO: Implement update if the API supports it. For now, we mark everything as needing replacement.
 }
 
 func (r *objectStorageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-    var state objectStorageResourceModel
-    diags := req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	var state common.ObjectStorageResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    err := r.Client.DeleteObjectStorageResource(state.UUID.ValueString())
-    if err != nil {
-        resp.Diagnostics.AddWarning(
-            "Error Deleting ObjectStorage Resource",
-            "Could not delete objectstorage resource, unexpected error: " + err.Error(),
-        )
-        return
-    }
+	err := r.Client.DeleteObjectStorageResource(state.UUID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddWarning(
+			"Error Deleting ObjectStorage Resource",
+			"Could not delete objectstorage resource, unexpected error: "+err.Error(),
+		)
+		return
+	}
 }
