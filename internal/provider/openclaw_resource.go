@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -10,13 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var (
-	_ resource.Resource = &openclawResource{}
+	_ resource.Resource              = &openclawResource{}
 	_ resource.ResourceWithConfigure = &openclawResource{}
 )
 
@@ -24,27 +26,22 @@ func NewOpenClawResource() resource.Resource {
 	return &openclawResource{}
 }
 
-type openclawResource struct{
+type openclawResource struct {
 	client *client.ElementoClient
 }
 
 type openclawResourceModel struct {
-	VMName           types.String                `tfsdk:"vm_name"`
-	CPUCores         types.Int32                 `tfsdk:"cpu_cores"`
-	RAMSizeMB        types.Int32                 `tfsdk:"ram_size_mb"`
-	Username         types.String                `tfsdk:"username"`
-	Password         types.String                `tfsdk:"password"`
-	SSHKey           types.String                `tfsdk:"ssh_key"`
-    Region           types.String                `tfsdk:"region"`
-    BillingFrequency types.String                `tfsdk:"billing_frequency"`
-    BillingUUID      types.String                `tfsdk:"billing_uuid"`
-    PaymentURL       types.String                `tfsdk:"payment_url"`
-    LastUpdated      types.String                `tfsdk:"last_updated"`
-    UUID             types.String                `tfsdk:"uuid"`
-    State            types.String                `tfsdk:"state"`
-    ServiceURL       types.String                `tfsdk:"service_url"`
-    Token            types.String                `tfsdk:"token"`
-    Status           types.String                `tfsdk:"status"`
+	baseResourceModel
+	VMName     types.String `tfsdk:"vm_name"`
+	CPUCores   types.Int32  `tfsdk:"cpu_cores"`
+	RAMSizeMB  types.Int32  `tfsdk:"ram_size_mb"`
+	DiskSizeGB types.Int64  `tfsdk:"disk_size_gb"`
+	Username   types.String `tfsdk:"username"`
+	Password   types.String `tfsdk:"password"`
+	SSHKey     types.String `tfsdk:"ssh_key"`
+	State      types.String `tfsdk:"state"`
+	ServiceURL types.String `tfsdk:"service_url"`
+	Token      types.String `tfsdk:"token"`
 }
 
 func (r *openclawResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -52,101 +49,77 @@ func (r *openclawResource) Metadata(_ context.Context, req resource.MetadataRequ
 }
 
 func (r *openclawResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-		    "vm_name": schema.StringAttribute{
-				Required: true,
-				Description: "The name of the virtual machine for the n8n resource.",
-				PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"cpu_cores": schema.Int32Attribute{
-                Required: true,
-                Description: "The number of CPU cores for the n8n resource.",
-                PlanModifiers: []planmodifier.Int32{
-                    int32planmodifier.RequiresReplace(),
-                },
-            },
-            "ram_size_mb": schema.Int32Attribute{
-                Required: true,
-                Description: "The amount of RAM in MB for the n8n resource.",
-                PlanModifiers: []planmodifier.Int32{
-                    int32planmodifier.RequiresReplace(),
-                },
-            },
-            "username": schema.StringAttribute{
-                Required: true,
-                Description: "The username for the n8n resource.",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-                },
-            },
-            "password": schema.StringAttribute{
-                Required: true,
-                Sensitive: true,
-                Description: "The password for the n8n resource.",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-                },
-            },
-            "ssh_key": schema.StringAttribute{
-                Optional: true,
-                Sensitive: true,
-                Description: "The SSH key for the n8n resource.",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-                },
-            },
-            "region": schema.StringAttribute{
-                Required: true,
-                Description: "The region where the n8n resource will be created.",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-                },
-            },
-            "billing_frequency": schema.StringAttribute{
-                Required: true,
-                Description: "The billing frequency for the n8n resource (e.g., 'hour', 'month').",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-                },
-            },
-            "billing_uuid": schema.StringAttribute{
-                Computed: true,
-                Description: "The billing UUID for the n8n resource, assigned after creation.",
+	attributes := baseSchema()
 
-            },
-            "payment_url": schema.StringAttribute{
-                Computed: true,
-                Description: "The payment URL for the n8n resource, assigned after creation.",
-            },
-            "last_updated": schema.StringAttribute{
-                Computed: true,
-                Description: "The timestamp of the last update to the n8n resource.",
-            },
-            "uuid": schema.StringAttribute{
-                Computed: true,
-                Description: "The UUID of the n8n resource, assigned after creation.",
-            },
-            "service_url": schema.StringAttribute{
-                Computed: true,
-                Description: "The service URL for the n8n resource, assigned after creation.",
-            },
-            "state": schema.StringAttribute{
-                Computed: true,
-                Description: "The state of the n8n resource (e.g., 'ERROR', 'SUCCESS').",
-            },
-            "token": schema.StringAttribute{
-                Computed: true,
-                Sensitive: true,
-                Description: "The token for the n8n resource, assigned after creation.",
-            },
-            "status": schema.StringAttribute{
-                Computed: true,
-                Description: "The status of the n8n resource (e.g., 'paid', 'provisioning', 'running').",
-            },
+	attributes["vm_name"] = schema.StringAttribute{
+		Required:    true,
+		Description: "The name of the virtual machine for the openclaw resource.",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
 		},
+	}
+	attributes["cpu_cores"] = schema.Int32Attribute{
+		Required:    true,
+		Description: "The number of CPU cores for the openclaw resource.",
+		PlanModifiers: []planmodifier.Int32{
+			int32planmodifier.RequiresReplace(),
+		},
+	}
+	attributes["ram_size_mb"] = schema.Int32Attribute{
+		Required:    true,
+		Description: "The amount of RAM in MB for the openclaw resource.",
+		PlanModifiers: []planmodifier.Int32{
+			int32planmodifier.RequiresReplace(),
+		},
+	}
+	attributes["disk_size_gb"] = schema.Int64Attribute{
+		Required: true,
+		Description: "The size (in GB) of the boot disk for the openclaw resource.",
+		PlanModifiers: []planmodifier.Int64{
+			int64planmodifier.RequiresReplace(),
+		},
+
+	}
+	attributes["username"] = schema.StringAttribute{
+		Required:    true,
+		Description: "The username for the openclaw resource.",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+	}
+	attributes["password"] = schema.StringAttribute{
+		Required:    true,
+		Sensitive:   true,
+		Description: "The password for the openclaw resource.",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+	}
+	attributes["ssh_key"] = schema.StringAttribute{
+		Optional:    true,
+		Sensitive:   true,
+		Description: "The SSH key for the openclaw resource.",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
+	}
+	attributes["service_url"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "The service URL for the openclaw resource, assigned after creation.",
+	}
+	attributes["state"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "The state of the openclaw resource (e.g., 'ERROR', 'SUCCESS').",
+	}
+
+	attributes["token"] = schema.StringAttribute{
+		Computed:    true,
+		Sensitive:   true,
+		Description: "The token for the openclaw resource, assigned after creation.",
+	}
+
+	resp.Schema = schema.Schema{
+		Attributes: attributes,
 	}
 }
 
@@ -169,207 +142,207 @@ func (r *openclawResource) Configure(_ context.Context, req resource.ConfigureRe
 }
 
 func (r *openclawResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-    var plan openclawResourceModel
-    diags := req.Plan.Get(ctx, &plan)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	var plan openclawResourceModel
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    authentication := &client.ComputeAuthentication{
-        Username: plan.Username.ValueString(),
-        Password: plan.Password.ValueString(),
-        SSHKey:   plan.SSHKey.ValueStringPointer(),
-    }
+	cloudinit, err := r.client.RenderCloudinit("openclaw", map[string]string{})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Creating openclaw Resource",
+			"Could not render cloudinit template: "+err.Error(),
+		)
+		return
+	}
+	cloudinit_b64 := base64.StdEncoding.EncodeToString([]byte(*cloudinit))
 
-    openclawResource := client.ComputeResource{
-        Requirements: client.ComputeRequirements{
-            CPU: client.ComputeCPU{
-                SMTEnabled:       false,
-                MinFrequency:     1,
-                Arch:             []string{"X86_64"},
-                Flags:            []string{},
-                Slots:            int(plan.CPUCores.ValueInt32()),
-                AllowSMT:         false,
-                FullPhysical:     true,
-                MaxOverprovision: 1,
-            },
-            Memory: client.ComputeMemory{
-                Capacity:   int(plan.RAMSizeMB.ValueInt32()),
-                RequireECC: false,
-            },
-            PCI: client.ComputePCI{
-                Devices: map[string]int{},
-            },
-            Misc: client.ComputeMisc{
-                OSFamily:  "linux",
-                OSFlavour: "ubuntu",
-            },
-        },
-        Authentication: authentication,
-        VMName: plan.VMName.ValueString(),
-        Region: plan.Region.ValueString(),
-        CloudInit: client.CloudInitConfig{
-            Template:  "openclaw",
-            Variables: map[string]string{},
-        },
-        AdditionalInfo: client.AdditionalInfoConfig{
-            Service: "openclaw",
-        },
-        BillingFrequency: plan.BillingFrequency.ValueString(),
-        Volumes: []client.StorageResourceMin{
-            {
-                Name:      "openclaw-main-disk",
-                Size:      64,
-                Private:   true,
-                Shareable: false,
-                Bootable:  false,
-                Readonly:  false,
-            },
-        },
-    }
+	openclawResource := client.SpotVMRequest{
+		BaseRequest: client.BaseRequest{
+			Region:           plan.Region.ValueString(),
+			BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
+		},
+		VMName: plan.VMName.ValueString(),
+		CPU: client.SpotVMCPU{
+			Arch:        []string{"X86_64"},
+			Slots:       int(plan.CPUCores.ValueInt32()),
+			SharedCores: false,
+		},
+		Mem: client.SpotVMMemory{
+			CapacityMB: int(plan.RAMSizeMB.ValueInt32()),
+		},
+		OS: client.SpotVMOS{
+			Family:  "linux",
+			Flavour: "ubuntu",
+			Version: "24.04",
+		},
+		Storage: client.SpotVMStorage{
+			Boot: client.SpotVMVolume{
+				Name:   "openclaw-main-disk",
+				SizeGB: float64(plan.DiskSizeGB.ValueInt64()),
+			},
+			Data: []client.SpotVMVolume{},
+		},
+		PCI: client.SpotVMPCI{
+			Devices: []client.SpotVMPCIDev{},
+		},
+		Networks: []client.SpotVMNetwork{
+			{Kind: "natted"},
+		},
+		Auth: client.SpotVMAuth{
+			Username: plan.Username.ValueString(),
+			Password: plan.Password.ValueString(),
+			SSHKey:   plan.SSHKey.ValueStringPointer(),
+		},
+		Tags:            []string{"service:openclaw"},
+		CloudInitBase64: cloudinit_b64,
+	}
 
-    canCreateResponse, err := r.client.CanCreateComputeResource(openclawResource)
-    ValidateCanCreate(canCreateResponse, &diags, "OpenClaw", err)
+	canCreateResponse, err := r.client.CanCreateResource(openclawResource)
+	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "OpenClaw", err)
 
-    response, err := r.client.CreateComputeResource(openclawResource)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Creating OpenClaw Resource",
-            "Could not create openclaw resource, unexpected error: " + err.Error(),
-        )
-        return
-    }
+	response, err := r.client.CreateResource(openclawResource)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Creating OpenClaw Resource",
+			"Could not create openclaw resource, unexpected error: "+err.Error(),
+		)
+		return
+	}
 
-    switch res := response.(type) {
-        case client.PublicCreateResponse:
-            plan.BillingUUID = types.StringValue(res.BillingUUID)
-            plan.PaymentURL  = types.StringValue(res.PaymentURL)
-            plan.UUID        = types.StringNull()
+	switch res := response.(type) {
+	case client.PublicCreateResponse:
+		plan.BillingUUID = types.StringValue(res.BillingUUID)
+		plan.PaymentURL = types.StringValue(res.PaymentURL)
+		plan.UUID = types.StringNull()
 
-            status, err := r.client.GetResourceStatus(res.BillingUUID)
-            if err != nil {
-                resp.Diagnostics.AddError(
-                    "Error Reading OpenClaw Resource Status",
-                    "Could not read openclaw resource status: "+err.Error(),
-                )
-                return
-            }
+		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading OpenClaw Resource Status",
+				"Could not read openclaw resource status: "+err.Error(),
+			)
+			return
+		}
 
-            plan.Status = types.StringValue(*status)
-        case client.PrivateCreateResponse:
-            plan.BillingUUID = types.StringNull()
-            plan.PaymentURL  = types.StringNull()
-            plan.UUID        = types.StringValue(res.ServiceUUID)
-            plan.Status      = types.StringValue(res.Status)
-    }
+		plan.Status = types.StringValue(*status)
+	case client.PrivateCreateResponse:
+		plan.BillingUUID = types.StringNull()
+		plan.PaymentURL = types.StringNull()
+		plan.UUID = types.StringValue(res.ServiceUUID)
+		plan.Status = types.StringValue(res.Status)
+	}
 
-    plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+	plan.CreationDate = types.StringNull()
+	plan.CreatorUUID = types.StringNull()
+	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
-    plan.State       = types.StringNull()
-    plan.ServiceURL  = types.StringNull()
-    plan.Token       = types.StringNull()
+	plan.State = types.StringNull()
+	plan.ServiceURL = types.StringNull()
+	plan.Token = types.StringNull()
 
-    diags = resp.State.Set(ctx, plan)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (r *openclawResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-    var state openclawResourceModel
-    diags := req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	var state openclawResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    resources, err := r.client.ListComputeResources()
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading OpenClaw Resources",
-            "Could not list openclaw resources: "+err.Error(),
-        )
-        return
-    }
+	resources, err := r.client.ListComputeResources()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading OpenClaw Resources",
+			"Could not list openclaw resources: "+err.Error(),
+		)
+		return
+	}
 
-    var resource *client.ComputeListItem;
-    for _, res := range resources {
-        if res.BillingUUID == state.BillingUUID.ValueString() || res.UUID == state.UUID.ValueString() {
-            resource = &res
-            break
-        }
-    }
+	var resource *client.ComputeListItem
+	for _, res := range resources {
+		if res.BillingUUID == state.BillingUUID.ValueString() || res.UUID == state.UUID.ValueString() {
+			resource = &res
+			break
+		}
+	}
 
-    billing_uuid := state.BillingUUID.ValueStringPointer()
-    var status *string
-    if billing_uuid != nil && *billing_uuid != "" {
-        status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
-        if err != nil {
-            resp.Diagnostics.AddError(
-                "Error Reading OpenClaw Resource Status",
-                "Could not read openclaw resource status: "+err.Error(),
-            )
-            return
-        }
-    } else {
-        status = nil
-    }
+	billing_uuid := state.BillingUUID.ValueStringPointer()
+	var status *string
+	if billing_uuid != nil && *billing_uuid != "" {
+		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error Reading OpenClaw Resource Status",
+				"Could not read openclaw resource status: "+err.Error(),
+			)
+			return
+		}
+	} else {
+		status = nil
+	}
 
-    if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-        resp.State.RemoveResource(ctx)
-        return
-    }
+	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
+		resp.State.RemoveResource(ctx)
+		return
+	}
 
-    state.Status      = types.StringPointerValue(status)
-    state.VMName      = types.StringValue(resource.Requirements.VMName)
-    state.CPUCores    = types.Int32Value(int32(resource.Requirements.Slots))
-    state.RAMSizeMB   = types.Int32Value(int32(resource.Requirements.RamSize))
-    state.VMName      = types.StringValue(resource.Requirements.VMName)
-    state.Region      = types.StringValue(resource.Region)
-    state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-    state.UUID        = types.StringValue(resource.UUID)
-    state.PaymentURL  = types.StringNull()
+	state.Status = types.StringPointerValue(status)
+	state.VMName = types.StringValue(resource.Requirements.VMName)
+	state.CPUCores = types.Int32Value(int32(resource.Requirements.Slots))
+	state.RAMSizeMB = types.Int32Value(int32(resource.Requirements.RamSize))
+	state.VMName = types.StringValue(resource.Requirements.VMName)
+	state.Region = types.StringValue(resource.Region)
+	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+	state.UUID = types.StringValue(resource.UUID)
+	state.PaymentURL = types.StringNull()
 
-    credentials, err := r.client.GetOpenClawCredentials(resource.UUID)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading OpenClaw Credentials",
-            "Could not read openclaw credentials: "+err.Error(),
-        )
-        return
-    }
+	credentials, err := r.client.GetOpenClawCredentials(resource.UUID)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading OpenClaw Credentials",
+			"Could not read openclaw credentials: "+err.Error(),
+		)
+		return
+	}
 
-    state.State      = types.StringValue(credentials.State)
-    state.ServiceURL = types.StringValue(credentials.URL)
-    state.Token      = types.StringValue(credentials.Token)
+	state.State = types.StringValue(credentials.State)
+	state.ServiceURL = types.StringValue(credentials.URL)
+	state.Token = types.StringValue(credentials.Token)
 
-    diags = resp.State.Set(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 func (r *openclawResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-    // TODO: Implement update if the API supports it. For now, we mark everything as needing replacement.
+	// TODO: Implement update if the API supports it. For now, we mark everything as needing replacement.
 }
 
 func (r *openclawResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-    var state openclawResourceModel
-    diags := req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	var state openclawResourceModel
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    err := r.client.DeleteComputeResource(state.UUID.ValueString())
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Deleting OpenClaw Resource",
-            "Could not delete openclaw resource, unexpected error: " + err.Error(),
-        )
-        return
-    }
+	err := r.client.DeleteSpotVMResource(state.UUID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting OpenClaw Resource",
+			"Could not delete openclaw resource, unexpected error: "+err.Error(),
+		)
+		return
+	}
 }
