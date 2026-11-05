@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"terraform-provider-elemento/internal/client"
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
@@ -27,48 +26,6 @@ func NewKAASResource() resource.Resource {
 
 type kaasResource struct{
 	common.BaseResource
-}
-
-type kaasResourceModel struct {
-    CreatorUUID           types.String      `tfsdk:"creator_uuid"`
-    Name                  types.String      `tfsdk:"name"`
-    Region                types.String      `tfsdk:"region"`
-    UUID                  types.String      `tfsdk:"uuid"`
-    LastUpdated           types.String      `tfsdk:"last_updated"`
-    BillingFrequency      types.String      `tfsdk:"billing_frequency"`
-    BillingUUID           types.String      `tfsdk:"billing_uuid"`
-    PaymentURL            types.String      `tfsdk:"payment_url"`
-    NodePools             []nodePoolModel   `tfsdk:"node_pools"`
-    NodesSubnet           nodeSubnetModel   `tfsdk:"nodes_subnet"`
-    UpdatePolicy          types.String      `tfsdk:"update_policy"`
-    KubernetesVersion     types.String      `tfsdk:"kubernetes_version"`
-    ControlPlaneHAEnabled types.Bool        `tfsdk:"control_plane_ha_enabled"`
-    ClusterName           types.String      `tfsdk:"cluster_name"`
-    ClusterStatus         types.String      `tfsdk:"cluster_status"`
-    Endpoint              types.String      `tfsdk:"endpoint"`
-    KubeConfig            types.String      `tfsdk:"kube_config"`
-    Status                types.String      `tfsdk:"status"`
-}
-
-type nodePoolModel struct {
-    Name             types.String   `tfsdk:"name"`
-    AutoScale        types.Bool     `tfsdk:"auto_scale"`
-    MinNodes         types.Int32    `tfsdk:"min_nodes"`
-    MaxNodes         types.Int32    `tfsdk:"max_nodes"`
-    SharedStorageGB  types.Int64    `tfsdk:"shared_storage_gb"`
-    Specs            nodePoolSpecsModel `tfsdk:"specs"`
-}
-
-type nodePoolSpecsModel struct {
-    CPUCores         types.Int32    `tfsdk:"cpu_cores"`
-    MemoryGB         types.Int32    `tfsdk:"memory_gb"`
-    DiskSizeGB       types.Int32    `tfsdk:"disk_size_gb"`
-    GPUs             types.Int32    `tfsdk:"gpus"`
-}
-
-type nodeSubnetModel struct {
-    DHCPEnabled      types.Bool     `tfsdk:"dhcp_enabled"`
-    CIDR             types.String   `tfsdk:"cidr"`
 }
 
 func (r *kaasResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -229,26 +186,8 @@ func (r *kaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 	}
 }
 
-func (r *kaasResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.ElementoClient)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Provider Data Type",
-			fmt.Sprintf("Expected *ElementoClient, got %T. Please report this issue to the provider developer.", req.ProviderData),
-		)
-
-		return
-	}
-	r.Client = client
-}
-
 func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-    var plan kaasResourceModel
+    var plan common.KAASResourceModel
     diags := req.Plan.Get(ctx, &plan)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
@@ -337,90 +276,22 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 }
 
 func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-    var state kaasResourceModel
-    diags := req.State.Get(ctx, &state)
+    var model common.KAASResourceModel
+    diags := req.State.Get(ctx, &model)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
         return
     }
 
-    var resource *client.KAASResponse
-    if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-        resources, err := r.Client.ListKAASResources()
-        if err != nil {
-            resp.Diagnostics.AddError(
-                "Error Reading KAAS Resources",
-                "Could not list kaas resources: "+err.Error(),
-            )
-            return
-        }
-
-        for _, res := range resources {
-            if res.BillingUUID == state.BillingUUID.ValueString() {
-                resource = &res
-                break
-            }
-        }
-    } else {
-        res, code, err := r.Client.GetKAASResource(state.UUID.ValueString())
-        if err != nil && code != 404 {
-            resp.Diagnostics.AddError(
-                "Error Reading KAAS Resource",
-                "Could not read kaas resource: "+err.Error(),
-            )
-            return
-        }
-        resource = res
-    }
-
-    billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-    state.Status      = types.StringPointerValue(status)
-    state.Name        = types.StringValue(resource.Name)
-    state.Region      = types.StringValue(resource.Region)
-    state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-    state.UUID        = types.StringValue(resource.UUID)
-    state.CreatorUUID = types.StringValue(resource.CreatorUUID)
-    state.PaymentURL  = types.StringNull()
-
-    state.ClusterName   = types.StringValue(resource.ClusterName)
-    state.ClusterStatus = types.StringValue(resource.Status)
-    state.Endpoint      = types.StringValue(resource.Endpoint)
-    state.KubeConfig    = types.StringValue(resource.KubeConfig)
-
-    // credentials, err := r.Client.GetKAASCredentials(resource.UUID)
-    // if err != nil {
-    //     resp.Diagnostics.AddError(
-    //         "Error Reading KAAS Credentials",
-    //         "Could not read kaas credentials: "+err.Error(),
-    //     )
-    //     return
-    // }
-
-    diags = resp.State.Set(ctx, &state)
+    diags = model.Read(ctx, *r.Client, common.RemoveResource(resp))
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
-        return
+    	return
     }
+    model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -428,7 +299,7 @@ func (r *kaasResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-    var state kaasResourceModel
+    var state common.KAASResourceModel
     diags := req.State.Get(ctx, &state)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
