@@ -97,7 +97,7 @@ type renderCloudinitRequest struct {
 
 type renderCloudinitResponse struct {
 	Service   string            `json:"service"`
-	Cloudinit string            `json:"cloudinit"`
+	Cloudinit string            `json:"cloud_init"`
 	Metadata  map[string]any `json:"metadata"`
 	Source    struct {
 		Repo   string `json:"repo"`

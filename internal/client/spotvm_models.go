@@ -40,7 +40,7 @@ type SpotVMStorage struct {
 type SpotVMVolume struct {
 	UUID   *string `json:"volume_uuid,omitempty"`
 	Name   string  `json:"name"`
-	SizeGB int     `json:"size_gb"`
+	SizeGB float64 `json:"size_gb"`
 }
 
 type SpotVMPCI struct {
@@ -97,7 +97,7 @@ func (r *ComputeResource) toSpotVM(cloudinit *string) SpotVMRequest {
 	for _, v := range r.Volumes {
 		sv := SpotVMVolume{
 			Name:   v.Name,
-			SizeGB: v.Size,
+			SizeGB: float64(v.Size),
 		}
 		if v.Bootable && !bootAssigned {
 			spot.Storage.Boot = sv
@@ -138,7 +138,7 @@ type SpotVMListResponse struct {
 func spotVMVolumeToResponseMin(v SpotVMVolume, bootable bool) StorageResourceResponseMin {
 	vol := StorageResourceResponseMin{
 		Name:     v.Name,
-		Size:     v.SizeGB,
+		Size:     int(v.SizeGB),
 		Bootable: bootable,
 		Tags:     []string{},
 	}

@@ -262,7 +262,7 @@ func (c *ElementoClient) getTargetUUID() (*string, error) {
 	return &targetData.UUID, nil
 }
 
-func (c *ElementoClient) renderCloudinit(service string, variables map[string]string) (*string, error) {
+func (c *ElementoClient) RenderCloudinit(service string, variables map[string]string) (*string, error) {
 	authToken, err := c.getAuth()
 	if err != nil {
 		return nil, err
@@ -633,7 +633,7 @@ func (c *ElementoClient) CanCreateComputeResource(computeResource ComputeResourc
 	var resource any
 	var headers map[string]string
 	if targetData.TargetType == "meson_public" || targetData.TargetType == "meson_private" {
-		cloudinit, err := c.renderCloudinit(computeResource.CloudInit.Template, computeResource.CloudInit.Variables)
+		cloudinit, err := c.RenderCloudinit(computeResource.CloudInit.Template, computeResource.CloudInit.Variables)
 		if err != nil {
 			return nil, err
 		}
@@ -655,7 +655,7 @@ func (c *ElementoClient) CreateComputeResource(computeResource ComputeResource) 
 	var resource any
 	var headers map[string]string
 	if targetData.TargetType == "meson_public" || targetData.TargetType == "meson_private" {
-		cloudinit, err := c.renderCloudinit(computeResource.CloudInit.Template, computeResource.CloudInit.Variables)
+		cloudinit, err := c.RenderCloudinit(computeResource.CloudInit.Template, computeResource.CloudInit.Variables)
 		if err != nil {
 			return nil, err
 		}

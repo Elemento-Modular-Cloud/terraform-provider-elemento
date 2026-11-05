@@ -355,7 +355,7 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 	for _, volume := range plan.Storage.Data {
 		dataVolumes = append(dataVolumes, client.SpotVMVolume{
 			Name:   volume.Name.ValueString(),
-			SizeGB: int(volume.SizeGB.ValueInt64()),
+			SizeGB: float64(volume.SizeGB.ValueInt64()),
 		})
 	}
 
@@ -385,7 +385,7 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 		Storage: client.SpotVMStorage{
 			Boot: client.SpotVMVolume{
 				Name:   plan.Storage.Boot.Name.ValueString(),
-				SizeGB: int(plan.Storage.Boot.SizeGB.ValueInt64()),
+				SizeGB: float64(plan.Storage.Boot.SizeGB.ValueInt64()),
 			},
 			Data: dataVolumes,
 		},
@@ -405,7 +405,7 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	canCreateResponse, err := r.client.CanCreateResource(spotVMResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Serverless", err)
+	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "SpotVM", err)
 
 	response, err := r.client.CreateResource(spotVMResource)
 	if err != nil {
