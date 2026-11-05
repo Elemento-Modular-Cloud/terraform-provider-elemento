@@ -178,7 +178,7 @@ func (d *computeDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		config.IPv4 = types.StringNull()
 	}
 
-	arch, archDiags := types.ListValueFrom(ctx, types.StringType, []string{found.Requirements.Arch})
+	arch, archDiags := types.ListValueFrom(ctx, types.StringType, found.Requirements.Arch)
 	resp.Diagnostics.Append(archDiags...)
 	config.Arch = arch
 

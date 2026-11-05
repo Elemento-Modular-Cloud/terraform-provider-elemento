@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"terraform-provider-elemento/internal/client"
-	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"

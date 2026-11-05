@@ -98,7 +98,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	var found *client.KAASResponse
 	if uuid != "" {
-		res, err := d.Client.GetKAASResource(uuid)
+		res, _, err := d.Client.GetKAASResource(uuid)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading KAAS Resource", "Could not read kaas resource: "+err.Error())
 			return

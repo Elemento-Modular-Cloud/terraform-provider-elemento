@@ -125,7 +125,7 @@ func (d *storageDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	var found *client.StorageResourceResponse
 	if volumeUUID != "" {
-		res, err := d.Client.GetStorageResource(creatorUUID, volumeUUID)
+		res, _, err := d.Client.GetStorageResource(creatorUUID, volumeUUID)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading Storage Resource", "Could not read storage resource: "+err.Error())
 			return

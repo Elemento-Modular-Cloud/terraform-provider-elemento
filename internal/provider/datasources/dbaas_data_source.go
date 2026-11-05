@@ -114,7 +114,7 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	var found *client.DBAASResponse
 	if uuid != "" {
-		res, err := d.Client.GetDBAASResource(uuid)
+		res, _, err := d.Client.GetDBAASResource(uuid)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading DBAAS Resource", "Could not read dbaas resource: "+err.Error())
 			return

@@ -96,7 +96,7 @@ func (d *objectStorageDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	var found *client.ObjectStorageResponse
 	if uuid != "" {
-		res, err := d.Client.GetObjectStorageResource(uuid)
+		res, _, err := d.Client.GetObjectStorageResource(uuid)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading Object Storage", "Could not read object storage resource: "+err.Error())
 			return
