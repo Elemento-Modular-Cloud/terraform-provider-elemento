@@ -1,9 +1,10 @@
-package provider
+package datasources
 
 import (
 	"context"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -20,7 +21,7 @@ func NewObjectStorageDataSource() datasource.DataSource {
 }
 
 type objectStorageDataSource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type objectStorageDataSourceModel struct {
@@ -78,7 +79,7 @@ func (d *objectStorageDataSource) Schema(_ context.Context, _ datasource.SchemaR
 }
 
 func (d *objectStorageDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	d.client = configureDataSourceClient(req, resp)
+	d.Client = configureDataSourceClient(req, resp)
 }
 
 func (d *objectStorageDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -95,7 +96,7 @@ func (d *objectStorageDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	var found *client.ObjectStorageResponse
 	if uuid != "" {
-		res, err := d.client.GetObjectStorageResource(uuid)
+		res, err := d.Client.GetObjectStorageResource(uuid)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading Object Storage", "Could not read object storage resource: "+err.Error())
 			return
@@ -106,7 +107,7 @@ func (d *objectStorageDataSource) Read(ctx context.Context, req datasource.ReadR
 		}
 		found = res
 	} else {
-		resources, err := d.client.ListObjectStorageResources()
+		resources, err := d.Client.ListObjectStorageResources()
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading Object Storage", "Could not list object storage resources: "+err.Error())
 			return
@@ -138,14 +139,14 @@ func (d *objectStorageDataSource) Read(ctx context.Context, req datasource.ReadR
 	config.ActiveStorage = types.Int32Value(found.ActiveStorage)
 	config.Endpoint = types.StringValue(found.Endpoint)
 
-	status, diags := resourceStatus(d.client, found.BillingUUID)
+	status, diags := resourceStatus(d.Client, found.BillingUUID)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	config.Status = status
 
-	credentials, err := d.client.GetObjectStorageCredentials(found.UUID)
+	credentials, err := d.Client.GetObjectStorageCredentials(found.UUID)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Reading Object Storage Credentials", "Could not read object storage credentials: "+err.Error())
 		return

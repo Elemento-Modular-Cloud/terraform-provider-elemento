@@ -1,9 +1,10 @@
-package provider
+package datasources
 
 import (
 	"context"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -20,7 +21,7 @@ func NewComputeDataSource() datasource.DataSource {
 }
 
 type computeDataSource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type computeDataSourceModel struct {
@@ -116,7 +117,7 @@ func (d *computeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 }
 
 func (d *computeDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	d.client = configureDataSourceClient(req, resp)
+	d.Client = configureDataSourceClient(req, resp)
 }
 
 func (d *computeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -131,7 +132,7 @@ func (d *computeDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	vmName := optionalString(config.VMName)
 	region := optionalString(config.Region)
 
-	resources, err := d.client.ListComputeResources()
+	resources, err := d.Client.ListComputeResources()
 	if err != nil {
 		resp.Diagnostics.AddError("Error Reading Compute Resources", "Could not list compute resources: "+err.Error())
 		return
@@ -200,7 +201,7 @@ func (d *computeDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 	config.Volumes = volumes
 
-	status, statusDiags := resourceStatus(d.client, found.BillingUUID)
+	status, statusDiags := resourceStatus(d.Client, found.BillingUUID)
 	resp.Diagnostics.Append(statusDiags...)
 	if resp.Diagnostics.HasError() {
 		return

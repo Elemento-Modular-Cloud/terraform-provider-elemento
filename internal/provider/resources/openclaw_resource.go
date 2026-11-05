@@ -1,4 +1,4 @@
-package provider
+package resources
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -27,11 +28,11 @@ func NewOpenClawResource() resource.Resource {
 }
 
 type openclawResource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type openclawResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	VMName     types.String `tfsdk:"vm_name"`
 	CPUCores   types.Int32  `tfsdk:"cpu_cores"`
 	RAMSizeMB  types.Int32  `tfsdk:"ram_size_mb"`
@@ -49,7 +50,7 @@ func (r *openclawResource) Metadata(_ context.Context, req resource.MetadataRequ
 }
 
 func (r *openclawResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Required:    true,
@@ -138,7 +139,7 @@ func (r *openclawResource) Configure(_ context.Context, req resource.ConfigureRe
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *openclawResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -149,7 +150,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	cloudinit, err := r.client.RenderCloudinit("openclaw", map[string]string{})
+	cloudinit, err := r.Client.RenderCloudinit("openclaw", map[string]string{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating openclaw Resource",
@@ -200,10 +201,10 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 		CloudInitBase64: cloudinit_b64,
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(openclawResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "OpenClaw", err)
+	canCreateResponse, err := r.Client.CanCreateResource(openclawResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "OpenClaw", err)
 
-	response, err := r.client.CreateResource(openclawResource)
+	response, err := r.Client.CreateResource(openclawResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating OpenClaw Resource",
@@ -218,7 +219,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading OpenClaw Resource Status",
@@ -258,7 +259,7 @@ func (r *openclawResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
-	resources, err := r.client.ListComputeResources()
+	resources, err := r.Client.ListComputeResources()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading OpenClaw Resources",
@@ -278,7 +279,7 @@ func (r *openclawResource) Read(ctx context.Context, req resource.ReadRequest, r
 	billing_uuid := state.BillingUUID.ValueStringPointer()
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading OpenClaw Resource Status",
@@ -305,7 +306,7 @@ func (r *openclawResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.UUID = types.StringValue(resource.UUID)
 	state.PaymentURL = types.StringNull()
 
-	credentials, err := r.client.GetOpenClawCredentials(resource.UUID)
+	credentials, err := r.Client.GetOpenClawCredentials(resource.UUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading OpenClaw Credentials",
@@ -337,7 +338,7 @@ func (r *openclawResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.client.DeleteSpotVMResource(state.UUID.ValueString())
+	err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting OpenClaw Resource",

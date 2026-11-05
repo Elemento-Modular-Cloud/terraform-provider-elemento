@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -26,11 +27,11 @@ func NewServerlessResource() resource.Resource {
 }
 
 type serverlessResource struct {
-	baseResource
+	common.BaseResource
 }
 
 type serverlessResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name            types.String `tfsdk:"name"`
 	Runtime         types.String `tfsdk:"runtime"`
 	Handler         types.String `tfsdk:"handler"`
@@ -52,7 +53,7 @@ func (r *serverlessResource) Metadata(_ context.Context, req resource.MetadataRe
 }
 
 func (r *serverlessResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -171,10 +172,10 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		CodeZipB64:  plan.CodeZipB64.ValueString(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(serverlessResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Serverless", err)
+	canCreateResponse, err := r.Client.CanCreateResource(serverlessResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Serverless", err)
 
-	response, err := r.client.CreateResource(serverlessResource)
+	response, err := r.Client.CreateResource(serverlessResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Serverless Resource",
@@ -189,7 +190,7 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Serverless Resource Status",
@@ -240,7 +241,7 @@ func (r *serverlessResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	var resource *client.ServerlessResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.ServerlessResponse](r.client, "serverless")
+		resources, err := client.ListResources[client.ServerlessResponse](r.Client, "serverless")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Serverless Resources",
@@ -256,7 +257,7 @@ func (r *serverlessResource) Read(ctx context.Context, req resource.ReadRequest,
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.ServerlessResponse](r.client, state.UUID.ValueString(), "serverless")
+		res, code, err := client.GetResource[client.ServerlessResponse](r.Client, state.UUID.ValueString(), "serverless")
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading Serverless Resource"+string(code),
@@ -271,7 +272,7 @@ func (r *serverlessResource) Read(ctx context.Context, req resource.ReadRequest,
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -305,7 +306,7 @@ func (r *serverlessResource) Read(ctx context.Context, req resource.ReadRequest,
 	state.State = types.StringValue(resource.State)
 	state.PaymentURL = types.StringNull()
 
-	credentials, err := r.client.GetServerlessCredentials(resource.ServiceUUID)
+	credentials, err := r.Client.GetServerlessCredentials(resource.ServiceUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Serverless Credentials",
@@ -337,7 +338,7 @@ func (r *serverlessResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	err := r.client.DeleteResource(state.UUID.ValueString(), "serverless")
+	err := r.Client.DeleteResource(state.UUID.ValueString(), "serverless")
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting Serverless Resource",

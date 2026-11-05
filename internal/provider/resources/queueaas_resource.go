@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,11 +26,11 @@ func NewQueueAASResource() resource.Resource {
 }
 
 type queueaasResource struct {
-	baseResource
+	common.BaseResource
 }
 
 type queueaasResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name             types.String `tfsdk:"name"`
 	NodeNumber       types.Int64  `tfsdk:"node_number"`
 	NodeSize         types.String `tfsdk:"node_size"`
@@ -49,7 +50,7 @@ func (r *queueaasResource) Metadata(_ context.Context, req resource.MetadataRequ
 }
 
 func (r *queueaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -161,10 +162,10 @@ func (r *queueaasResource) Create(ctx context.Context, req resource.CreateReques
 		NetworkUUID:  plan.NetworkUUID.ValueString(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(queueaasResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "QueueAAS", err)
+	canCreateResponse, err := r.Client.CanCreateResource(queueaasResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "QueueAAS", err)
 
-	response, err := r.client.CreateResource(queueaasResource)
+	response, err := r.Client.CreateResource(queueaasResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating QueueAAS Resource",
@@ -179,7 +180,7 @@ func (r *queueaasResource) Create(ctx context.Context, req resource.CreateReques
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading QueueAAS Resource Status",
@@ -226,7 +227,7 @@ func (r *queueaasResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	var resource *client.QueueAASResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.QueueAASResponse](r.client, "queueaas")
+		resources, err := client.ListResources[client.QueueAASResponse](r.Client, "queueaas")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading QueueAAS Resources",
@@ -242,7 +243,7 @@ func (r *queueaasResource) Read(ctx context.Context, req resource.ReadRequest, r
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.QueueAASResponse](r.client, state.UUID.ValueString(), "queueaas")
+		res, code, err := client.GetResource[client.QueueAASResponse](r.Client, state.UUID.ValueString(), "queueaas")
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading QueueAAS Resource"+string(code),
@@ -257,7 +258,7 @@ func (r *queueaasResource) Read(ctx context.Context, req resource.ReadRequest, r
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -292,7 +293,7 @@ func (r *queueaasResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.NetworkUUID = types.StringValue(resource.NetworkUUID)
 	state.PaymentURL = types.StringNull()
 
-	credentials, err := r.client.GetQueueAASCredentials(resource.ServiceUUID)
+	credentials, err := r.Client.GetQueueAASCredentials(resource.ServiceUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading QueueAAS Credentials",
@@ -323,7 +324,7 @@ func (r *queueaasResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.client.DeleteResource(state.UUID.ValueString(), "queueaas")
+	err := r.Client.DeleteResource(state.UUID.ValueString(), "queueaas")
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting QueueAAS Resource",

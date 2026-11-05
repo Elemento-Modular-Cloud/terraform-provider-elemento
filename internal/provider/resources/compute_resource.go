@@ -1,4 +1,4 @@
-package provider
+package resources
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
@@ -34,7 +35,7 @@ func NewComputeResource() resource.Resource {
 }
 
 type computeResource struct{
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type computeResourceModel struct {
@@ -366,7 +367,7 @@ func (r *computeResource) Configure(_ context.Context, req resource.ConfigureReq
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -456,10 +457,10 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         Volumes: volumes,
     }
 
-    canCreateResponse, err := r.client.CanCreateComputeResource(computeResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Compute", err)
+    canCreateResponse, err := r.Client.CanCreateComputeResource(computeResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Compute", err)
 
-    response, err := r.client.CreateComputeResource(computeResource)
+    response, err := r.Client.CreateComputeResource(computeResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating Compute Resource",
@@ -474,7 +475,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
 
-            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddError(
                     "Error Reading Compute Resource Status",
@@ -523,7 +524,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
         return
     }
 
-    resources, err := r.client.ListComputeResources()
+    resources, err := r.Client.ListComputeResources()
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Reading Compute Resources",
@@ -543,7 +544,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     billing_uuid := state.BillingUUID.ValueStringPointer()
     var status *string
     if billing_uuid != nil && *billing_uuid != "" {
-        status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+        status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
         if err != nil {
             resp.Diagnostics.AddError(
                 "Error Reading Compute Resource Status",
@@ -627,7 +628,7 @@ func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest
         return
     }
 
-    err := r.client.DeleteComputeResource(state.UUID.ValueString())
+    err := r.Client.DeleteComputeResource(state.UUID.ValueString())
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Deleting Compute Resource",

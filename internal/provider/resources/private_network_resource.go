@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -25,11 +26,11 @@ func NewPrivateNetworkResource() resource.Resource {
 }
 
 type privateNetworkResource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type privateNetworkResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name           types.String `tfsdk:"name"`
 	CIDR           types.String `tfsdk:"cidr"`
 	AutoAssignCIDR types.Bool   `tfsdk:"auto_assign_cidr"`
@@ -59,7 +60,7 @@ func (r *privateNetworkResource) Metadata(_ context.Context, req resource.Metada
 }
 
 func (r *privateNetworkResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -134,7 +135,7 @@ func (r *privateNetworkResource) Configure(_ context.Context, req resource.Confi
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *privateNetworkResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -155,10 +156,10 @@ func (r *privateNetworkResource) Create(ctx context.Context, req resource.Create
 		AutoAssignCIDR: plan.AutoAssignCIDR.ValueBool(),
 	}
 
-	canCreateResponse, err := r.client.CanCreatePrivateNetworkResource(privateNetworkResource)
-    ValidateCanCreate(canCreateResponse, &diags, "PrivateNetwork", err)
+	canCreateResponse, err := r.Client.CanCreatePrivateNetworkResource(privateNetworkResource)
+    common.ValidateCanCreate(canCreateResponse, &diags, "PrivateNetwork", err)
 
-	response, err := r.client.CreatePrivateNetworkResource(privateNetworkResource)
+	response, err := r.Client.CreatePrivateNetworkResource(privateNetworkResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating PrivateNetwork Resource",
@@ -173,7 +174,7 @@ func (r *privateNetworkResource) Create(ctx context.Context, req resource.Create
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading PrivateNetwork Resource Status",
@@ -222,7 +223,7 @@ func (r *privateNetworkResource) Read(ctx context.Context, req resource.ReadRequ
 
 	var resource *client.PrivateNetworkResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := r.client.ListPrivateNetworkResources()
+		resources, err := r.Client.ListPrivateNetworkResources()
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading PrivateNetwork Resources",
@@ -238,7 +239,7 @@ func (r *privateNetworkResource) Read(ctx context.Context, req resource.ReadRequ
 			}
 		}
 	} else {
-		res, code, err := r.client.GetPrivateNetworkResource(state.UUID.ValueString())
+		res, code, err := r.Client.GetPrivateNetworkResource(state.UUID.ValueString())
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading PrivateNetwork Resource"+string(code),
@@ -253,7 +254,7 @@ func (r *privateNetworkResource) Read(ctx context.Context, req resource.ReadRequ
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -295,7 +296,7 @@ func (r *privateNetworkResource) Read(ctx context.Context, req resource.ReadRequ
 	resp.Diagnostics.Append(diags...)
 
 	// // NOTE: current network credentials are not useful so we ignore them.
-	// credentials, err := r.client.GetPrivateNetworkCredentials(resource.ServiceUUID)
+	// credentials, err := r.Client.GetPrivateNetworkCredentials(resource.ServiceUUID)
 	// if err != nil {
 	// 	resp.Diagnostics.AddError(
 	// 		"Error Reading PrivateNetwork Credentials",
@@ -323,7 +324,7 @@ func (r *privateNetworkResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	err := r.client.DeletePrivateNetworkResource(state.UUID.ValueString())
+	err := r.Client.DeletePrivateNetworkResource(state.UUID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting PrivateNetwork Resource",

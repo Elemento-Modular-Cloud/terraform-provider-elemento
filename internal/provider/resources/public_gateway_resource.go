@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -23,11 +24,11 @@ func NewPublicGatewayResource() resource.Resource {
 }
 
 type publicGatewayResource struct {
-	baseResource
+	common.BaseResource
 }
 
 type publicGatewayResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name           types.String `tfsdk:"name"`
 	NetworkUUID    types.String `tfsdk:"network_uuid"`
 	VPCID          types.String `tfsdk:"vpc_id"`
@@ -44,7 +45,7 @@ func (r *publicGatewayResource) Metadata(_ context.Context, req resource.Metadat
 }
 
 func (r *publicGatewayResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -111,10 +112,10 @@ func (r *publicGatewayResource) Create(ctx context.Context, req resource.CreateR
 		NetworkUUID: plan.NetworkUUID.ValueString(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(publicGatewayResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicGateway", err)
+	canCreateResponse, err := r.Client.CanCreateResource(publicGatewayResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicGateway", err)
 
-	response, err := r.client.CreateResource(publicGatewayResource)
+	response, err := r.Client.CreateResource(publicGatewayResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating PublicGateway Resource",
@@ -129,7 +130,7 @@ func (r *publicGatewayResource) Create(ctx context.Context, req resource.CreateR
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading PublicGateway Resource Status",
@@ -181,7 +182,7 @@ func (r *publicGatewayResource) Read(ctx context.Context, req resource.ReadReque
 
 	var resource *client.PublicGatewayResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.PublicGatewayResponse](r.client, "publicgateway")
+		resources, err := client.ListResources[client.PublicGatewayResponse](r.Client, "publicgateway")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading PublicGateway Resources",
@@ -197,7 +198,7 @@ func (r *publicGatewayResource) Read(ctx context.Context, req resource.ReadReque
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.PublicGatewayResponse](r.client, state.UUID.ValueString(), "publicgateway")
+		res, code, err := client.GetResource[client.PublicGatewayResponse](r.Client, state.UUID.ValueString(), "publicgateway")
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading PublicGateway Resource"+string(code),
@@ -212,7 +213,7 @@ func (r *publicGatewayResource) Read(ctx context.Context, req resource.ReadReque
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -245,7 +246,7 @@ func (r *publicGatewayResource) Read(ctx context.Context, req resource.ReadReque
 	state.PaymentURL = types.StringNull()
 
 	// // NOTE: PublicGateway credentials contain no useful extra information
-	// credentials, err := r.client.GetPublicGatewayCredentials(resource.ServiceUUID)
+	// credentials, err := r.Client.GetPublicGatewayCredentials(resource.ServiceUUID)
 	// if err != nil {
 	// 	resp.Diagnostics.AddError(
 	// 		"Error Reading PublicGateway Credentials",
@@ -278,7 +279,7 @@ func (r *publicGatewayResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	err := r.client.DeleteResource(state.UUID.ValueString(), "publicgateway")
+	err := r.Client.DeleteResource(state.UUID.ValueString(), "publicgateway")
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting PublicGateway Resource",

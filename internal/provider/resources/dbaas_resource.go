@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,7 +26,7 @@ func NewDBAASResource() resource.Resource {
 }
 
 type dbaasResource struct{
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type dbaasResourceModel struct {
@@ -190,7 +191,7 @@ func (r *dbaasResource) Configure(_ context.Context, req resource.ConfigureReque
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -212,10 +213,10 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
         BillingFrequency: plan.BillingFrequency.ValueString(),
     }
 
-    canCreateResponse, err := r.client.CanCreateDBAASResource(dbaasResource)
-    ValidateCanCreate(canCreateResponse, &diags, "DBAAS", err)
+    canCreateResponse, err := r.Client.CanCreateDBAASResource(dbaasResource)
+    common.ValidateCanCreate(canCreateResponse, &diags, "DBAAS", err)
 
-    response, err := r.client.CreateDBAASResource(dbaasResource)
+    response, err := r.Client.CreateDBAASResource(dbaasResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating DBAAS Resource",
@@ -230,7 +231,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
 
-            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddError(
                     "Error Reading DBAAS Resource Status",
@@ -276,7 +277,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
     var resource *client.DBAASResponse
     if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-        resources, err := r.client.ListDBAASResources()
+        resources, err := r.Client.ListDBAASResources()
         if err != nil {
             resp.Diagnostics.AddError(
                 "Error Reading DBAAS Resources",
@@ -292,7 +293,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
             }
         }
     } else {
-        res, code, err := r.client.GetDBAASResource(state.UUID.ValueString())
+        res, code, err := r.Client.GetDBAASResource(state.UUID.ValueString())
         if err != nil && code != 404 {
             resp.Diagnostics.AddError(
                 "Error Reading DBAAS Resource",
@@ -307,7 +308,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -337,7 +338,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
     state.Engine       = types.StringValue(resource.Engine)
     state.PaymentURL   = types.StringNull()
 
-    credentials, err := r.client.GetDBAASCredentials(resource.UUID)
+    credentials, err := r.Client.GetDBAASCredentials(resource.UUID)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Reading DBAAS Credentials",
@@ -373,7 +374,7 @@ func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, 
         return
     }
 
-    err := r.client.DeleteDBAASResource(state.UUID.ValueString())
+    err := r.Client.DeleteDBAASResource(state.UUID.ValueString())
     if err != nil {
         resp.Diagnostics.AddWarning(
             "Error Deleting DBAAS Resource",

@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,11 +26,11 @@ func NewLoadBalancerResource() resource.Resource {
 }
 
 type loadBalancerResource struct {
-	baseResource
+	common.BaseResource
 }
 
 type loadBalancerResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name            types.String `tfsdk:"name"`
 	Type            types.String `tfsdk:"type"`
 	IsPublic        types.Bool   `tfsdk:"is_public"`
@@ -48,7 +49,7 @@ func (r *loadBalancerResource) Metadata(_ context.Context, req resource.Metadata
 }
 
 func (r *loadBalancerResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -131,10 +132,10 @@ func (r *loadBalancerResource) Create(ctx context.Context, req resource.CreateRe
 		Port:     plan.Port.ValueInt64(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(loadBalancerResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "LoadBalancer", err)
+	canCreateResponse, err := r.Client.CanCreateResource(loadBalancerResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "LoadBalancer", err)
 
-	response, err := r.client.CreateResource(loadBalancerResource)
+	response, err := r.Client.CreateResource(loadBalancerResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating LoadBalancer Resource",
@@ -149,7 +150,7 @@ func (r *loadBalancerResource) Create(ctx context.Context, req resource.CreateRe
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading LoadBalancer Resource Status",
@@ -201,7 +202,7 @@ func (r *loadBalancerResource) Read(ctx context.Context, req resource.ReadReques
 
 	var resource *client.LoadBalancerResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.LoadBalancerResponse](r.client, "loadbalancer")
+		resources, err := client.ListResources[client.LoadBalancerResponse](r.Client, "loadbalancer")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading LoadBalancer Resources",
@@ -217,7 +218,7 @@ func (r *loadBalancerResource) Read(ctx context.Context, req resource.ReadReques
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.LoadBalancerResponse](r.client, state.UUID.ValueString(), "loadbalancer")
+		res, code, err := client.GetResource[client.LoadBalancerResponse](r.Client, state.UUID.ValueString(), "loadbalancer")
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading LoadBalancer Resource"+string(code),
@@ -232,7 +233,7 @@ func (r *loadBalancerResource) Read(ctx context.Context, req resource.ReadReques
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -270,7 +271,7 @@ func (r *loadBalancerResource) Read(ctx context.Context, req resource.ReadReques
 	state.PaymentURL = types.StringNull()
 
 	// // NOTE: LoadBalancer credentials contain no useful extra information
-	// credentials, err := r.client.GetLoadBalancerCredentials(resource.ServiceUUID)
+	// credentials, err := r.Client.GetLoadBalancerCredentials(resource.ServiceUUID)
 	// if err != nil {
 	// 	resp.Diagnostics.AddError(
 	// 		"Error Reading LoadBalancer Credentials",
@@ -303,7 +304,7 @@ func (r *loadBalancerResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.client.DeleteResource(state.UUID.ValueString(), "loadbalancer")
+	err := r.Client.DeleteResource(state.UUID.ValueString(), "loadbalancer")
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting LoadBalancer Resource",

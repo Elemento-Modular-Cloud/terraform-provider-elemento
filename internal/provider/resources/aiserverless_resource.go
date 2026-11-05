@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -24,11 +25,11 @@ func NewAIServerlessResource() resource.Resource {
 }
 
 type aiserverlessResource struct {
-	baseResource
+	common.BaseResource
 }
 
 type aiserverlessResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name            types.String `tfsdk:"name"`
 	ModelName       types.String `tfsdk:"model_name"`
 	EnableStreaming types.Bool   `tfsdk:"enable_streaming"`
@@ -43,7 +44,7 @@ func (r *aiserverlessResource) Metadata(_ context.Context, req resource.Metadata
 }
 
 func (r *aiserverlessResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -107,10 +108,10 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 		EnableStreaming: plan.EnableStreaming.ValueBool(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(aiserverlessResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "AIServerless", err)
+	canCreateResponse, err := r.Client.CanCreateResource(aiserverlessResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "AIServerless", err)
 
-	response, err := r.client.CreateResource(aiserverlessResource)
+	response, err := r.Client.CreateResource(aiserverlessResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating AIServerless Resource",
@@ -125,7 +126,7 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading AIServerless Resource Status",
@@ -174,7 +175,7 @@ func (r *aiserverlessResource) Read(ctx context.Context, req resource.ReadReques
 
 	var resource *client.AIServerlessResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.AIServerlessResponse](r.client, "aiserverless")
+		resources, err := client.ListResources[client.AIServerlessResponse](r.Client, "aiserverless")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading AIServerless Resources",
@@ -190,7 +191,7 @@ func (r *aiserverlessResource) Read(ctx context.Context, req resource.ReadReques
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.AIServerlessResponse](r.client, state.UUID.ValueString(), "aiserverless")
+		res, code, err := client.GetResource[client.AIServerlessResponse](r.Client, state.UUID.ValueString(), "aiserverless")
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading AIServerless Resource"+string(code),
@@ -205,7 +206,7 @@ func (r *aiserverlessResource) Read(ctx context.Context, req resource.ReadReques
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -235,7 +236,7 @@ func (r *aiserverlessResource) Read(ctx context.Context, req resource.ReadReques
 	state.ARN = types.StringValue(resource.ARN)
 	state.PaymentURL = types.StringNull()
 
-	credentials, err := r.client.GetAIServerlessCredentials(resource.ServiceUUID)
+	credentials, err := r.Client.GetAIServerlessCredentials(resource.ServiceUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading AIServerless Credentials",
@@ -266,7 +267,7 @@ func (r *aiserverlessResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.client.DeleteResource(state.UUID.ValueString(), "aiserverless")
+	err := r.Client.DeleteResource(state.UUID.ValueString(), "aiserverless")
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting AIServerless Resource",

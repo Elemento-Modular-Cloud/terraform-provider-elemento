@@ -5,6 +5,10 @@ import (
 	"os"
 	"terraform-provider-elemento/internal/client"
 
+	"terraform-provider-elemento/internal/provider/resources"
+	"terraform-provider-elemento/internal/provider/datasources"
+
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -197,32 +201,32 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 
 func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewComputeDataSource,
-		NewStorageDataSource,
-		NewObjectStorageDataSource,
-		NewDBAASDataSource,
-		NewKAASDataSource,
+		datasources.NewComputeDataSource,
+		datasources.NewStorageDataSource,
+		datasources.NewObjectStorageDataSource,
+		datasources.NewDBAASDataSource,
+		datasources.NewKAASDataSource,
 	}
 }
 
 func (p *ElementoProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		// NewComputeResource,
-		NewSpotVMResource,
-		NewStorageResource,
-		NewObjectStorageResource,
-		NewDBAASResource,
-		NewKAASResource,
-		NewN8NResource,
-		NewOpenClawResource,
-		NewFileStorageResource,
-		NewPrivateNetworkResource,
-		NewPublicIPResource,
-		NewRegistryResource,
-		NewLoadBalancerResource,
-		NewPublicGatewayResource,
-		NewServerlessResource,
-		NewAIServerlessResource,
-		NewQueueAASResource,
+		resources.NewSpotVMResource,
+		resources.NewStorageResource,
+		resources.NewObjectStorageResource,
+		resources.NewDBAASResource,
+		resources.NewKAASResource,
+		resources.NewN8NResource,
+		resources.NewOpenClawResource,
+		resources.NewFileStorageResource,
+		resources.NewPrivateNetworkResource,
+		resources.NewPublicIPResource,
+		resources.NewRegistryResource,
+		resources.NewLoadBalancerResource,
+		resources.NewPublicGatewayResource,
+		resources.NewServerlessResource,
+		resources.NewAIServerlessResource,
+		resources.NewQueueAASResource,
 	}
 }

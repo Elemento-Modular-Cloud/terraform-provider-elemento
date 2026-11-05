@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -29,7 +30,7 @@ func NewStorageResource() resource.Resource {
 }
 
 type storageResource struct{
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type storageResourceModel struct {
@@ -247,7 +248,7 @@ func (r *storageResource) Configure(_ context.Context, req resource.ConfigureReq
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -308,10 +309,10 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
         Ceph:             nil,
     }
 
-    canCreateResponse, err := r.client.CanCreateStorageResource(canCreateRequest)
-    ValidateCanCreate(canCreateResponse, &diags, "Storage", err)
+    canCreateResponse, err := r.Client.CanCreateStorageResource(canCreateRequest)
+    common.ValidateCanCreate(canCreateResponse, &diags, "Storage", err)
 
-    response, err := r.client.CreateStorageResource(&storageResource)
+    response, err := r.Client.CreateStorageResource(&storageResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating Storage Resource",
@@ -326,7 +327,7 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
 
-            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddError(
                     "Error Reading Storage Resource Status",
@@ -363,7 +364,7 @@ func (r *storageResource) Read(ctx context.Context, req resource.ReadRequest, re
 
     var resource *client.StorageResourceResponse
     if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-        resources, err := r.client.ListStorageResources(state.CreatorUUID.ValueString())
+        resources, err := r.Client.ListStorageResources(state.CreatorUUID.ValueString())
         if err != nil {
             resp.Diagnostics.AddError(
                 "Error Reading Storage Resources",
@@ -379,7 +380,7 @@ func (r *storageResource) Read(ctx context.Context, req resource.ReadRequest, re
             }
         }
     } else {
-        res, code, err := r.client.GetStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
+        res, code, err := r.Client.GetStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
         if err != nil && code != 404 {
             resp.Diagnostics.AddError(
                 "Error Reading Storage Resource",
@@ -394,7 +395,7 @@ func (r *storageResource) Read(ctx context.Context, req resource.ReadRequest, re
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -448,7 +449,7 @@ func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest
         return
     }
 
-    err := r.client.DeleteStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
+    err := r.Client.DeleteStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
     if err != nil {
         resp.Diagnostics.AddWarning(
             "Error Deleting Storage Resource",

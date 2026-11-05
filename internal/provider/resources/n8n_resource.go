@@ -1,4 +1,4 @@
-package provider
+package resources
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -27,11 +28,11 @@ func NewN8NResource() resource.Resource {
 }
 
 type n8nResource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type n8nResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	VMName     types.String `tfsdk:"vm_name"`
 	CPUCores   types.Int32  `tfsdk:"cpu_cores"`
 	RAMSizeMB  types.Int32  `tfsdk:"ram_size_mb"`
@@ -48,7 +49,7 @@ func (r *n8nResource) Metadata(_ context.Context, req resource.MetadataRequest, 
 }
 
 func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Required:    true,
@@ -131,7 +132,7 @@ func (r *n8nResource) Configure(_ context.Context, req resource.ConfigureRequest
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -142,7 +143,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	cloudinit, err := r.client.RenderCloudinit("n8n", map[string]string{})
+	cloudinit, err := r.Client.RenderCloudinit("n8n", map[string]string{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating n8n Resource",
@@ -193,10 +194,10 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		CloudInitBase64: cloudinit_b64,
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(n8nResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "n8n", err)
+	canCreateResponse, err := r.Client.CanCreateResource(n8nResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "n8n", err)
 
-	response, err := r.client.CreateResource(n8nResource)
+	response, err := r.Client.CreateResource(n8nResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating n8n Resource",
@@ -211,7 +212,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading n8n Resource Status",
@@ -250,7 +251,7 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	resources, err := r.client.ListSpotVMResources()
+	resources, err := r.Client.ListSpotVMResources()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading n8n Resources",
@@ -270,7 +271,7 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	billing_uuid := state.BillingUUID.ValueStringPointer()
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading n8n Resource Status",
@@ -297,7 +298,7 @@ func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	state.UUID = types.StringValue(resource.UUID)
 	state.PaymentURL = types.StringNull()
 
-	credentials, err := r.client.GetN8NCredentials(resource.UUID)
+	credentials, err := r.Client.GetN8NCredentials(resource.UUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading n8n Credentials",
@@ -328,7 +329,7 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
-	err := r.client.DeleteSpotVMResource(state.UUID.ValueString())
+	err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting n8n Resource",

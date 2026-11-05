@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,11 +26,11 @@ func NewRegistryResource() resource.Resource {
 }
 
 type registryResource struct {
-	baseResource
+	common.BaseResource
 }
 
 type registryResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name            types.String `tfsdk:"name"`
 	SizeGB          types.Int64  `tfsdk:"size_gb"`
 	IsPublic        types.Bool   `tfsdk:"is_public"`
@@ -49,7 +50,7 @@ func (r *registryResource) Metadata(_ context.Context, req resource.MetadataRequ
 }
 
 func (r *registryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -132,10 +133,10 @@ func (r *registryResource) Create(ctx context.Context, req resource.CreateReques
 		IsPublic: plan.IsPublic.ValueBool(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(registryResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Registry", err)
+	canCreateResponse, err := r.Client.CanCreateResource(registryResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Registry", err)
 
-	response, err := r.client.CreateResource(registryResource)
+	response, err := r.Client.CreateResource(registryResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Registry Resource",
@@ -150,7 +151,7 @@ func (r *registryResource) Create(ctx context.Context, req resource.CreateReques
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Registry Resource Status",
@@ -205,7 +206,7 @@ func (r *registryResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	var resource *client.RegistryResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.RegistryResponse](r.client, "registry")
+		resources, err := client.ListResources[client.RegistryResponse](r.Client, "registry")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Registry Resources",
@@ -221,7 +222,7 @@ func (r *registryResource) Read(ctx context.Context, req resource.ReadRequest, r
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.RegistryResponse](r.client, state.UUID.ValueString(), "registry")
+		res, code, err := client.GetResource[client.RegistryResponse](r.Client, state.UUID.ValueString(), "registry")
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading Registry Resource"+string(code),
@@ -236,7 +237,7 @@ func (r *registryResource) Read(ctx context.Context, req resource.ReadRequest, r
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -269,7 +270,7 @@ func (r *registryResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.State = types.StringValue(resource.State)
 	state.PaymentURL = types.StringNull()
 
-	credentials, err := r.client.GetRegistryCredentials(resource.ServiceUUID)
+	credentials, err := r.Client.GetRegistryCredentials(resource.ServiceUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Registry Credentials",
@@ -302,7 +303,7 @@ func (r *registryResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.client.DeleteResource(state.UUID.ValueString(), "registry")
+	err := r.Client.DeleteResource(state.UUID.ValueString(), "registry")
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting Registry Resource",

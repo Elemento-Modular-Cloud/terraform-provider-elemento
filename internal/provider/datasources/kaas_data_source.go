@@ -1,9 +1,10 @@
-package provider
+package datasources
 
 import (
 	"context"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -20,7 +21,7 @@ func NewKAASDataSource() datasource.DataSource {
 }
 
 type kaasDataSource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type kaasDataSourceModel struct {
@@ -80,7 +81,7 @@ func (d *kaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 }
 
 func (d *kaasDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	d.client = configureDataSourceClient(req, resp)
+	d.Client = configureDataSourceClient(req, resp)
 }
 
 func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -97,7 +98,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	var found *client.KAASResponse
 	if uuid != "" {
-		res, err := d.client.GetKAASResource(uuid)
+		res, err := d.Client.GetKAASResource(uuid)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading KAAS Resource", "Could not read kaas resource: "+err.Error())
 			return
@@ -108,7 +109,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		}
 		found = res
 	} else {
-		resources, err := d.client.ListKAASResources()
+		resources, err := d.Client.ListKAASResources()
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading KAAS Resources", "Could not list kaas resources: "+err.Error())
 			return
@@ -149,7 +150,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	config.Version = types.StringValue(found.Version)
 	config.NetworkCIDR = types.StringValue(found.NetworkCIDR)
 
-	status, diags := resourceStatus(d.client, found.BillingUUID)
+	status, diags := resourceStatus(d.Client, found.BillingUUID)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

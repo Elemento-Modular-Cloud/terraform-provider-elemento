@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -23,11 +24,11 @@ func NewPublicIPResource() resource.Resource {
 }
 
 type publicIPResource struct {
-	baseResource
+	common.BaseResource
 }
 
 type publicIPResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name                         types.String `tfsdk:"name"`
 	PublicIP                     types.String `tfsdk:"public_ip"`
 	AllocationID                 types.String `tfsdk:"allocation_id"`
@@ -43,7 +44,7 @@ func (r *publicIPResource) Metadata(_ context.Context, req resource.MetadataRequ
 }
 
 func (r *publicIPResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -102,10 +103,10 @@ func (r *publicIPResource) Create(ctx context.Context, req resource.CreateReques
 		Name: plan.Name.ValueString(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(publicIPResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicIP", err)
+	canCreateResponse, err := r.Client.CanCreateResource(publicIPResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicIP", err)
 
-	response, err := r.client.CreateResource(publicIPResource)
+	response, err := r.Client.CreateResource(publicIPResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating PublicIP Resource",
@@ -120,7 +121,7 @@ func (r *publicIPResource) Create(ctx context.Context, req resource.CreateReques
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading PublicIP Resource Status",
@@ -172,7 +173,7 @@ func (r *publicIPResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	var resource *client.PublicIPResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.PublicIPResponse](r.client, "publicip")
+		resources, err := client.ListResources[client.PublicIPResponse](r.Client, "publicip")
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading PublicIP Resources",
@@ -188,7 +189,7 @@ func (r *publicIPResource) Read(ctx context.Context, req resource.ReadRequest, r
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.PublicIPResponse](r.client, state.UUID.ValueString(), "publicip")
+		res, code, err := client.GetResource[client.PublicIPResponse](r.Client, state.UUID.ValueString(), "publicip")
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading PublicIP Resource"+string(code),
@@ -203,7 +204,7 @@ func (r *publicIPResource) Read(ctx context.Context, req resource.ReadRequest, r
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -237,7 +238,7 @@ func (r *publicIPResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.PaymentURL = types.StringNull()
 
 	// // NOTE: PublicIP credentials contain no useful extra information
-	// credentials, err := r.client.GetPublicIPCredentials(resource.ServiceUUID)
+	// credentials, err := r.Client.GetPublicIPCredentials(resource.ServiceUUID)
 	// if err != nil {
 	// 	resp.Diagnostics.AddError(
 	// 		"Error Reading PublicIP Credentials",
@@ -270,7 +271,7 @@ func (r *publicIPResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.client.DeleteResource(state.UUID.ValueString(), "publicip")
+	err := r.Client.DeleteResource(state.UUID.ValueString(), "publicip")
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting PublicIP Resource",

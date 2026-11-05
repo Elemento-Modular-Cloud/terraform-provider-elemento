@@ -1,9 +1,10 @@
-package provider
+package datasources
 
 import (
 	"context"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -21,7 +22,7 @@ func NewStorageDataSource() datasource.DataSource {
 }
 
 type storageDataSource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type storageDataSourceModel struct {
@@ -97,7 +98,7 @@ func (d *storageDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 }
 
 func (d *storageDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	d.client = configureDataSourceClient(req, resp)
+	d.Client = configureDataSourceClient(req, resp)
 }
 
 func (d *storageDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -114,7 +115,7 @@ func (d *storageDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	creatorUUID := optionalString(config.CreatorUUID)
 
 	if creatorUUID == "" {
-		id, err := d.client.ClientUUID()
+		id, err := d.Client.ClientUUID()
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading Account UUID", "Could not resolve creator_uuid: "+err.Error())
 			return
@@ -124,7 +125,7 @@ func (d *storageDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 	var found *client.StorageResourceResponse
 	if volumeUUID != "" {
-		res, err := d.client.GetStorageResource(creatorUUID, volumeUUID)
+		res, err := d.Client.GetStorageResource(creatorUUID, volumeUUID)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading Storage Resource", "Could not read storage resource: "+err.Error())
 			return
@@ -135,7 +136,7 @@ func (d *storageDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 		found = res
 	} else {
-		resources, err := d.client.ListStorageResources(creatorUUID)
+		resources, err := d.Client.ListStorageResources(creatorUUID)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading Storage Resources", "Could not list storage resources: "+err.Error())
 			return
@@ -187,7 +188,7 @@ func (d *storageDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 	config.Tags = tags
 
-	status, diags := resourceStatus(d.client, found.BillingUUID)
+	status, diags := resourceStatus(d.Client, found.BillingUUID)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

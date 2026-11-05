@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,7 +26,7 @@ func NewKAASResource() resource.Resource {
 }
 
 type kaasResource struct{
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type kaasResourceModel struct {
@@ -243,7 +244,7 @@ func (r *kaasResource) Configure(_ context.Context, req resource.ConfigureReques
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -285,10 +286,10 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
         ControlPlaneHAEnabled: plan.ControlPlaneHAEnabled.ValueBool(),
     }
 
-    canCreateResponse, err := r.client.CanCreateKAASResource(kaasResource)
-    ValidateCanCreate(canCreateResponse, &diags, "KAAS", err)
+    canCreateResponse, err := r.Client.CanCreateKAASResource(kaasResource)
+    common.ValidateCanCreate(canCreateResponse, &diags, "KAAS", err)
 
-    response, err := r.client.CreateKAASResource(kaasResource)
+    response, err := r.Client.CreateKAASResource(kaasResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating KAAS Resource",
@@ -303,7 +304,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
 
-            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddError(
                     "Error Reading KAAS Resource Status",
@@ -345,7 +346,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
     var resource *client.KAASResponse
     if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-        resources, err := r.client.ListKAASResources()
+        resources, err := r.Client.ListKAASResources()
         if err != nil {
             resp.Diagnostics.AddError(
                 "Error Reading KAAS Resources",
@@ -361,7 +362,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
             }
         }
     } else {
-        res, code, err := r.client.GetKAASResource(state.UUID.ValueString())
+        res, code, err := r.Client.GetKAASResource(state.UUID.ValueString())
         if err != nil && code != 404 {
             resp.Diagnostics.AddError(
                 "Error Reading KAAS Resource",
@@ -376,7 +377,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -406,7 +407,7 @@ func (r *kaasResource) Read(ctx context.Context, req resource.ReadRequest, resp 
     state.Endpoint      = types.StringValue(resource.Endpoint)
     state.KubeConfig    = types.StringValue(resource.KubeConfig)
 
-    // credentials, err := r.client.GetKAASCredentials(resource.UUID)
+    // credentials, err := r.Client.GetKAASCredentials(resource.UUID)
     // if err != nil {
     //     resp.Diagnostics.AddError(
     //         "Error Reading KAAS Credentials",
@@ -434,7 +435,7 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
         return
     }
 
-    err := r.client.DeleteKAASResource(state.UUID.ValueString())
+    err := r.Client.DeleteKAASResource(state.UUID.ValueString())
     if err != nil {
         resp.Diagnostics.AddWarning(
             "Error Deleting KAAS Resource",

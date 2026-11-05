@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -25,11 +26,11 @@ func NewFileStorageResource() resource.Resource {
 }
 
 type fileStorageResource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type fileStorageResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	Name         types.String  `tfsdk:"name"`
 	SizeGB       types.Int64   `tfsdk:"size_gb"`
 	UsedGB       types.Float64 `tfsdk:"used_gb"`
@@ -47,7 +48,7 @@ func (r *fileStorageResource) Metadata(_ context.Context, req resource.MetadataR
 }
 
 func (r *fileStorageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -119,7 +120,7 @@ func (r *fileStorageResource) Configure(_ context.Context, req resource.Configur
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -139,10 +140,10 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 		SizeGB: int64(plan.SizeGB.ValueInt64()),
 	}
 
-	canCreateResponse, err := r.client.CanCreateFileStorageResource(fileStorageResource)
-    ValidateCanCreate(canCreateResponse, &diags, "FileStorage", err)
+	canCreateResponse, err := r.Client.CanCreateFileStorageResource(fileStorageResource)
+    common.ValidateCanCreate(canCreateResponse, &diags, "FileStorage", err)
 
-	response, err := r.client.CreateFileStorageResource(fileStorageResource)
+	response, err := r.Client.CreateFileStorageResource(fileStorageResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating FileStorage Resource",
@@ -157,7 +158,7 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading FileStorage Resource Status",
@@ -209,7 +210,7 @@ func (r *fileStorageResource) Read(ctx context.Context, req resource.ReadRequest
 
 	var resource *client.FileStorageResponse
 	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := r.client.ListFileStorageResources()
+		resources, err := r.Client.ListFileStorageResources()
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading FileStorage Resources",
@@ -225,7 +226,7 @@ func (r *fileStorageResource) Read(ctx context.Context, req resource.ReadRequest
 			}
 		}
 	} else {
-		res, code, err := r.client.GetFileStorageResource(state.UUID.ValueString())
+		res, code, err := r.Client.GetFileStorageResource(state.UUID.ValueString())
 		if err != nil && code != 404 {
 			resp.Diagnostics.AddError(
 				"Error Reading FileStorage Resource"+string(code),
@@ -240,7 +241,7 @@ func (r *fileStorageResource) Read(ctx context.Context, req resource.ReadRequest
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -270,7 +271,7 @@ func (r *fileStorageResource) Read(ctx context.Context, req resource.ReadRequest
 	state.State = types.StringValue(resource.State)
 	state.PaymentURL = types.StringNull()
 
-	credentials, err := r.client.GetFileStorageCredentials(resource.ServiceUUID)
+	credentials, err := r.Client.GetFileStorageCredentials(resource.ServiceUUID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading FileStorage Credentials",
@@ -303,7 +304,7 @@ func (r *fileStorageResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	err := r.client.DeleteFileStorageResource(state.UUID.ValueString())
+	err := r.Client.DeleteFileStorageResource(state.UUID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddWarning(
 			"Error Deleting FileStorage Resource",

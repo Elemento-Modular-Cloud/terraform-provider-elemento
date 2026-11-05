@@ -1,4 +1,4 @@
-package provider
+package common
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type baseResourceModel struct {
+type BaseResourceModel struct {
 	CreatorUUID      types.String `tfsdk:"creator_uuid"`
 	Region           types.String `tfsdk:"region"`
 	CreationDate     types.String `tfsdk:"creation_date"`
@@ -26,7 +26,7 @@ type baseResourceModel struct {
 	Status           types.String `tfsdk:"status"`
 }
 
-func baseSchema() map[string]schema.Attribute {
+func BaseSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"creator_uuid": schema.StringAttribute{
 			Computed:    true,
@@ -70,12 +70,12 @@ func baseSchema() map[string]schema.Attribute {
 	}
 }
 
-type baseResource struct {
-	client *client.ElementoClient
+type BaseResource struct {
+	Client *client.ElementoClient
 }
 
 // TODO: use in older resources
-func (r *baseResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *BaseResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -90,7 +90,7 @@ func (r *baseResource) Configure(_ context.Context, req resource.ConfigureReques
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func ValidateCanCreate(check *client.CanCreateResponse, diags *diag.Diagnostics, resourceName string, err error) bool {

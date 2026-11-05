@@ -1,4 +1,4 @@
-package provider
+package resources
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -32,11 +33,11 @@ func NewSpotVMResource() resource.Resource {
 }
 
 type spotVMResource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type spotVMResourceModel struct {
-	baseResourceModel
+	common.BaseResourceModel
 	VMName         types.String       `tfsdk:"vm_name"`
 	CPU            spotVMCPUModel     `tfsdk:"cpu"`
 	Mem            spotVMMemoryModel  `tfsdk:"mem"`
@@ -101,7 +102,7 @@ func (r *spotVMResource) Metadata(_ context.Context, req resource.MetadataReques
 }
 
 func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := baseSchema()
+	attributes := common.BaseSchema()
 
 	volumeAttributes := map[string]schema.Attribute{
 		"name": schema.StringAttribute{
@@ -332,7 +333,7 @@ func (r *spotVMResource) Configure(_ context.Context, req resource.ConfigureRequ
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -404,10 +405,10 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 		CloudInitBase64: plan.CloudInitB64.ValueString(),
 	}
 
-	canCreateResponse, err := r.client.CanCreateResource(spotVMResource)
-	ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "SpotVM", err)
+	canCreateResponse, err := r.Client.CanCreateResource(spotVMResource)
+	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "SpotVM", err)
 
-	response, err := r.client.CreateResource(spotVMResource)
+	response, err := r.Client.CreateResource(spotVMResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating SpotVM Resource",
@@ -422,7 +423,7 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		status, err := r.client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading SpotVM Resource Status",
@@ -458,7 +459,7 @@ func (r *spotVMResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	resources, err := r.client.ListSpotVMResources()
+	resources, err := r.Client.ListSpotVMResources()
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading SpotVM Resources",
@@ -478,7 +479,7 @@ func (r *spotVMResource) Read(ctx context.Context, req resource.ReadRequest, res
 	billing_uuid := state.BillingUUID.ValueStringPointer()
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading SpotVM Resource Status",
@@ -557,7 +558,7 @@ func (r *spotVMResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	err := r.client.DeleteSpotVMResource(state.UUID.ValueString())
+	err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting SpotVM Resource",

@@ -1,9 +1,10 @@
-package provider
+package datasources
 
 import (
 	"context"
 
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -20,7 +21,7 @@ func NewDBAASDataSource() datasource.DataSource {
 }
 
 type dbaasDataSource struct {
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type dbaasDataSourceModel struct {
@@ -96,7 +97,7 @@ func (d *dbaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 }
 
 func (d *dbaasDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	d.client = configureDataSourceClient(req, resp)
+	d.Client = configureDataSourceClient(req, resp)
 }
 
 func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
@@ -113,7 +114,7 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 	var found *client.DBAASResponse
 	if uuid != "" {
-		res, err := d.client.GetDBAASResource(uuid)
+		res, err := d.Client.GetDBAASResource(uuid)
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading DBAAS Resource", "Could not read dbaas resource: "+err.Error())
 			return
@@ -124,7 +125,7 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		}
 		found = res
 	} else {
-		resources, err := d.client.ListDBAASResources()
+		resources, err := d.Client.ListDBAASResources()
 		if err != nil {
 			resp.Diagnostics.AddError("Error Reading DBAAS Resources", "Could not list dbaas resources: "+err.Error())
 			return
@@ -160,14 +161,14 @@ func (d *dbaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	config.NodesNumber = types.Int32Value(found.NodesNumber)
 	config.CreationDate = types.StringValue(found.CreationDate)
 
-	status, diags := resourceStatus(d.client, found.BillingUUID)
+	status, diags := resourceStatus(d.Client, found.BillingUUID)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	config.Status = status
 
-	credentials, err := d.client.GetDBAASCredentials(found.UUID)
+	credentials, err := d.Client.GetDBAASCredentials(found.UUID)
 	if err != nil {
 		resp.Diagnostics.AddError("Error Reading DBAAS Credentials", "Could not read dbaas credentials: "+err.Error())
 		return

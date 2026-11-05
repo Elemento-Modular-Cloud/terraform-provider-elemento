@@ -1,9 +1,10 @@
-package provider
+package resources
 
 import (
 	"context"
 	"fmt"
 	"terraform-provider-elemento/internal/client"
+	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -21,7 +22,7 @@ func NewObjectStorageResource() resource.Resource {
 }
 
 type objectStorageResource struct{
-	client *client.ElementoClient
+	common.BaseResource
 }
 
 type objectStorageResourceModel struct {
@@ -128,7 +129,7 @@ func (r *objectStorageResource) Configure(_ context.Context, req resource.Config
 
 		return
 	}
-	r.client = client
+	r.Client = client
 }
 
 func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -146,10 +147,10 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
         BillingFrequency: plan.BillingFrequency.ValueString(),
     }
 
-    canCreateResponse, err := r.client.CanCreateObjectStorageResource(objectStorageResource)
-    ValidateCanCreate(canCreateResponse, &diags, "ObjectStorage", err)
+    canCreateResponse, err := r.Client.CanCreateObjectStorageResource(objectStorageResource)
+    common.ValidateCanCreate(canCreateResponse, &diags, "ObjectStorage", err)
 
-    response, err := r.client.CreateObjectStorageResource(objectStorageResource)
+    response, err := r.Client.CreateObjectStorageResource(objectStorageResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating ObjectStorage Resource",
@@ -164,7 +165,7 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
 
-            status, err := r.client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddError(
                     "Error Reading ObjectStorage Resource Status",
@@ -207,7 +208,7 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
 
     var resource *client.ObjectStorageResponse
     if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-        resources, err := r.client.ListObjectStorageResources()
+        resources, err := r.Client.ListObjectStorageResources()
         if err != nil {
             resp.Diagnostics.AddError(
                 "Error Reading ObjectStorage Resources",
@@ -223,7 +224,7 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
             }
         }
     } else {
-        res, code, err := r.client.GetObjectStorageResource(state.UUID.ValueString())
+        res, code, err := r.Client.GetObjectStorageResource(state.UUID.ValueString())
         if err != nil && code != 404 {
             resp.Diagnostics.AddError(
                 "Error Reading ObjectStorage Resource",
@@ -238,7 +239,7 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = r.client.GetResourceStatus(state.BillingUUID.ValueString())
+		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error Reading Compute Resource Status",
@@ -264,7 +265,7 @@ func (r *objectStorageResource) Read(ctx context.Context, req resource.ReadReque
     state.UUID          = types.StringValue(resource.UUID)
     state.PaymentURL    = types.StringNull()
 
-    credentials, err := r.client.GetObjectStorageCredentials(resource.UUID)
+    credentials, err := r.Client.GetObjectStorageCredentials(resource.UUID)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Reading ObjectStorage Credentials",
@@ -297,7 +298,7 @@ func (r *objectStorageResource) Delete(ctx context.Context, req resource.DeleteR
         return
     }
 
-    err := r.client.DeleteObjectStorageResource(state.UUID.ValueString())
+    err := r.Client.DeleteObjectStorageResource(state.UUID.ValueString())
     if err != nil {
         resp.Diagnostics.AddWarning(
             "Error Deleting ObjectStorage Resource",
