@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"terraform-provider-elemento/internal/client"
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
@@ -149,24 +148,6 @@ func (r *dbaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
             },
         },
 	}
-}
-
-func (r *dbaasResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.ElementoClient)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Provider Data Type",
-			fmt.Sprintf("Expected *ElementoClient, got %T. Please report this issue to the provider developer.", req.ProviderData),
-		)
-
-		return
-	}
-	r.Client = client
 }
 
 func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
