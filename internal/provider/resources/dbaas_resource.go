@@ -29,31 +29,6 @@ type dbaasResource struct{
 	common.BaseResource
 }
 
-type dbaasResourceModel struct {
-    CreatorUUID      types.String   `tfsdk:"creator_uuid"`
-    Name             types.String   `tfsdk:"name"`
-    Engine           types.String   `tfsdk:"engine"`
-    BackupTime       types.String   `tfsdk:"backup_time"`
-    DiskSizeGB       types.Int64    `tfsdk:"disk_size_gb"`
-    Region           types.String   `tfsdk:"region"`
-    Password         types.String   `tfsdk:"password"`
-    NodesNumber      types.Int32    `tfsdk:"nodes_number"`
-    CreationDate     types.String   `tfsdk:"creation_date"`
-    UUID             types.String   `tfsdk:"uuid"`
-    LastUpdated      types.String   `tfsdk:"last_updated"`
-    BillingFrequency types.String   `tfsdk:"billing_frequency"`
-    BillingUUID      types.String   `tfsdk:"billing_uuid"`
-    PaymentURL       types.String   `tfsdk:"payment_url"`
-    DatabaseHost     types.String   `tfsdk:"database_host"`
-    DatabasePort     types.String   `tfsdk:"database_port"`
-    DatabaseUser     types.String   `tfsdk:"database_user"`
-    DatabasePassword types.String   `tfsdk:"database_password"`
-    DatabaseName     types.String   `tfsdk:"database_name"`
-    DatabaseSSLMode  types.String   `tfsdk:"database_ssl_mode"`
-    PublicURI        types.String   `tfsdk:"public_uri"`
-    Status           types.String   `tfsdk:"status"`
-}
-
 func (r *dbaasResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_dbaas"
 }
@@ -195,7 +170,7 @@ func (r *dbaasResource) Configure(_ context.Context, req resource.ConfigureReque
 }
 
 func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-    var plan dbaasResourceModel
+    var plan common.DBAASResourceModel
     diags := req.Plan.Get(ctx, &plan)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
@@ -268,98 +243,22 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-    var state dbaasResourceModel
-    diags := req.State.Get(ctx, &state)
+    var model common.DBAASResourceModel
+    diags := req.State.Get(ctx, &model)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
         return
     }
 
-    var resource *client.DBAASResponse
-    if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-        resources, err := r.Client.ListDBAASResources()
-        if err != nil {
-            resp.Diagnostics.AddError(
-                "Error Reading DBAAS Resources",
-                "Could not list dbaas resources: "+err.Error(),
-            )
-            return
-        }
-
-        for _, res := range resources {
-            if res.BillingUUID == state.BillingUUID.ValueString() {
-                resource = &res
-                break
-            }
-        }
-    } else {
-        res, code, err := r.Client.GetDBAASResource(state.UUID.ValueString())
-        if err != nil && code != 404 {
-            resp.Diagnostics.AddError(
-                "Error Reading DBAAS Resource",
-                "Could not read dbaas resource: "+err.Error(),
-            )
-            return
-        }
-        resource = res
-    }
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-    state.Status       = types.StringPointerValue(status)
-    state.Name         = types.StringValue(resource.Name)
-    state.Region       = types.StringValue(resource.Region)
-    state.LastUpdated  = types.StringValue(time.Now().Format(time.RFC850))
-    state.UUID         = types.StringValue(resource.UUID)
-    state.CreatorUUID  = types.StringValue(resource.CreatorUUID)
-    state.CreationDate = types.StringValue(resource.CreationDate)
-    state.BackupTime   = types.StringValue(resource.BackupTime)
-    state.DiskSizeGB   = types.Int64Value(resource.DiskSizeGB)
-    state.NodesNumber  = types.Int32Value(resource.NodesNumber)
-    state.Engine       = types.StringValue(resource.Engine)
-    state.PaymentURL   = types.StringNull()
-
-    credentials, err := r.Client.GetDBAASCredentials(resource.UUID)
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading DBAAS Credentials",
-            "Could not read dbaas credentials: "+err.Error(),
-        )
-        return
-    }
-
-    state.DatabaseHost = types.StringValue(credentials.DatabaseHost)
-    state.DatabasePort = types.StringValue(credentials.DatabasePort)
-    state.DatabaseUser = types.StringValue(credentials.DatabaseUser)
-    state.DatabasePassword = types.StringValue(credentials.DatabasePassword)
-    state.DatabaseName = types.StringValue(credentials.DatabaseName)
-    state.DatabaseSSLMode = types.StringValue(credentials.DatabaseSSLMode)
-    state.PublicURI = types.StringValue(credentials.PublicURI)
-
-    diags = resp.State.Set(ctx, &state)
+    diags = model.Read(ctx, *r.Client, common.RemoveResource(resp))
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
-        return
+    	return
     }
+    model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -367,7 +266,7 @@ func (r *dbaasResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-    var state dbaasResourceModel
+    var state common.DBAASResourceModel
     diags := req.State.Get(ctx, &state)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
