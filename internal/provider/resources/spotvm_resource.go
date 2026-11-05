@@ -2,7 +2,6 @@ package resources
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"terraform-provider-elemento/internal/client"
@@ -34,67 +33,6 @@ func NewSpotVMResource() resource.Resource {
 
 type spotVMResource struct {
 	common.BaseResource
-}
-
-type spotVMResourceModel struct {
-	common.BaseResourceModel
-	VMName         types.String       `tfsdk:"vm_name"`
-	CPU            spotVMCPUModel     `tfsdk:"cpu"`
-	Mem            spotVMMemoryModel  `tfsdk:"mem"`
-	OS             spotVMOSModel      `tfsdk:"os"`
-	Storage        spotVMStorageModel `tfsdk:"storage"`
-	Networks       types.List         `tfsdk:"networks"`
-	Authentication *spotVMAuthModel   `tfsdk:"auth"`
-	CloudInitB64   types.String       `tfsdk:"cloudinit_b64"`
-	Tags           types.List         `tfsdk:"tags"`
-}
-
-type spotVMCPUModel struct {
-	Slots       types.Int32 `tfsdk:"slots"`
-	Arch        types.List  `tfsdk:"arch"`
-	SharedCores types.Bool  `tfsdk:"shared_cores"`
-}
-
-type spotVMMemoryModel struct {
-	CapacityMB types.Int32 `tfsdk:"capacity_mb"`
-}
-
-type spotVMOSModel struct {
-	Family  types.String `tfsdk:"family"`
-	Flavour types.String `tfsdk:"flavour"`
-	Version types.String `tfsdk:"version"`
-}
-
-type spotVMStorageModel struct {
-	Boot spotVMVolumeModel   `tfsdk:"boot"`
-	Data []spotVMVolumeModel `tfsdk:"data"`
-}
-
-type spotVMNetworkModel struct {
-	Kind types.String `tfsdk:"kind"`
-	IPV4 types.String `tfsdk:"ipv4"`
-	MAC  types.String `tfsdk:"mac"`
-}
-
-type spotVMVolumeModel struct {
-	Name   types.String `tfsdk:"name"`
-	SizeGB types.Int64  `tfsdk:"size_gb"`
-}
-
-type spotVMAuthModel struct {
-	Username types.String `tfsdk:"username"`
-	Password types.String `tfsdk:"password"`
-	SSHKey   types.String `tfsdk:"ssh_key"`
-}
-
-func networkObjectType() types.ObjectType {
-	return types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"kind": types.StringType,
-			"ipv4": types.StringType,
-			"mac":  types.StringType,
-		},
-	}
 }
 
 func (r *spotVMResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -318,26 +256,8 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	}
 }
 
-func (r *spotVMResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.ElementoClient)
-
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Provider Data Type",
-			fmt.Sprintf("Expected *ElementoClient, got %T. Please report this issue to the provider developer.", req.ProviderData),
-		)
-
-		return
-	}
-	r.Client = client
-}
-
 func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan spotVMResourceModel
+	var plan common.SpotVMResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -440,7 +360,7 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 		plan.Status = types.StringValue(res.Status)
 	}
 
-	plan.Networks = types.ListNull(networkObjectType())
+	plan.Networks = types.ListNull(common.SpotVMNetworkObjectType())
 
 	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
@@ -452,98 +372,22 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 }
 
 func (r *spotVMResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state spotVMResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.SpotVMResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resources, err := r.Client.ListSpotVMResources()
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading SpotVM Resources",
-			"Could not list spotvm resources: "+err.Error(),
-		)
-		return
-	}
+    diags = model.Read(ctx, *r.Client, common.RemoveResource(resp))
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+    	return
+    }
+    model.PaymentURL = types.StringNull()
 
-	var resource *client.SpotVMListItem
-	for _, res := range resources {
-		if res.BillingUUID == state.BillingUUID.ValueString() || res.UUID == state.UUID.ValueString() {
-			resource = &res
-			break
-		}
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading SpotVM Resource Status",
-				"Could not read spotvm resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.CPU.Arch, diags = types.ListValueFrom(ctx, types.StringType, resource.CPU.Arch)
+	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
-
-	state.CPU.Slots = types.Int32Value(int32(resource.CPU.Slots))
-	state.CPU.SharedCores = types.BoolValue(resource.CPU.SharedCores)
-
-	state.Mem.CapacityMB = types.Int32Value(int32(resource.Mem.CapacityMB))
-
-	// TODO: PCI DEVICES
-
-	state.OS.Family = types.StringValue(resource.OS.Family)
-	state.OS.Flavour = types.StringValue(resource.OS.Flavour)
-	state.OS.Version = types.StringValue(resource.OS.Version)
-
-	var dataVolumes []spotVMVolumeModel
-	for _, volume := range resource.Storage.Data {
-		dataVolumes = append(dataVolumes, spotVMVolumeModel{
-			Name:   types.StringValue(volume.Name),
-			SizeGB: types.Int64Value(int64(volume.SizeGB)),
-		})
-	}
-	state.Storage.Data = dataVolumes
-
-	var networks []spotVMNetworkModel
-	for _, network := range resource.Networks {
-		networks = append(networks, spotVMNetworkModel{
-			Kind: types.StringValue(network.Kind),
-			IPV4: types.StringPointerValue(network.IPv4),
-			MAC:  types.StringPointerValue(network.MAC),
-		})
-	}
-	state.Networks, diags = types.ListValueFrom(ctx, networkObjectType(), networks)
-
-	state.Status = types.StringPointerValue(status)
-	state.VMName = types.StringValue(resource.VMName)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.UUID)
-	state.Tags, diags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
-	resp.Diagnostics.Append(diags...)
-
-	state.PaymentURL = types.StringNull()
-
-	diags = resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
 func (r *spotVMResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -551,7 +395,7 @@ func (r *spotVMResource) Update(ctx context.Context, req resource.UpdateRequest,
 }
 
 func (r *spotVMResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state spotVMResourceModel
+	var state common.SpotVMResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

@@ -201,7 +201,7 @@ func (p *ElementoProvider) Configure(ctx context.Context, req provider.Configure
 
 func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		datasources.NewComputeDataSource,
+		datasources.NewSpotVMDataSource,
 		datasources.NewStorageDataSource,
 		datasources.NewObjectStorageDataSource,
 		datasources.NewDBAASDataSource,
