@@ -27,18 +27,6 @@ type publicIPResource struct {
 	common.BaseResource
 }
 
-type publicIPResourceModel struct {
-	common.BaseResourceModel
-	Name                         types.String `tfsdk:"name"`
-	PublicIP                     types.String `tfsdk:"public_ip"`
-	AllocationID                 types.String `tfsdk:"allocation_id"`
-	Domain                       types.String `tfsdk:"domain"`
-	AssociationID                types.String `tfsdk:"association_id"`
-	AssociatedInstanceID         types.String `tfsdk:"associated_instance_id"`
-	AssociatedNetworkInterfaceID types.String `tfsdk:"associated_network_interface_id"`
-	State                        types.String `tfsdk:"state"`
-}
-
 func (r *publicIPResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_publicip"
 }
@@ -88,7 +76,7 @@ func (r *publicIPResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 }
 
 func (r *publicIPResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan publicIPResourceModel
+	var plan common.PublicIPResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -164,95 +152,24 @@ func (r *publicIPResource) Create(ctx context.Context, req resource.CreateReques
 }
 
 func (r *publicIPResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state publicIPResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.PublicIPResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var resource *client.PublicIPResponse
-	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.PublicIPResponse](r.Client, "publicip")
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading PublicIP Resources",
-				"Could not list publicip resources: "+err.Error(),
-			)
-			return
-		}
-
-		for _, res := range resources {
-			if res.BillingUUID == state.BillingUUID.ValueString() {
-				resource = &res
-				break
-			}
-		}
-	} else {
-		res, code, err := client.GetResource[client.PublicIPResponse](r.Client, state.UUID.ValueString(), "publicip")
-		if err != nil && code != 404 {
-			resp.Diagnostics.AddError(
-				"Error Reading PublicIP Resource"+string(code),
-				"Could not read publicip resource: "+err.Error(),
-			)
-			return
-		}
-		resource = res
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
+	diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
+	model.PaymentURL = types.StringNull()
 
-	state.Status = types.StringPointerValue(status)
-	state.Name = types.StringValue(resource.Name)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.ServiceUUID)
-	state.CreatorUUID = types.StringValue(resource.CreatorUUID)
-	state.CreationDate = types.StringValue(resource.CreationDate)
-	state.PublicIP = types.StringValue(resource.PublicIP)
-	state.AllocationID = types.StringValue(resource.AllocationID)
-	state.Domain = types.StringValue(resource.Domain)
-	state.AssociationID = types.StringValue(resource.AssociationID)
-	state.AssociatedInstanceID = types.StringValue(resource.AssociatedInstanceID)
-	state.AssociatedNetworkInterfaceID = types.StringValue(resource.AssociatedNetworkInterfaceID)
-	state.State = types.StringValue(resource.State)
-	state.PaymentURL = types.StringNull()
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 
-	// // NOTE: PublicIP credentials contain no useful extra information
-	// credentials, err := r.Client.GetPublicIPCredentials(resource.ServiceUUID)
-	// if err != nil {
-	// 	resp.Diagnostics.AddError(
-	// 		"Error Reading PublicIP Credentials",
-	// 		"Could not read publicip credentials: "+err.Error(),
-	// 	)
-	// 	return
-	// }
-
-	// state.NFSHost = types.StringValue(credentials.NFSHost)
-	// state.NFSPath = types.StringValue(credentials.NFSPath)
-	// state.NFSVersion = types.StringValue(credentials.NFSVersion)
-	// state.MountCommand = types.StringValue(credentials.MountCommand)
-
-	diags = resp.State.Set(ctx, &state)
+	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -264,7 +181,7 @@ func (r *publicIPResource) Update(ctx context.Context, req resource.UpdateReques
 }
 
 func (r *publicIPResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state publicIPResourceModel
+	var state common.PublicIPResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
