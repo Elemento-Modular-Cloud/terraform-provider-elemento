@@ -112,7 +112,9 @@ func (r *privateNetworkResource) Create(ctx context.Context, req resource.Create
 	}
 
 	canCreateResponse, err := r.Client.CanCreatePrivateNetworkResource(privateNetworkResource)
-    common.ValidateCanCreate(canCreateResponse, &diags, "PrivateNetwork", err)
+    if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PrivateNetwork", err) {
+	    return
+    }
 
 	response, err := r.Client.CreatePrivateNetworkResource(privateNetworkResource)
 	if err != nil {

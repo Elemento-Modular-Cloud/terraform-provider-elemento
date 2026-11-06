@@ -202,7 +202,9 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(openclawResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "OpenClaw", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "OpenClaw", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(openclawResource)
 	if err != nil {

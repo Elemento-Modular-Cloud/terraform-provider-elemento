@@ -118,7 +118,9 @@ func (r *registryResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(registryResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Registry", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Registry", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(registryResource)
 	if err != nil {

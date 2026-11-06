@@ -458,7 +458,9 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
     }
 
     canCreateResponse, err := r.Client.CanCreateComputeResource(computeResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Compute", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Compute", err) {
+		return
+	}
 
     response, err := r.Client.CreateComputeResource(computeResource)
     if err != nil {

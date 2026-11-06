@@ -109,7 +109,9 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	canCreateResponse, err := r.Client.CanCreateFileStorageResource(fileStorageResource)
-    common.ValidateCanCreate(canCreateResponse, &diags, "FileStorage", err)
+    if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "FileStorage", err) {
+	    return
+    }
 
 	response, err := r.Client.CreateFileStorageResource(fileStorageResource)
 	if err != nil {

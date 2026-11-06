@@ -101,7 +101,9 @@ func (r *publicGatewayResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(publicGatewayResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicGateway", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicGateway", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(publicGatewayResource)
 	if err != nil {

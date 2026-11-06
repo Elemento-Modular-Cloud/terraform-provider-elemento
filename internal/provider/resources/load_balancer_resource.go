@@ -118,7 +118,9 @@ func (r *loadBalancerResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(loadBalancerResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "LoadBalancer", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "LoadBalancer", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(loadBalancerResource)
 	if err != nil {

@@ -226,7 +226,9 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
     }
 
     canCreateResponse, err := r.Client.CanCreateKAASResource(kaasResource)
-    common.ValidateCanCreate(canCreateResponse, &diags, "KAAS", err)
+    if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "KAAS", err) {
+	    return
+    }
 
     response, err := r.Client.CreateKAASResource(kaasResource)
     if err != nil {

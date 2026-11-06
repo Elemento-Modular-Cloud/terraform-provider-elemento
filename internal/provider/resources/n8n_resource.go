@@ -195,7 +195,9 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(n8nResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "n8n", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "n8n", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(n8nResource)
 	if err != nil {

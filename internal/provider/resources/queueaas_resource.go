@@ -147,7 +147,9 @@ func (r *queueAASResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(queueaasResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "QueueAAS", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "QueueAAS", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(queueaasResource)
 	if err != nil {

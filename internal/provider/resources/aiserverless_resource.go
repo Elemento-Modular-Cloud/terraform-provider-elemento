@@ -97,7 +97,9 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(aiserverlessResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "AIServerless", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "AIServerless", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(aiserverlessResource)
 	if err != nil {

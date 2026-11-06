@@ -92,7 +92,9 @@ func (r *publicIPResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(publicIPResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicIP", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicIP", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(publicIPResource)
 	if err != nil {

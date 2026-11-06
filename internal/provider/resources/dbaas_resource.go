@@ -170,7 +170,9 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
     }
 
     canCreateResponse, err := r.Client.CanCreateDBAASResource(dbaasResource)
-    common.ValidateCanCreate(canCreateResponse, &diags, "DBAAS", err)
+    if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "DBAAS", err) {
+	    return
+    }
 
     response, err := r.Client.CreateDBAASResource(dbaasResource)
     if err != nil {

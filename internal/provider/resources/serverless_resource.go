@@ -173,7 +173,9 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(serverlessResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Serverless", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Serverless", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(serverlessResource)
 	if err != nil {

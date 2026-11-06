@@ -326,7 +326,9 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 
 	canCreateResponse, err := r.Client.CanCreateResource(spotVMResource)
-	common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "SpotVM", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "SpotVM", err) {
+		return
+	}
 
 	response, err := r.Client.CreateResource(spotVMResource)
 	if err != nil {

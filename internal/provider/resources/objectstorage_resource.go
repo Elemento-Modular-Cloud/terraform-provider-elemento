@@ -85,7 +85,9 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	canCreateResponse, err := r.Client.CanCreateObjectStorageResource(objectStorageResource)
-	common.ValidateCanCreate(canCreateResponse, &diags, "ObjectStorage", err)
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "ObjectStorage", err) {
+		return
+	}
 
 	response, err := r.Client.CreateObjectStorageResource(objectStorageResource)
 	if err != nil {
