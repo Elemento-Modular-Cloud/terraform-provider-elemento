@@ -318,7 +318,7 @@ func (r *storageResource) Read(ctx context.Context, req resource.ReadRequest, re
         return
     }
 
-    diags = model.Read(ctx, *r.Client, common.RemoveResource(resp))
+    diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
     	return
@@ -334,7 +334,7 @@ func (r *storageResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-    var state storageResourceModel
+    var state common.StorageResourceModel
     diags := req.State.Get(ctx, &state)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {

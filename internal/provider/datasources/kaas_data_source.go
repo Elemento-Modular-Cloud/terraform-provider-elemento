@@ -73,7 +73,7 @@ func (d *kaasDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	diags := model.Read(ctx, *d.Client, common.AddNotFoundError(resp.Diagnostics, "KAAS"))
+	diags := model.Read(ctx, d.Client, common.AddNotFoundError(resp.Diagnostics, "KAAS"))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

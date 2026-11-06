@@ -31,7 +31,7 @@ type DBAASResourceModel struct {
 	Password types.String `tfsdk:"password"`
 }
 
-func (m *DBAASDataSourceModel) Read(ctx context.Context, c client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
+func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
 	var diags diag.Diagnostics
 	var resource *client.DBAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {

@@ -33,7 +33,7 @@ type StorageResourceModel struct {
 	Tags           types.List   `tfsdk:"tags"`
 }
 
-func (m *StorageDataSourceModel) Read(ctx context.Context, c client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
+func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	var resource *client.StorageResourceResponse

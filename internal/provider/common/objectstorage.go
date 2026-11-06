@@ -26,7 +26,7 @@ type ObjectStorageResourceModel struct {
 	SizeTB types.Int64 `tfsdk:"size_tb"`
 }
 
-func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
+func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
 	var diags diag.Diagnostics
     var resource *client.ObjectStorageResponse
     if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {

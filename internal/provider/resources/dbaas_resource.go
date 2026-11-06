@@ -231,7 +231,7 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         return
     }
 
-    diags = model.Read(ctx, *r.Client, common.RemoveResource(resp))
+    diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
     	return
