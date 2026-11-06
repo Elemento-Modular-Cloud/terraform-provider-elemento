@@ -28,17 +28,6 @@ type aiserverlessResource struct {
 	common.BaseResource
 }
 
-type aiserverlessResourceModel struct {
-	common.BaseResourceModel
-	Name            types.String `tfsdk:"name"`
-	ModelName       types.String `tfsdk:"model_name"`
-	EnableStreaming types.Bool   `tfsdk:"enable_streaming"`
-	ModelID         types.String `tfsdk:"model_id"`
-	ARN             types.String `tfsdk:"arn"`
-	AccessKeyID     types.String `tfsdk:"access_key_id"`
-	SecretAccessKey types.String `tfsdk:"secret_access_key"`
-}
-
 func (r *aiserverlessResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_aiserverless"
 }
@@ -84,14 +73,13 @@ func (r *aiserverlessResource) Schema(_ context.Context, _ resource.SchemaReques
 		Description: "The secret access key of the resource.",
 	}
 
-
 	resp.Schema = schema.Schema{
 		Attributes: attributes,
 	}
 }
 
 func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan aiserverlessResourceModel
+	var plan common.AIServerlessResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -103,8 +91,8 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 			Region:           plan.Region.ValueString(),
 			BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
 		},
-		Name:        plan.Name.ValueString(),
-		ModelName: plan.ModelName.ValueString(),
+		Name:            plan.Name.ValueString(),
+		ModelName:       plan.ModelName.ValueString(),
 		EnableStreaming: plan.EnableStreaming.ValueBool(),
 	}
 
@@ -166,93 +154,22 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 }
 
 func (r *aiserverlessResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state aiserverlessResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.AIServerlessResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var resource *client.AIServerlessResponse
-	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.AIServerlessResponse](r.Client, "aiserverless")
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading AIServerless Resources",
-				"Could not list aiserverless resources: "+err.Error(),
-			)
-			return
-		}
-
-		for _, res := range resources {
-			if res.BillingUUID == state.BillingUUID.ValueString() {
-				resource = &res
-				break
-			}
-		}
-	} else {
-		res, code, err := client.GetResource[client.AIServerlessResponse](r.Client, state.UUID.ValueString(), "aiserverless")
-		if err != nil && code != 404 {
-			resp.Diagnostics.AddError(
-				"Error Reading AIServerless Resource"+string(code),
-				"Could not read aiserverless resource: "+err.Error(),
-			)
-			return
-		}
-		resource = res
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.Status = types.StringPointerValue(status)
-	state.Name = types.StringValue(resource.Name)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.ServiceUUID)
-	state.CreatorUUID = types.StringValue(resource.CreatorUUID)
-	state.CreationDate = types.StringValue(resource.CreationDate)
-	state.ModelName = types.StringValue(resource.ModelName)
-	state.EnableStreaming = types.BoolValue(resource.EnableStreaming)
-	state.ModelID = types.StringValue(resource.ModelID)
-	state.ARN = types.StringValue(resource.ARN)
-	state.PaymentURL = types.StringNull()
-
-	credentials, err := r.Client.GetAIServerlessCredentials(resource.ServiceUUID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading AIServerless Credentials",
-			"Could not read aiserverless credentials: "+err.Error(),
-		)
-		return
-	}
-
-	state.AccessKeyID = types.StringValue(credentials.AccessKeyID)
-	state.SecretAccessKey = types.StringValue(credentials.SecretAccessKey)
-
-	diags = resp.State.Set(ctx, &state)
+	diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *aiserverlessResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -260,7 +177,7 @@ func (r *aiserverlessResource) Update(ctx context.Context, req resource.UpdateRe
 }
 
 func (r *aiserverlessResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state aiserverlessResourceModel
+	var state common.AIServerlessResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
