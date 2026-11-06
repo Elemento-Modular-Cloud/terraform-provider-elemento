@@ -17,39 +17,23 @@ import (
 )
 
 var (
-	_ resource.Resource              = &queueaasResource{}
-	_ resource.ResourceWithConfigure = &queueaasResource{}
+	_ resource.Resource              = &queueAASResource{}
+	_ resource.ResourceWithConfigure = &queueAASResource{}
 )
 
 func NewQueueAASResource() resource.Resource {
-	return &queueaasResource{}
+	return &queueAASResource{}
 }
 
-type queueaasResource struct {
+type queueAASResource struct {
 	common.BaseResource
 }
 
-type queueaasResourceModel struct {
-	common.BaseResourceModel
-	Name             types.String `tfsdk:"name"`
-	NodeNumber       types.Int64  `tfsdk:"node_number"`
-	NodeSize         types.String `tfsdk:"node_size"`
-	SizeGB           types.Int64  `tfsdk:"size_gb"`
-	Username         types.String `tfsdk:"username"`
-	Password         types.String `tfsdk:"password"`
-	KafkaVersion     types.String `tfsdk:"kafka_version"`
-	IsHA             types.Bool   `tfsdk:"is_ha"`
-	IsPublic         types.Bool   `tfsdk:"is_public"`
-	NetworkUUID      types.String `tfsdk:"network_uuid"`
-	BootstrapServers types.String `tfsdk:"bootstrap_servers"`
-	KafkaCert        types.String `tfsdk:"kafka_cert"`
-}
-
-func (r *queueaasResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *queueAASResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_queueaas"
 }
 
-func (r *queueaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *queueAASResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	attributes := common.BaseSchema()
 
 	attributes["name"] = schema.StringAttribute{
@@ -137,8 +121,8 @@ func (r *queueaasResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	}
 }
 
-func (r *queueaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan queueaasResourceModel
+func (r *queueAASResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan common.QueueAASResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -217,8 +201,8 @@ func (r *queueaasResource) Create(ctx context.Context, req resource.CreateReques
 	}
 }
 
-func (r *queueaasResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state queueaasResourceModel
+func (r *queueAASResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state common.QueueAASResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -312,11 +296,11 @@ func (r *queueaasResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 }
 
-func (r *queueaasResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *queueAASResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	// TODO: Implement update if the API supports it. For now, we mark everything as needing replacement.
 }
 
-func (r *queueaasResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *queueAASResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state queueaasResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
