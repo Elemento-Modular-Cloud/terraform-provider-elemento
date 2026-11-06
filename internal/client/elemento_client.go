@@ -241,6 +241,8 @@ func (c *ElementoClient) getTargetData() (*TargetGrant, error) {
 		return nil, fmt.Errorf("target %s is not currently active", c.Target)
 	}
 
+	c.targetData = target
+
 	return target, nil
 }
 
