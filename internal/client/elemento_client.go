@@ -887,6 +887,8 @@ func (c *ElementoClient) GetKAASResource(service_uuid string) (*KAASResponse, in
 }
 
 func (c *ElementoClient) GetKAASCredentials(service_uuid string) (*string, error) {
+	urlSuffix := ":7770/api/v1.0/kaas/credentials/" + service_uuid
+
 	deserializer := func(r io.Reader) (*string, error) {
 		credentials, err := io.ReadAll(r)
 		if err != nil {
@@ -896,7 +898,7 @@ func (c *ElementoClient) GetKAASCredentials(service_uuid string) (*string, error
         creds := string(credentials)
         return &creds, nil
     }
-    return getCredentials[string](c, "kaas", service_uuid, deserializer, nil)
+    return getCredentials[string](c, urlSuffix, "kaas", deserializer, nil)
 }
 
 
