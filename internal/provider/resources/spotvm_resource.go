@@ -364,6 +364,8 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	plan.Networks = types.ListNull(common.SpotVMNetworkObjectType())
 
+	plan.CreationDate = types.StringNull()
+	plan.CreatorUUID = types.StringNull()
 	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
 	diags = resp.State.Set(ctx, plan)
