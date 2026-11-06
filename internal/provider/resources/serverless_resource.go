@@ -30,24 +30,6 @@ type serverlessResource struct {
 	common.BaseResource
 }
 
-type serverlessResourceModel struct {
-	common.BaseResourceModel
-	Name            types.String `tfsdk:"name"`
-	Runtime         types.String `tfsdk:"runtime"`
-	Handler         types.String `tfsdk:"handler"`
-	Memory          types.Int64  `tfsdk:"memory"`
-	Timeout         types.Int64  `tfsdk:"timeout"`
-	IsPublic        types.Bool   `tfsdk:"is_public"`
-	Environment     types.Map    `tfsdk:"environment"`
-	CodeZipB64      types.String `tfsdk:"code_zip_b64"`
-	URL             types.String `tfsdk:"url"`
-	ARN             types.String `tfsdk:"arn"`
-	State           types.String `tfsdk:"state"`
-	AccessKeyID     types.String `tfsdk:"access_key_id"`
-	SecretAccessKey types.String `tfsdk:"secret_access_key"`
-	AuthType        types.String `tfsdk:"auth_type"`
-}
-
 func (r *serverlessResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_serverless"
 }
@@ -143,7 +125,7 @@ func (r *serverlessResource) Schema(_ context.Context, _ resource.SchemaRequest,
 }
 
 func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan serverlessResourceModel
+	var plan common.ServerlessResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -234,98 +216,22 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 }
 
 func (r *serverlessResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state serverlessResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.ServerlessResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var resource *client.ServerlessResponse
-	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.ServerlessResponse](r.Client, "serverless")
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Serverless Resources",
-				"Could not list serverless resources: "+err.Error(),
-			)
-			return
-		}
+    diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+    	return
+    }
+    model.PaymentURL = types.StringNull()
 
-		for _, res := range resources {
-			if res.BillingUUID == state.BillingUUID.ValueString() {
-				resource = &res
-				break
-			}
-		}
-	} else {
-		res, code, err := client.GetResource[client.ServerlessResponse](r.Client, state.UUID.ValueString(), "serverless")
-		if err != nil && code != 404 {
-			resp.Diagnostics.AddError(
-				"Error Reading Serverless Resource"+string(code),
-				"Could not read serverless resource: "+err.Error(),
-			)
-			return
-		}
-		resource = res
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.Status = types.StringPointerValue(status)
-	state.Name = types.StringValue(resource.Name)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.ServiceUUID)
-	state.CreatorUUID = types.StringValue(resource.CreatorUUID)
-	state.CreationDate = types.StringValue(resource.CreationDate)
-	state.Runtime = types.StringValue(resource.Runtime)
-	state.Handler = types.StringValue(resource.Handler)
-	state.Memory = types.Int64Value(resource.Memory)
-	state.Timeout = types.Int64Value(resource.Timeout)
-	state.IsPublic = types.BoolValue(resource.IsPublic)
-	state.URL = types.StringValue(resource.URL)
-	state.ARN = types.StringValue(resource.ARN)
-	state.State = types.StringValue(resource.State)
-	state.PaymentURL = types.StringNull()
-
-	credentials, err := r.Client.GetServerlessCredentials(resource.ServiceUUID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Serverless Credentials",
-			"Could not read serverless credentials: "+err.Error(),
-		)
-		return
-	}
-
-	state.AccessKeyID = types.StringValue(credentials.AccessKeyID)
-	state.SecretAccessKey = types.StringValue(credentials.SecretAccessKey)
-	state.AuthType = types.StringValue(credentials.AuthType)
-
-	diags = resp.State.Set(ctx, &state)
+	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
 func (r *serverlessResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -333,7 +239,7 @@ func (r *serverlessResource) Update(ctx context.Context, req resource.UpdateRequ
 }
 
 func (r *serverlessResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state serverlessResourceModel
+	var state common.ServerlessResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
