@@ -303,7 +303,7 @@ func (r *queueAASResource) Update(ctx context.Context, req resource.UpdateReques
 }
 
 func (r *queueAASResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state queueaasResourceModel
+	var state common.QueueAASResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
