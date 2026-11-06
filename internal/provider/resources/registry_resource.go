@@ -29,22 +29,6 @@ type registryResource struct {
 	common.BaseResource
 }
 
-type registryResourceModel struct {
-	common.BaseResourceModel
-	Name            types.String `tfsdk:"name"`
-	SizeGB          types.Int64  `tfsdk:"size_gb"`
-	IsPublic        types.Bool   `tfsdk:"is_public"`
-	State           types.String `tfsdk:"state"`
-	RepositoryURI   types.String `tfsdk:"repository_uri"`
-	RegistryID      types.String `tfsdk:"registry_id"`
-	ImageCount      types.Int64  `tfsdk:"image_count"`
-	UsedBytes       types.Int64  `tfsdk:"used_bytes"`
-	AccessKeyID     types.String `tfsdk:"access_key_id"`
-	SecretAccessKey types.String `tfsdk:"secret_access_key"`
-	RegistryType    types.String `tfsdk:"registry_type"`
-	LoginCommand    types.String `tfsdk:"login_command"`
-}
-
 func (r *registryResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_registry"
 }
@@ -116,7 +100,7 @@ func (r *registryResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 }
 
 func (r *registryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan registryResourceModel
+	var plan common.RegistryResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -197,98 +181,22 @@ func (r *registryResource) Create(ctx context.Context, req resource.CreateReques
 }
 
 func (r *registryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state registryResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.RegistryResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var resource *client.RegistryResponse
-	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.RegistryResponse](r.Client, "registry")
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Registry Resources",
-				"Could not list registry resources: "+err.Error(),
-			)
-			return
-		}
-
-		for _, res := range resources {
-			if res.BillingUUID == state.BillingUUID.ValueString() {
-				resource = &res
-				break
-			}
-		}
-	} else {
-		res, code, err := client.GetResource[client.RegistryResponse](r.Client, state.UUID.ValueString(), "registry")
-		if err != nil && code != 404 {
-			resp.Diagnostics.AddError(
-				"Error Reading Registry Resource"+string(code),
-				"Could not read registry resource: "+err.Error(),
-			)
-			return
-		}
-		resource = res
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.Status = types.StringPointerValue(status)
-	state.Name = types.StringValue(resource.Name)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.ServiceUUID)
-	state.CreatorUUID = types.StringValue(resource.CreatorUUID)
-	state.CreationDate = types.StringValue(resource.CreationDate)
-	state.SizeGB = types.Int64Value(resource.SizeGB)
-	state.IsPublic = types.BoolValue(resource.IsPublic)
-	state.RepositoryURI = types.StringValue(resource.RepositoryURI)
-	state.RegistryID = types.StringValue(resource.RegistryID)
-	state.ImageCount = types.Int64Value(resource.ImageCount)
-	state.UsedBytes = types.Int64Value(resource.UsedBytes)
-	state.State = types.StringValue(resource.State)
-	state.PaymentURL = types.StringNull()
-
-	credentials, err := r.Client.GetRegistryCredentials(resource.ServiceUUID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Registry Credentials",
-			"Could not read registry credentials: "+err.Error(),
-		)
-		return
-	}
-
-	state.AccessKeyID = types.StringValue(credentials.AccessKeyID)
-	state.SecretAccessKey = types.StringValue(credentials.SecretAccessKey)
-	state.RegistryType = types.StringValue(credentials.RegistryType)
-	state.LoginCommand = types.StringValue(credentials.LoginCommand)
-
-	diags = resp.State.Set(ctx, &state)
+	diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *registryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -296,7 +204,7 @@ func (r *registryResource) Update(ctx context.Context, req resource.UpdateReques
 }
 
 func (r *registryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state registryResourceModel
+	var state common.RegistryResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
