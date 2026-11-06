@@ -29,21 +29,6 @@ type loadBalancerResource struct {
 	common.BaseResource
 }
 
-type loadBalancerResourceModel struct {
-	common.BaseResourceModel
-	Name            types.String `tfsdk:"name"`
-	Type            types.String `tfsdk:"type"`
-	IsPublic        types.Bool   `tfsdk:"is_public"`
-	Port            types.Int64  `tfsdk:"port"`
-	Scheme          types.String `tfsdk:"scheme"`
-	DNSName         types.String `tfsdk:"dns_name"`
-	ARN             types.String `tfsdk:"arn"`
-	TargetGroupARN  types.String `tfsdk:"target_group_arn"`
-	SecurityGroupID types.String `tfsdk:"security_group_id"`
-	VPCID           types.String `tfsdk:"vpc_id"`
-	State           types.String `tfsdk:"state"`
-}
-
 func (r *loadBalancerResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_loadbalancer"
 }
@@ -114,7 +99,7 @@ func (r *loadBalancerResource) Schema(_ context.Context, _ resource.SchemaReques
 }
 
 func (r *loadBalancerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan loadBalancerResourceModel
+	var plan common.LoadBalancerResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -193,103 +178,22 @@ func (r *loadBalancerResource) Create(ctx context.Context, req resource.CreateRe
 }
 
 func (r *loadBalancerResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state loadBalancerResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.LoadBalancerResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var resource *client.LoadBalancerResponse
-	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.LoadBalancerResponse](r.Client, "loadbalancer")
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading LoadBalancer Resources",
-				"Could not list loadbalancer resources: "+err.Error(),
-			)
-			return
-		}
-
-		for _, res := range resources {
-			if res.BillingUUID == state.BillingUUID.ValueString() {
-				resource = &res
-				break
-			}
-		}
-	} else {
-		res, code, err := client.GetResource[client.LoadBalancerResponse](r.Client, state.UUID.ValueString(), "loadbalancer")
-		if err != nil && code != 404 {
-			resp.Diagnostics.AddError(
-				"Error Reading LoadBalancer Resource"+string(code),
-				"Could not read loadbalancer resource: "+err.Error(),
-			)
-			return
-		}
-		resource = res
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.Status = types.StringPointerValue(status)
-	state.Name = types.StringValue(resource.Name)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.ServiceUUID)
-	state.CreatorUUID = types.StringValue(resource.CreatorUUID)
-	state.CreationDate = types.StringValue(resource.CreationDate)
-	state.Type = types.StringValue(resource.Type)
-	state.IsPublic = types.BoolValue(resource.IsPublic)
-	state.Port = types.Int64Value(resource.Port)
-	state.Scheme = types.StringValue(resource.Scheme)
-	state.DNSName = types.StringValue(resource.DNSName)
-	state.ARN = types.StringValue(resource.ARN)
-	state.TargetGroupARN = types.StringValue(resource.TargetGroupARN)
-	state.SecurityGroupID = types.StringValue(resource.SecurityGroupID)
-	state.VPCID = types.StringValue(resource.VPCID)
-
-	state.State = types.StringValue(resource.State)
-	state.PaymentURL = types.StringNull()
-
-	// // NOTE: LoadBalancer credentials contain no useful extra information
-	// credentials, err := r.Client.GetLoadBalancerCredentials(resource.ServiceUUID)
-	// if err != nil {
-	// 	resp.Diagnostics.AddError(
-	// 		"Error Reading LoadBalancer Credentials",
-	// 		"Could not read loadbalancer credentials: "+err.Error(),
-	// 	)
-	// 	return
-	// }
-
-	// state.NFSHost = types.StringValue(credentials.NFSHost)
-	// state.NFSPath = types.StringValue(credentials.NFSPath)
-	// state.NFSVersion = types.StringValue(credentials.NFSVersion)
-	// state.MountCommand = types.StringValue(credentials.MountCommand)
-
-	diags = resp.State.Set(ctx, &state)
+	diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *loadBalancerResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -297,7 +201,7 @@ func (r *loadBalancerResource) Update(ctx context.Context, req resource.UpdateRe
 }
 
 func (r *loadBalancerResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state loadBalancerResourceModel
+	var state common.LoadBalancerResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
