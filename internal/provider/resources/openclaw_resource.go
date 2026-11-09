@@ -31,20 +31,6 @@ type openclawResource struct {
 	common.BaseResource
 }
 
-type openclawResourceModel struct {
-	common.BaseResourceModel
-	VMName     types.String `tfsdk:"vm_name"`
-	CPUCores   types.Int32  `tfsdk:"cpu_cores"`
-	RAMSizeMB  types.Int32  `tfsdk:"ram_size_mb"`
-	DiskSizeGB types.Int64  `tfsdk:"disk_size_gb"`
-	Username   types.String `tfsdk:"username"`
-	Password   types.String `tfsdk:"password"`
-	SSHKey     types.String `tfsdk:"ssh_key"`
-	State      types.String `tfsdk:"state"`
-	ServiceURL types.String `tfsdk:"service_url"`
-	Token      types.String `tfsdk:"token"`
-}
-
 func (r *openclawResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_openclaw"
 }
@@ -74,12 +60,11 @@ func (r *openclawResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 		},
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
-		Required: true,
+		Required:    true,
 		Description: "The size (in GB) of the boot disk for the openclaw resource.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
-
 	}
 	attributes["username"] = schema.StringAttribute{
 		Required:    true,
@@ -143,7 +128,7 @@ func (r *openclawResource) Configure(_ context.Context, req resource.ConfigureRe
 }
 
 func (r *openclawResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan openclawResourceModel
+	var plan common.OpenClawResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -254,78 +239,23 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 }
 
 func (r *openclawResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state openclawResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.OpenClawResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resources, err := r.Client.ListComputeResources()
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading OpenClaw Resources",
-			"Could not list openclaw resources: "+err.Error(),
-		)
-		return
-	}
-
-	var resource *client.ComputeListItem
-	for _, res := range resources {
-		if res.BillingUUID == state.BillingUUID.ValueString() || res.UUID == state.UUID.ValueString() {
-			resource = &res
-			break
-		}
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading OpenClaw Resource Status",
-				"Could not read openclaw resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.Status = types.StringPointerValue(status)
-	state.VMName = types.StringValue(resource.Requirements.VMName)
-	state.CPUCores = types.Int32Value(int32(resource.Requirements.Slots))
-	state.RAMSizeMB = types.Int32Value(int32(resource.Requirements.RamSize))
-	state.VMName = types.StringValue(resource.Requirements.VMName)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.UUID)
-	state.PaymentURL = types.StringNull()
-
-	credentials, err := r.Client.GetOpenClawCredentials(resource.UUID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading OpenClaw Credentials",
-			"Could not read openclaw credentials: "+err.Error(),
-		)
-		return
-	}
-
-	state.State = types.StringValue(credentials.State)
-	state.ServiceURL = types.StringValue(credentials.URL)
-	state.Token = types.StringValue(credentials.Token)
-
-	diags = resp.State.Set(ctx, &state)
+	diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
+
 }
 
 func (r *openclawResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -333,7 +263,7 @@ func (r *openclawResource) Update(ctx context.Context, req resource.UpdateReques
 }
 
 func (r *openclawResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state openclawResourceModel
+	var state common.OpenClawResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
