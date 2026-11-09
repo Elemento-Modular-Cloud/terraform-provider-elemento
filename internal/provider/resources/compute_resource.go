@@ -41,7 +41,7 @@ type computeResource struct{
 type computeResourceModel struct {
 	Requirements     computeRequirementsModel    `tfsdk:"requirements"`
 	Authentication   *computeAuthenticationModel `tfsdk:"authentication"`
-	Volumes          []storageResourceModel      `tfsdk:"volumes"`
+	Volumes          []common.StorageResourceModel      `tfsdk:"volumes"`
 	VMName           types.String                `tfsdk:"vm_name"`
     Region           types.String                `tfsdk:"region"`
     CloudInit        computeCloudInitModel       `tfsdk:"cloudinit"`
@@ -581,25 +581,26 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     state.Requirements.Misc.OSFamily  = types.StringValue(resource.Requirements.OSFamily)
     state.Requirements.Misc.OSFlavour = types.StringValue(resource.Requirements.OSFlavour)
 
-    var volumes []storageResourceModel
+    var volumes []common.StorageResourceModel
     for _, volume := range resource.Requirements.Volumes {
         tags, diags := types.ListValueFrom(ctx, types.StringType, volume.Tags)
         resp.Diagnostics.Append(diags...)
 
-        volumes = append(volumes, storageResourceModel{
-            Name:        types.StringValue(volume.Name),
-            Size:        types.Int64Value(int64(volume.Size)),
-            Private:     types.BoolValue(volume.Private),
-            Shareable:   types.BoolValue(volume.Shareable),
-            Bootable:    types.BoolValue(volume.Bootable),
-            Readonly:    types.BoolValue(volume.Readonly),
-            Clonable:    types.BoolValue(volume.Clonable),
-            Priority:    types.Int32Value(int32(volume.Priority)),
-            UUID:        types.StringValue(volume.UUID),
-            LastUpdated: types.StringValue(volume.LastUpdated),
-            Tags:        tags,
-            Region:      types.StringValue(volume.Region),
-        })
+		model := common.StorageResourceModel{}
+        model.Name = types.StringValue(volume.Name)
+        model.Size = types.Int64Value(int64(volume.Size))
+        model.Private = types.BoolValue(volume.Private)
+        model.Shareable = types.BoolValue(volume.Shareable)
+        model.Bootable = types.BoolValue(volume.Bootable)
+        model.Readonly = types.BoolValue(volume.Readonly)
+        model.Clonable = types.BoolValue(volume.Clonable)
+        model.Priority = types.Int32Value(int32(volume.Priority))
+        model.UUID = types.StringValue(volume.UUID)
+        model.LastUpdated = types.StringValue(volume.LastUpdated)
+        model.Tags = tags
+        model.Region = types.StringValue(volume.Region)
+		
+        volumes = append(volumes, model)
     }
     state.Volumes = volumes
 
