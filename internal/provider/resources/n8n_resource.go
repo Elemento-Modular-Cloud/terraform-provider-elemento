@@ -31,19 +31,6 @@ type n8nResource struct {
 	common.BaseResource
 }
 
-type n8nResourceModel struct {
-	common.BaseResourceModel
-	VMName     types.String `tfsdk:"vm_name"`
-	CPUCores   types.Int32  `tfsdk:"cpu_cores"`
-	RAMSizeMB  types.Int32  `tfsdk:"ram_size_mb"`
-	DiskSizeGB types.Int64  `tfsdk:"disk_size_gb"`
-	Username   types.String `tfsdk:"username"`
-	Password   types.String `tfsdk:"password"`
-	SSHKey     types.String `tfsdk:"ssh_key"`
-	State      types.String `tfsdk:"state"`
-	ServiceURL types.String `tfsdk:"service_url"`
-}
-
 func (r *n8nResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_n8n"
 }
@@ -73,12 +60,11 @@ func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 		},
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
-		Required: true,
+		Required:    true,
 		Description: "The size (in GB) of the boot disk for the n8n resource.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
-
 	}
 	attributes["username"] = schema.StringAttribute{
 		Required:    true,
@@ -136,7 +122,7 @@ func (r *n8nResource) Configure(_ context.Context, req resource.ConfigureRequest
 }
 
 func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan n8nResourceModel
+	var plan common.N8NResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -246,77 +232,22 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 }
 
 func (r *n8nResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state n8nResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.N8NResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	resources, err := r.Client.ListSpotVMResources()
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading n8n Resources",
-			"Could not list n8n resources: "+err.Error(),
-		)
-		return
-	}
-
-	var resource *client.SpotVMListItem
-	for _, res := range resources {
-		if res.BillingUUID == state.BillingUUID.ValueString() || res.UUID == state.UUID.ValueString() {
-			resource = &res
-			break
-		}
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading n8n Resource Status",
-				"Could not read n8n resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.Status = types.StringPointerValue(status)
-	state.VMName = types.StringValue(resource.VMName)
-	state.CPUCores = types.Int32Value(int32(resource.CPU.Slots))
-	state.RAMSizeMB = types.Int32Value(int32(resource.Mem.CapacityMB))
-	state.DiskSizeGB = types.Int64Value(int64(resource.Storage.Boot.SizeGB))
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.UUID)
-	state.PaymentURL = types.StringNull()
-
-	credentials, err := r.Client.GetN8NCredentials(resource.UUID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading n8n Credentials",
-			"Could not read n8n credentials: "+err.Error(),
-		)
-		return
-	}
-
-	state.State = types.StringValue(credentials.State)
-	state.ServiceURL = types.StringValue(credentials.URL)
-
-	diags = resp.State.Set(ctx, &state)
+	diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *n8nResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -324,7 +255,7 @@ func (r *n8nResource) Update(ctx context.Context, req resource.UpdateRequest, re
 }
 
 func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state n8nResourceModel
+	var state common.N8NResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
