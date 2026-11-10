@@ -7,12 +7,18 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	// "slices"
 	// "strings"
 	"time"
 	// "github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type MutexCache[T any] struct {
+	inner T
+	mutex sync.Mutex
+}
 
 type ElementoClient struct {
 	Target            string
@@ -21,10 +27,14 @@ type ElementoClient struct {
 	Portal            string
 	context           context.Context
 	httpClient        *http.Client
-	cachedToken       *string
-	cachedTokenExpiry int64
-	cachedUUID        *string
-	targetData        *TargetGrant
+	// These locks are always locked in the order cachedUUID/targetData -> cachedToken.
+	// Avoid inverting the lock order anywhere to avoid introducing deadlocks.
+	cachedToken       MutexCache[struct {
+		token *string
+		expiry int64
+	}]
+	cachedUUID        MutexCache[*string]
+	targetData        MutexCache[*TargetGrant]
 }
 
 func NewElementoClient(ctx context.Context, target, username, password, portal string) *ElementoClient {
@@ -89,8 +99,12 @@ func closeResponseBody(resp *http.Response) {
 }
 
 func (c *ElementoClient) getAuth() (*string, error) {
-	if c.cachedToken != nil && c.cachedTokenExpiry > time.Now().Unix() {
-		return c.cachedToken, nil
+	// TODO: use golang.org/x/sync/singleflight instead of mutex locking
+	c.cachedToken.mutex.Lock()
+	defer c.cachedToken.mutex.Unlock()
+
+	if c.cachedToken.inner.token != nil && c.cachedToken.inner.expiry > time.Now().Unix() {
+		return c.cachedToken.inner.token, nil
 	}
 
 	url := "https://" + c.Portal + "/api/v2/auth/userpass"
@@ -122,14 +136,17 @@ func (c *ElementoClient) getAuth() (*string, error) {
 		return nil, err
 	}
 
-	c.cachedToken = &authResponse.AccessToken
-	c.cachedTokenExpiry = authResponse.AccessTokenExp
-	return c.cachedToken, nil
+	c.cachedToken.inner.token = &authResponse.AccessToken
+	c.cachedToken.inner.expiry = authResponse.AccessTokenExp
+	return c.cachedToken.inner.token, nil
 }
 
 func (c *ElementoClient) getClientUUID() (*string, error) {
-	if c.cachedUUID != nil {
-		return c.cachedUUID, nil
+	c.cachedUUID.mutex.Lock()
+	defer c.cachedUUID.mutex.Unlock()
+
+	if c.cachedUUID.inner != nil {
+		return c.cachedUUID.inner, nil
 	}
 
 	authToken, err := c.getAuth()
@@ -152,14 +169,17 @@ func (c *ElementoClient) getClientUUID() (*string, error) {
         return nil, fmt.Errorf("client_uuid claim missing or not a string")
     }
 
-    c.cachedUUID = &clientUUID
+    c.cachedUUID.inner = &clientUUID
 
-	return c.cachedUUID, nil
+	return c.cachedUUID.inner, nil
 }
 
 func (c *ElementoClient) getTargetData() (*TargetGrant, error) {
-	if c.targetData != nil {
-		return c.targetData, nil
+	c.targetData.mutex.Lock()
+	defer c.targetData.mutex.Unlock()
+
+	if c.targetData.inner != nil {
+		return c.targetData.inner, nil
 	}
 
 	url := "https://" + c.Portal + "/api/v2/grants/me"
@@ -235,7 +255,7 @@ func (c *ElementoClient) getTargetData() (*TargetGrant, error) {
 		return nil, fmt.Errorf("target %s is not currently active", c.Target)
 	}
 
-	c.targetData = target
+	c.targetData.inner = target
 
 	return target, nil
 }
