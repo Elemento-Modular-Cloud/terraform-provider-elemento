@@ -109,10 +109,12 @@ func (r *serverlessResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The access key ID for the resource.",
+		Sensitive: true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The secret access key of the resource.",
+		Sensitive: true,
 	}
 	attributes["auth_type"] = schema.StringAttribute{
 		Computed:    true,

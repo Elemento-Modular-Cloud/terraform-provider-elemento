@@ -68,10 +68,12 @@ func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaReque
 	attributes["sas_token"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The SAS token for accessing the storage account.",
+		Sensitive: true,
 	}
 	attributes["azure_cli_command"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The Azure CLI command to access the storage account.",
+		Sensitive: true,
 	}
 
 	resp.Schema = schema.Schema{

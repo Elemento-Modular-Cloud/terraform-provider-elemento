@@ -147,6 +147,7 @@ func (r *kaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
     attributes["kube_config"] = schema.StringAttribute{
         Computed: true,
         Description: "The kubeconfig for the Kubernetes cluster associated with the KAAS resource.",
+        Sensitive: true,
     }
 
     resp.Schema = schema.Schema{

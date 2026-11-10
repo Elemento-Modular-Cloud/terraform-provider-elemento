@@ -114,6 +114,7 @@ func (r *queueAASResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	attributes["kafka_cert"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The Kafka certificate for the resource.",
+		Sensitive: true,
 	}
 
 	resp.Schema = schema.Schema{
