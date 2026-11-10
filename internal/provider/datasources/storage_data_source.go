@@ -82,9 +82,9 @@ func (d *storageDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 
-	diags := model.Read(ctx, d.Client, common.AddNotFoundError(resp.Diagnostics, "DBAAS"))
+	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(resp.Diagnostics, "DBAAS"))
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || !found {
 		return
 	}
 

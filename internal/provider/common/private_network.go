@@ -41,7 +41,7 @@ type PrivateNetworkResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.PrivateNetworkResponse
@@ -52,7 +52,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 				"Error Reading PrivateNetwork Resources",
 				"Could not list privatenetwork resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -68,7 +68,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 				"Error Reading PrivateNetwork Resource"+string(code),
 				"Could not read privatenetwork resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -83,7 +83,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -92,7 +92,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -125,9 +125,9 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 	// 		"Error Reading PrivateNetwork Credentials",
 	// 		"Could not read privatenetwork credentials: "+err.Error(),
 	// 	)
-	// 	return diags
+	// 	return true, diags
 	// }
 
 
-	return diags
+	return true, diags
 }

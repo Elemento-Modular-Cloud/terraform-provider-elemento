@@ -28,7 +28,7 @@ type PublicGatewayResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.PublicGatewayResponse
@@ -39,7 +39,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 				"Error Reading PublicGateway Resources",
 				"Could not list publicgateway resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -55,7 +55,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 				"Error Reading PublicGateway Resource"+string(code),
 				"Could not read publicgateway resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -70,7 +70,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -79,7 +79,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -103,7 +103,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	// 		"Error Reading PublicGateway Credentials",
 	// 		"Could not read publicgateway credentials: "+err.Error(),
 	// 	)
-	// 	return diags
+	// 	return true, diags
 	// }
 
 	// state.NFSHost = types.StringValue(credentials.NFSHost)
@@ -111,5 +111,5 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	// state.NFSVersion = types.StringValue(credentials.NFSVersion)
 	// state.MountCommand = types.StringValue(credentials.MountCommand)
 
-	return diags
+	return true, diags
 }

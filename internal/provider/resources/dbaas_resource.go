@@ -196,9 +196,9 @@ func (r *dbaasResource) Read(ctx context.Context, req resource.ReadRequest, resp
         return
     }
 
-    diags = model.Read(ctx, r.Client, common.RemoveResource(resp))
+    found, diags := model.Read(ctx, r.Client, common.RemoveResource(resp))
     resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
+    if resp.Diagnostics.HasError() || !found {
     	return
     }
     model.PaymentURL = types.StringNull()

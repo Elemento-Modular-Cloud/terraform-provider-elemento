@@ -25,7 +25,7 @@ type AIServerlessResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.AIServerlessResponse
@@ -36,7 +36,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading AIServerless Resources",
 				"Could not list aiserverless resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -52,7 +52,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading AIServerless Resource"+string(code),
 				"Could not read aiserverless resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -67,7 +67,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -76,7 +76,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -97,11 +97,11 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 			"Error Reading AIServerless Credentials",
 			"Could not read aiserverless credentials: "+err.Error(),
 		)
-		return diags
+		return true, diags
 	}
 
 	m.AccessKeyID = types.StringValue(credentials.AccessKeyID)
 	m.SecretAccessKey = types.StringValue(credentials.SecretAccessKey)
 
-	return diags
+	return true, diags
 }

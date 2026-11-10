@@ -30,7 +30,7 @@ type QueueAASResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.QueueAASResponse
@@ -41,7 +41,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading QueueAAS Resources",
 				"Could not list queueaas resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -57,7 +57,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading QueueAAS Resource"+string(code),
 				"Could not read queueaas resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -72,7 +72,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -81,7 +81,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -107,11 +107,11 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 			"Error Reading QueueAAS Credentials",
 			"Could not read queueaas credentials: "+err.Error(),
 		)
-		return diags
+		return true, diags
 	}
 
 	m.BootstrapServers = types.StringValue(credentials.BootstrapServers)
 	m.KafkaCert = types.StringValue(credentials.KafkaCert)
 
-	return diags
+	return true, diags
 }

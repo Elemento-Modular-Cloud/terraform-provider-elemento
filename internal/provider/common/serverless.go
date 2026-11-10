@@ -32,7 +32,7 @@ type ServerlessResourceModel struct {
 	CodeZipB64  types.String `tfsdk:"code_zip_b64"`
 }
 
-func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.ServerlessResponse
@@ -43,7 +43,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 				"Error Reading Serverless Resources",
 				"Could not list serverless resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -59,7 +59,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 				"Error Reading Serverless Resource"+string(code),
 				"Could not read serverless resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -74,7 +74,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -83,7 +83,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -108,12 +108,12 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 			"Error Reading Serverless Credentials",
 			"Could not read serverless credentials: "+err.Error(),
 		)
-		return diags
+		return true, diags
 	}
 
 	m.AccessKeyID = types.StringValue(credentials.AccessKeyID)
 	m.SecretAccessKey = types.StringValue(credentials.SecretAccessKey)
 	m.AuthType = types.StringValue(credentials.AuthType)
 
-	return diags
+	return true, diags
 }

@@ -78,7 +78,7 @@ func SpotVMNetworkObjectType() types.ObjectType {
 	}
 }
 
-func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	resources, err := c.ListSpotVMResources()
@@ -87,7 +87,7 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 			"Error Reading SpotVM Resources",
 			"Could not list spotvm resources: "+err.Error(),
 		)
-		return diags
+		return true, diags
 	}
 
 	var resource *client.SpotVMListItem
@@ -107,7 +107,7 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 				"Error Reading SpotVM Resource Status",
 				"Could not read spotvm resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -116,7 +116,7 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.CPU.Arch, diags = types.ListValueFrom(ctx, types.StringType, resource.CPU.Arch)
@@ -160,5 +160,5 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 	m.Tags, diags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
 	diags.Append(diags...)
 
-	return diags
+	return true, diags
 }

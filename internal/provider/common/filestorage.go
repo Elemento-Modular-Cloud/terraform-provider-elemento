@@ -28,7 +28,7 @@ type FileStorageResourceModel struct {
 	IsPublic types.Bool `tfsdk:"is_public"`
 }
 
-func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.FileStorageResponse
@@ -39,7 +39,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 				"Error Reading FileStorage Resources",
 				"Could not list filestorage resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -55,7 +55,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 				"Error Reading FileStorage Resource"+string(code),
 				"Could not read filestorage resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -70,7 +70,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -79,7 +79,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -100,7 +100,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 			"Error Reading FileStorage Credentials",
 			"Could not read filestorage credentials: "+err.Error(),
 		)
-		return diags
+		return true, diags
 	}
 
 	m.NFSHost = types.StringValue(credentials.NFSHost)
@@ -108,5 +108,5 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 	m.NFSVersion = types.StringValue(credentials.NFSVersion)
 	m.MountCommand = types.StringValue(credentials.MountCommand)
 
-	return diags
+	return true, diags
 }

@@ -84,9 +84,9 @@ func (d *privateNetworkDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	diags := model.Read(ctx, d.Client, common.AddNotFoundError(resp.Diagnostics, "PrivateNetwork"))
+	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(resp.Diagnostics, "PrivateNetwork"))
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || !found {
 		return
 	}
 

@@ -32,7 +32,7 @@ type StorageResourceModel struct {
 	HardwareDevice types.String `tfsdk:"hardware_device"`
 }
 
-func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.StorageResourceResponse
@@ -43,7 +43,7 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 				"Error Reading Storage Resources",
 				"Could not list storage resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -59,7 +59,7 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 				"Error Reading Storage Resource",
 				"Could not read storage resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -74,7 +74,7 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -83,7 +83,7 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -102,5 +102,5 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)
 
-	return diags
+	return true, diags
 }

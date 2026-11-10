@@ -30,7 +30,7 @@ type RegistryResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
+func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var resource *client.RegistryResponse
@@ -41,7 +41,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading Registry Resources",
 				"Could not list registry resources: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 
 		for _, res := range resources {
@@ -57,7 +57,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading Registry Resource"+string(code),
 				"Could not read registry resource: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 		resource = res
 	}
@@ -72,7 +72,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading Compute Resource Status",
 				"Could not read compute resource status: "+err.Error(),
 			)
-			return diags
+			return true, diags
 		}
 	} else {
 		status = nil
@@ -81,7 +81,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return diags
+		return !statusDeleted, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -105,7 +105,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 			"Error Reading Registry Credentials",
 			"Could not read registry credentials: "+err.Error(),
 		)
-		return diags
+		return true, diags
 	}
 
 	m.AccessKeyID = types.StringValue(credentials.AccessKeyID)
@@ -113,5 +113,5 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	m.RegistryType = types.StringValue(credentials.RegistryType)
 	m.LoginCommand = types.StringValue(credentials.LoginCommand)
 
-	return diags
+	return true, diags
 }
