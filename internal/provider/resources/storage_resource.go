@@ -160,7 +160,7 @@ func volumeAttributes() map[string]schema.Attribute {
                 int32planmodifier.RequiresReplace(),
             },
         },
-        "volume_uuid": schema.StringAttribute{
+        "uuid": schema.StringAttribute{
  	       	Computed: true,
             Description: "The UUID of the storage resource.",
         },
@@ -220,8 +220,12 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
     diags = plan.Tags.ElementsAs(ctx, &tags, false)
     resp.Diagnostics.Append(diags...)
 
+    if plan.Priority.IsUnknown() {
+    	plan.Priority = types.Int32Null()
+    }
+
     var priority *int
-    if !(plan.Priority.IsNull() || plan.Priority.IsUnknown()){
+    if !plan.Priority.IsNull() {
         priorityValue := int(plan.Priority.ValueInt32())
         priority = &priorityValue
     }

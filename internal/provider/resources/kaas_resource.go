@@ -125,6 +125,11 @@ func (r *kaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
             stringplanmodifier.RequiresReplace(),
         },
     }
+	attributes["network_cidr"] = schema.StringAttribute{
+		Computed:    true,
+		Description: "Cluster network CIDR.",
+	}
+
     attributes["control_plane_ha_enabled"] = schema.BoolAttribute{
         Required: true,
         Description: "Whether high availability is enabled for the control plane.",
@@ -233,6 +238,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 
     plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
     plan.CreatorUUID = types.StringNull()
+    plan.CreationDate = types.StringNull()
 
     plan.ClusterName   = types.StringNull()
     plan.ClusterStatus = types.StringNull()

@@ -30,7 +30,6 @@ type StorageResourceModel struct {
 	Bus            types.String `tfsdk:"bus"`
 	FS             types.String `tfsdk:"fs"`
 	HardwareDevice types.String `tfsdk:"hardware_device"`
-	Tags           types.List   `tfsdk:"tags"`
 }
 
 func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {

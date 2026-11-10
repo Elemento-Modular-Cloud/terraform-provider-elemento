@@ -26,7 +26,6 @@ type KAASResourceModel struct {
 	NodePools             []nodePoolModel `tfsdk:"node_pools"`
 	NodesSubnet           nodeSubnetModel `tfsdk:"nodes_subnet"`
 	UpdatePolicy          types.String    `tfsdk:"update_policy"`
-	KubernetesVersion     types.String    `tfsdk:"kubernetes_version"`
 	ControlPlaneHAEnabled types.Bool      `tfsdk:"control_plane_ha_enabled"`
 }
 
