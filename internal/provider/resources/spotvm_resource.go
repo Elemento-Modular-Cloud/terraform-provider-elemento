@@ -406,12 +406,19 @@ func (r *spotVMResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting SpotVM Resource",
-			"Could not delete spotvm resoruce, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting SpotVM Resource",
+				"Could not delete spotvm resoruce: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting SpotVM Resource",
+				"Could not delete spotvm resoruce, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

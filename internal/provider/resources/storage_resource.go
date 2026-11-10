@@ -343,12 +343,19 @@ func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest
         return
     }
 
-    err := r.Client.DeleteStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
     if err != nil {
-        resp.Diagnostics.AddWarning(
-            "Error Deleting Storage Resource",
-            "Could not delete storage resource, unexpected error: " + err.Error(),
-        )
-        return
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting Storage Resource",
+				"Could not delete storage resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting Storage Resource",
+				"Could not delete storage resource, unexpected error: " + err.Error(),
+			)
+		}
+		return
     }
 }

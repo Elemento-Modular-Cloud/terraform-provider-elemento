@@ -310,12 +310,19 @@ func (r *queueAASResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.Client.DeleteResource(state.UUID.ValueString(), "queueaas")
+	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "queueaas")
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting QueueAAS Resource",
-			"Could not delete queueaas resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting QueueAAS Resource",
+				"Could not delete queueaas resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting QueueAAS Resource",
+				"Could not delete queueaas resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

@@ -190,12 +190,19 @@ func (r *publicIPResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.Client.DeleteResource(state.UUID.ValueString(), "publicip")
+	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "publicip")
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting PublicIP Resource",
-			"Could not delete publicip resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting PublicIP Resource",
+				"Could not delete publicip resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting PublicIP Resource",
+				"Could not delete publicip resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

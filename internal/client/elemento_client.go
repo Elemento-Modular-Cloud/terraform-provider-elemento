@@ -444,21 +444,21 @@ func (c *ElementoClient) createResource(resource any, urlSuffix, resourceName st
     }
 }
 
-func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, resourceName string, headers map[string]string) error {
+func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, resourceName string, headers map[string]string) (int, error) {
 	host, err := c.getHost()
 	if err != nil {
-		return err
+		return -1, err
 	}
     url := "https://" + *host + urlSuffix
 
 	authToken, err := c.getAuth()
 	if err != nil {
-		return err
+		return, -1, err
 	}
 
     target_uuid, err := c.getTargetUUID()
     if err != nil {
-    	return err
+    	return -1, err
     }
 
     if headers == nil {
@@ -470,17 +470,17 @@ func (c *ElementoClient) deleteResource(deleteRequest any, method, urlSuffix, re
 
     resp, err := c.request(method, url, headers, deleteRequest)
     if err != nil {
-        return err
+        return -1, err
     }
 
     defer closeResponseBody(resp)
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to delete %s resource: %s %s", resourceName, resp.Status, string(body))
+		return resp.StatusCode, fmt.Errorf("failed to delete %s resource: %s %s", resourceName, resp.Status, string(body))
 	}
 
-	return nil
+	return resp.StatusCode, nil
 }
 
 func listResources[T any](c *ElementoClient, listRequest any, method, urlSuffix, resourceName string, headers map[string]string) ([]T, error) {
@@ -731,7 +731,7 @@ func (c *ElementoClient) ListComputeResources() ([]ComputeListItem, error) {
 	return computeResources.VMS, nil
 }
 
-func (c *ElementoClient) DeleteComputeResource(uuid string) error {
+func (c *ElementoClient) DeleteComputeResource(uuid string) (int, error) {
     delRequest := struct {
         UUID string `json:"vm_uid"`
     }{
@@ -754,7 +754,7 @@ func (c *ElementoClient) CreateStorageResource(storageResource *StorageResource)
     return c.createResource(storageResource, ":7772/api/v1.0/create", "storage", nil)
 }
 
-func (c *ElementoClient) DeleteStorageResource(client_uuid, volume_uuid string) error {
+func (c *ElementoClient) DeleteStorageResource(client_uuid, volume_uuid string) (int, error) {
 	delRequest := struct {
 		UUID       string `json:"volume_id"`
 		ClientUUID string `json:"client_id"`
@@ -796,7 +796,7 @@ func (c *ElementoClient) CreateObjectStorageResource(objectStorageResource Objec
     return c.createResource(objectStorageResource, ":7770/api/v1.0/objectstorage/create", "objectstorage", nil)
 }
 
-func (c *ElementoClient) DeleteObjectStorageResource(service_uuid string) error {
+func (c *ElementoClient) DeleteObjectStorageResource(service_uuid string) (int, error) {
 	delRequest := struct {
 		UUID string `json:"service_uuid"`
 	}{
@@ -832,7 +832,7 @@ func (c *ElementoClient) CreateDBAASResource(dbaasResource DBAASRequest) (Create
     return c.createResource(dbaasResource, ":7770/api/v1.0/dbaas/create", "dbaas", nil)
 }
 
-func (c *ElementoClient) DeleteDBAASResource(service_uuid string) error {
+func (c *ElementoClient) DeleteDBAASResource(service_uuid string) (int, error) {
 	delRequest := struct {
 		UUID string `json:"service_uuid"`
 	}{
@@ -870,7 +870,7 @@ func (c *ElementoClient) CreateKAASResource(kaasResource KAASRequest) (CreateRes
     return c.createResource(kaasResource, ":7770/api/v1.0/kaas/create", "kaas", nil)
 }
 
-func (c *ElementoClient) DeleteKAASResource(service_uuid string) error {
+func (c *ElementoClient) DeleteKAASResource(service_uuid string) (int, error) {
 	delRequest := struct {
 		UUID string `json:"service_uuid"`
 	}{
@@ -966,7 +966,7 @@ func (c *ElementoClient) CreateFileStorageResource(fileStorageResource FileStora
     return c.createResource(fileStorageResource, ":7770/api/v1.0/filestorage/create", "filestorage", nil)
 }
 
-func (c *ElementoClient) DeleteFileStorageResource(service_uuid string) error {
+func (c *ElementoClient) DeleteFileStorageResource(service_uuid string) (int, error) {
     delRequest := struct {
         UUID       string `json:"service_uuid"`
     }{
@@ -1003,7 +1003,7 @@ func (c *ElementoClient) CreatePrivateNetworkResource(privateNetworkResource Pri
     return c.createResource(privateNetworkResource, ":7770/api/v1.0/privatenetwork/create", "privatenetwork", nil)
 }
 
-func (c *ElementoClient) DeletePrivateNetworkResource(service_uuid string) error {
+func (c *ElementoClient) DeletePrivateNetworkResource(service_uuid string) (int, error) {
     delRequest := struct {
         UUID       string `json:"service_uuid"`
     }{
@@ -1042,7 +1042,7 @@ func (c *ElementoClient) CreateResource(resource resourceWithCreate) (CreateResp
     return c.createResource(resource, cfg.UrlSuffix, cfg.ResourceName, cfg.Headers)
 }
 
-func (c *ElementoClient) DeleteResource(service_uuid string, resourceName string) error {
+func (c *ElementoClient) DeleteResource(service_uuid string, resourceName string) (int, error) {
     delRequest := struct {
         UUID       string `json:"service_uuid"`
     }{
@@ -1147,7 +1147,7 @@ func (c *ElementoClient) ListSpotVMResources() ([]SpotVMListItem, error) {
     return computeResources.VMS, nil
 }
 
-func (c *ElementoClient) DeleteSpotVMResource(uuid string) error {
+func (c *ElementoClient) DeleteSpotVMResource(uuid string) (int, error) {
     delRequest := struct {
         UUID string `json:"vm_uid"`
     }{

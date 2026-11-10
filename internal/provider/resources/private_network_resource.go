@@ -201,12 +201,19 @@ func (r *privateNetworkResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	err := r.Client.DeletePrivateNetworkResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeletePrivateNetworkResource(state.UUID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting PrivateNetwork Resource",
-			"Could not delete privatenetwork resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting PrivateNetwork Resource",
+				"Could not delete privatenetwork resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting PrivateNetwork Resource",
+				"Could not delete privatenetwork resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

@@ -193,12 +193,19 @@ func (r *publicGatewayResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	err := r.Client.DeleteResource(state.UUID.ValueString(), "publicgateway")
+	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "publicgateway")
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting PublicGateway Resource",
-			"Could not delete publicgateway resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting PublicGateway Resource",
+				"Could not delete publicgateway resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting PublicGateway Resource",
+				"Could not delete publicgateway resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

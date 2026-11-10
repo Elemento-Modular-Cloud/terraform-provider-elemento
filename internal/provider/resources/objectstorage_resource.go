@@ -168,12 +168,19 @@ func (r *objectStorageResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	err := r.Client.DeleteObjectStorageResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteObjectStorageResource(state.UUID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting ObjectStorage Resource",
-			"Could not delete objectstorage resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting ObjectStorage Resource",
+				"Could not delete objectstorage resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting ObjectStorage Resource",
+				"Could not delete objectstorage resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

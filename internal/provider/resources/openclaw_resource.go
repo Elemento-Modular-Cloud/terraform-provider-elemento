@@ -270,12 +270,19 @@ func (r *openclawResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting OpenClaw Resource",
-			"Could not delete openclaw resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting OpenClaw Resource",
+				"Could not delete openclaw resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting OpenClaw Resource",
+				"Could not delete openclaw resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

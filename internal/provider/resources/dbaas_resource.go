@@ -256,12 +256,19 @@ func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, 
         return
     }
 
-    err := r.Client.DeleteDBAASResource(state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteDBAASResource(state.UUID.ValueString())
     if err != nil {
-        resp.Diagnostics.AddWarning(
-            "Error Deleting DBAAS Resource",
-            "Could not delete dbaas resource, unexpected error: " + err.Error(),
-        )
-        return
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting DBAAS Resource",
+				"Could not delete dbaas resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting DBAAS Resource",
+				"Could not delete dbaas resource, unexpected error: " + err.Error(),
+			)
+		}
+		return
     }
 }

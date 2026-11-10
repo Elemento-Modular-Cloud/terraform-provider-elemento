@@ -262,12 +262,19 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
-	err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting n8n Resource",
-			"Could not delete n8n resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting n8n Resource",
+				"Could not delete n8n resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting n8n Resource",
+				"Could not delete n8n resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

@@ -213,12 +213,19 @@ func (r *registryResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	err := r.Client.DeleteResource(state.UUID.ValueString(), "registry")
+	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "registry")
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting Registry Resource",
-			"Could not delete registry resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting Registry Resource",
+				"Could not delete registry resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting Registry Resource",
+				"Could not delete registry resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

@@ -186,12 +186,20 @@ func (r *aiserverlessResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.Client.DeleteResource(state.UUID.ValueString(), "aiserverless")
+	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "aiserverless")
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting AIServerless Resource",
-			"Could not delete aiserverless resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting AIServerless Resource",
+				"Could not delete aiserverless resource: resource not found.",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting AIServerless Resource",
+				"Could not delete aiserverless resource, unexpected error: "+err.Error(),
+			)
+		}
+
 		return
 	}
 }

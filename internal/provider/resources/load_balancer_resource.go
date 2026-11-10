@@ -210,12 +210,19 @@ func (r *loadBalancerResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	err := r.Client.DeleteResource(state.UUID.ValueString(), "loadbalancer")
+	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "loadbalancer")
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting LoadBalancer Resource",
-			"Could not delete loadbalancer resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting LoadBalancer Resource",
+				"Could not delete loadbalancer resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting LoadBalancer Resource",
+				"Could not delete loadbalancer resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

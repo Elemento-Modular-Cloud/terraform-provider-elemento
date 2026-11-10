@@ -308,12 +308,19 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
         return
     }
 
-    err := r.Client.DeleteKAASResource(state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteKAASResource(state.UUID.ValueString())
     if err != nil {
-        resp.Diagnostics.AddWarning(
-            "Error Deleting KAAS Resource",
-            "Could not delete kaas resource, unexpected error: " + err.Error(),
-        )
-        return
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting KAAS Resource",
+				"Could not delete kaas resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting KAAS Resource",
+				"Could not delete kaas resource, unexpected error: " + err.Error(),
+			)
+		}
+		return
     }
 }

@@ -246,12 +246,19 @@ func (r *serverlessResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	err := r.Client.DeleteResource(state.UUID.ValueString(), "serverless")
+	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "serverless")
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting Serverless Resource",
-			"Could not delete serverless resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting Serverless Resource",
+				"Could not delete serverless resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting Serverless Resource",
+				"Could not delete serverless resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

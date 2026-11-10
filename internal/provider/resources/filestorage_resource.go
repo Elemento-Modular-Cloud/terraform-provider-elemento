@@ -201,12 +201,19 @@ func (r *fileStorageResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	err := r.Client.DeleteFileStorageResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteFileStorageResource(state.UUID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddWarning(
-			"Error Deleting FileStorage Resource",
-			"Could not delete filestorage resource, unexpected error: "+err.Error(),
-		)
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting FileStorage Resource",
+				"Could not delete filestorage resource: resource not found",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting FileStorage Resource",
+				"Could not delete filestorage resource, unexpected error: "+err.Error(),
+			)
+		}
 		return
 	}
 }

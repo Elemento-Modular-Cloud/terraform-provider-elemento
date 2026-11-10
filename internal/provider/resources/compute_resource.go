@@ -599,7 +599,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
         model.LastUpdated = types.StringValue(volume.LastUpdated)
         model.Tags = tags
         model.Region = types.StringValue(volume.Region)
-		
+
         volumes = append(volumes, model)
     }
     state.Volumes = volumes
@@ -631,12 +631,20 @@ func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest
         return
     }
 
-    err := r.Client.DeleteComputeResource(state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteComputeResource(state.UUID.ValueString())
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Deleting Compute Resource",
-            "Could not delete compute resoruce, unexpected error: " + err.Error(),
-        )
+		if statusCode == 404 {
+			resp.Diagnostics.AddWarning(
+				"Error Deleting Compute Resource",
+				"Could not delete compute resource: resource not found.",
+			)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error Deleting Compute Resource",
+				"Could not delete compute resource, unexpected error: "+err.Error(),
+			)
+		}
+
         return
     }
 }
