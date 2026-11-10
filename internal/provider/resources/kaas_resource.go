@@ -195,7 +195,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
             CIDR:        plan.NodesSubnet.CIDR.ValueString(),
         },
         UpdatePolicy:          plan.UpdatePolicy.ValueString(),
-        KubernetesVersion:     plan.KubernetesVersion.ValueString(),
+        KubernetesVersion:     plan.Version.ValueString(),
         ControlPlaneHAEnabled: plan.ControlPlaneHAEnabled.ValueBool(),
     }
 
