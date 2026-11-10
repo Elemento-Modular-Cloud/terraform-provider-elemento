@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,20 +28,20 @@ type ElementoClient struct {
 }
 
 func NewElementoClient(ctx context.Context, target, username, password, portal string) *ElementoClient {
-    httpClient := &http.Client{
-        Transport: &http.Transport{
-            TLSClientConfig: &tls.Config{
-                InsecureSkipVerify: true,
-            },
-        },
-    }
+    // httpClient := &http.Client{
+    //     Transport: &http.Transport{
+    //         TLSClientConfig: &tls.Config{
+    //             InsecureSkipVerify: true,
+    //         },
+    //     },
+    // }
 
     return &ElementoClient{
 		Target:     target,
 		Username: username,
 		Password: password,
 		Portal:   portal,
-		httpClient: httpClient,
+		httpClient: http.DefaultClient,
 		context: ctx,
 	}
 }
