@@ -38,7 +38,7 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 
 	var resource *client.StorageResourceResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := c.ListStorageResources(m.CreatorUUID.ValueString())
+		resources, err := c.ListStorageResources()
 		if err != nil {
 			diags.AddError(
 				"Error Reading Storage Resources",
@@ -54,7 +54,7 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 			}
 		}
 	} else {
-		res, code, err := c.GetStorageResource(m.CreatorUUID.ValueString(), m.UUID.ValueString())
+		res, code, err := c.GetStorageResource(m.UUID.ValueString())
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading Storage Resource",

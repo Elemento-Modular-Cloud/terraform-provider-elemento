@@ -39,9 +39,8 @@ func (r *storageResource) Metadata(_ context.Context, req resource.MetadataReque
 func volumeAttributes() map[string]schema.Attribute {
     return map[string]schema.Attribute{
         "creator_uuid": schema.StringAttribute{
-            Optional: true,
             Computed: true,
-            Description: "The UUID of the creator of the storage resource. If not provided, it will be set to the current user's UUID.",
+            Description: "The UUID of the creator of the storage resource.",
         },
         "name": schema.StringAttribute{
             Required: true,
@@ -230,7 +229,6 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
     }
 
     storageResource := client.StorageResource{
-        CreatorUUID:      plan.CreatorUUID.ValueString(),
         Name:             plan.Name.ValueString(),
         Size:             int(plan.Size.ValueInt64()),
         Private:          plan.Private.ValueBool(),
@@ -343,7 +341,7 @@ func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest
         return
     }
 
-    statusCode, err := r.Client.DeleteStorageResource(state.CreatorUUID.ValueString(), state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteStorageResource(state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

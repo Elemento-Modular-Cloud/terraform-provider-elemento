@@ -128,11 +128,6 @@ func (c *ElementoClient) getAuth() (*string, error) {
 	return c.cachedToken, nil
 }
 
-// ClientUUID returns the authenticated account UUID from the Portal.
-func (c *ElementoClient) ClientUUID() (*string, error) {
-    return c.getClientUUID()
-}
-
 func (c *ElementoClient) getClientUUID() (*string, error) {
 	if c.cachedUUID != nil {
 		return c.cachedUUID, nil
@@ -754,34 +749,49 @@ func (c *ElementoClient) CreateStorageResource(storageResource *StorageResource)
     return c.createResource(storageResource, ":7772/api/v1.0/create", "storage", nil)
 }
 
-func (c *ElementoClient) DeleteStorageResource(client_uuid, volume_uuid string) (int, error) {
+func (c *ElementoClient) DeleteStorageResource(volume_uuid string) (int, error) {
+	client_uuid, err := c.getClientUUID()
+	if err != nil {
+		return -1, err
+	}
+
 	delRequest := struct {
 		UUID       string `json:"volume_id"`
 		ClientUUID string `json:"client_id"`
 	}{
 		UUID:       volume_uuid,
-		ClientUUID: client_uuid,
+		ClientUUID: *client_uuid,
 	}
 
     return c.deleteResource(delRequest, "POST", ":7772/api/v1.0/destroy", "storage", nil)
 }
 
-func (c *ElementoClient) ListStorageResources(client_uuid string) ([]StorageResourceResponse, error) {
+func (c *ElementoClient) ListStorageResources() ([]StorageResourceResponse, error) {
+	client_uuid, err := c.getClientUUID()
+	if err != nil {
+		return nil, err
+	}
+
 	var listRequest = struct {
 		ClientUUID string `json:"client_uid"`
 	}{
-		ClientUUID: client_uuid,
+		ClientUUID: *client_uuid,
 	}
 
     return listResources[StorageResourceResponse](c, listRequest, "POST", ":7772/api/v1.0/accessible", "storage", nil)
 }
 
-func (c *ElementoClient) GetStorageResource(client_uuid, volume_uuid string) (*StorageResourceResponse, int, error) {
+func (c *ElementoClient) GetStorageResource(volume_uuid string) (*StorageResourceResponse, int, error) {
+	client_uuid, err := c.getClientUUID()
+	if err != nil {
+		return nil, -1, err
+	}
+
 	var getRequest = struct {
 		ClientUUID string `json:"client_uid"`
 		VolumeUUID string `json:"volume_id"`
 	}{
-		ClientUUID: client_uuid,
+		ClientUUID: *client_uuid,
 		VolumeUUID: volume_uuid,
 	}
 
