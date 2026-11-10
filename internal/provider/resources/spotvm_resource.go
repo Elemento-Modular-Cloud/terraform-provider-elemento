@@ -249,6 +249,9 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	attributes["cloudinit_b64"] = schema.StringAttribute{
 		Required:    true,
 		Description: "The cloudinit file for the spotvm, base64-encoded.",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
 	}
 
 	resp.Schema = schema.Schema{

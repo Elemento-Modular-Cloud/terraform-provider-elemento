@@ -8,6 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -34,10 +37,17 @@ func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaReque
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
 		Description: "The name of the object storage resource.",
+		PlanModifiers: []planmodifier.String{
+			stringplanmodifier.RequiresReplace(),
+		},
 	}
 	attributes["size_tb"] = schema.Int64Attribute{
 		Required:    true,
 		Description: "The size of the object storage resource in TB.",
+		PlanModifiers: []planmodifier.Int64{
+			int64planmodifier.RequiresReplace(),
+		},
+
 	}
 	attributes["active_storage"] = schema.Int32Attribute{
 		Computed:    true,

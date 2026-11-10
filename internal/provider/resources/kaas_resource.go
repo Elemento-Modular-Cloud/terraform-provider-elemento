@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -33,157 +34,124 @@ func (r *kaasResource) Metadata(_ context.Context, req resource.MetadataRequest,
 }
 
 func (r *kaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-    resp.Schema = schema.Schema{
-        Attributes: map[string]schema.Attribute{
-            "creator_uuid": schema.StringAttribute{
-                Computed: true,
-                Description: "The UUID of the user who created the KAAS resource.",
-            },
-            "name": schema.StringAttribute{
-                Required: true,
-                Description: "The name of the KAAS resource.",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
+	attributes := common.BaseSchema()
+
+    attributes["name"] = schema.StringAttribute{
+        Required: true,
+        Description: "The name of the KAAS resource.",
+        PlanModifiers: []planmodifier.String{
+            stringplanmodifier.RequiresReplace(),
+        },
+    }
+    attributes["node_pools"] = schema.ListNestedAttribute{
+        Required: true,
+        Description: "A list of node pools for the KAAS resource.",
+        NestedObject: schema.NestedAttributeObject{
+            Attributes: map[string]schema.Attribute{
+                "name": schema.StringAttribute{
+                    Required: true,
+                    Description: "The name of the node pool.",
                 },
-            },
-            "region": schema.StringAttribute{
-                Required: true,
-                Description: "The region where the KAAS resource will be created.",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
+                "auto_scale": schema.BoolAttribute{
+                    Required: true,
+                    Description: "Whether auto-scaling is enabled for the node pool.",
                 },
-            },
-            "uuid": schema.StringAttribute{
-           	    Computed: true,
-                Description: "The unique identifier of the KAAS resource.",
-            },
-            "last_updated": schema.StringAttribute{
-               	Computed: true,
-                Description: "The timestamp of the last update to the KAAS resource.",
-            },
-            "billing_frequency": schema.StringAttribute{
-                Required: true,
-                Description: "The billing frequency for the KAAS resource (e.g., 'month', 'year').",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
+                "min_nodes": schema.Int32Attribute{
+                    Required: true,
+                    Description: "The minimum number of nodes in the node pool.",
                 },
-            },
-            "billing_uuid": schema.StringAttribute{
-                Computed: true,
-                Description: "The billing UUID associated with the KAAS resource.",
-            },
-            "payment_url": schema.StringAttribute{
-                Computed: true,
-                Description: "The payment URL for the KAAS resource, assigned by the Elemento API after creation.",
-            },
-            "node_pools": schema.ListNestedAttribute{
-                Required: true,
-                Description: "A list of node pools for the KAAS resource.",
-                NestedObject: schema.NestedAttributeObject{
+                "max_nodes": schema.Int32Attribute{
+                    Required: true,
+                    Description: "The maximum number of nodes in the node pool.",
+                },
+                "shared_storage_gb": schema.Int64Attribute{
+                    Required: true,
+                    Description: "The amount of shared storage in GB for the node pool.",
+                },
+                "specs": schema.SingleNestedAttribute{
+                    Required: true,
                     Attributes: map[string]schema.Attribute{
-                        "name": schema.StringAttribute{
+                        "cpu_cores": schema.Int32Attribute{
                             Required: true,
-                            Description: "The name of the node pool.",
+                            Description: "The number of CPU cores for the node pool.",
                         },
-                        "auto_scale": schema.BoolAttribute{
+                        "memory_gb": schema.Int32Attribute{
                             Required: true,
-                            Description: "Whether auto-scaling is enabled for the node pool.",
+                            Description: "The amount of memory in GB for the node pool.",
                         },
-                        "min_nodes": schema.Int32Attribute{
+                        "disk_size_gb": schema.Int32Attribute{
                             Required: true,
-                            Description: "The minimum number of nodes in the node pool.",
+                            Description: "The size of the disk in GB for the node pool.",
                         },
-                        "max_nodes": schema.Int32Attribute{
+                        "gpus": schema.Int32Attribute{
                             Required: true,
-                            Description: "The maximum number of nodes in the node pool.",
-                        },
-                        "shared_storage_gb": schema.Int64Attribute{
-                            Required: true,
-                            Description: "The amount of shared storage in GB for the node pool.",
-                        },
-                        "specs": schema.SingleNestedAttribute{
-                            Required: true,
-                            Attributes: map[string]schema.Attribute{
-                                "cpu_cores": schema.Int32Attribute{
-                                    Required: true,
-                                    Description: "The number of CPU cores for the node pool.",
-                                },
-                                "memory_gb": schema.Int32Attribute{
-                                    Required: true,
-                                    Description: "The amount of memory in GB for the node pool.",
-                                },
-                                "disk_size_gb": schema.Int32Attribute{
-                                    Required: true,
-                                    Description: "The size of the disk in GB for the node pool.",
-                                },
-                                "gpus": schema.Int32Attribute{
-                                    Required: true,
-                                    Description: "The number of GPUs for the node pool.",
-                                },
-                            },
+                            Description: "The number of GPUs for the node pool.",
                         },
                     },
                 },
-                PlanModifiers: []planmodifier.List{
-                    listplanmodifier.RequiresReplace(),
-                },
-            },
-            "nodes_subnet": schema.SingleNestedAttribute{
-                Required: true,
-                Attributes: map[string]schema.Attribute{
-                    "dhcp_enabled": schema.BoolAttribute{
-                        Required: true,
-                        Description: "Whether DHCP is enabled for the nodes subnet.",
-                    },
-                    "cidr": schema.StringAttribute{
-                        Required: true,
-                        Description: "The CIDR block for the nodes subnet.",
-                    },
-                },
-            },
-            "update_policy": schema.StringAttribute{
-                Required: true,
-                Description: "The update policy for the KAAS resource (e.g., 'ALWAYS').",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-                },
-            },
-            "kubernetes_version": schema.StringAttribute{
-                Required: true,
-                Description: "The Kubernetes version for the KAAS resource.",
-                PlanModifiers: []planmodifier.String{
-                    stringplanmodifier.RequiresReplace(),
-                },
-            },
-            "control_plane_ha_enabled": schema.BoolAttribute{
-                Required: true,
-                Description: "Whether high availability is enabled for the control plane.",
-                PlanModifiers: []planmodifier.Bool{
-                    boolplanmodifier.RequiresReplace(),
-                },
-            },
-            "cluster_name": schema.StringAttribute{
-                Computed: true,
-                Description: "The name of the Kubernetes cluster associated with the KAAS resource.",
-            },
-            "cluster_status": schema.StringAttribute{
-                Computed: true,
-                Description: "The status of the Kubernetes cluster associated with the KAAS resource.",
-            },
-            "endpoint": schema.StringAttribute{
-                Computed: true,
-                Description: "The endpoint for the KAAS resource.",
-            },
-            "kube_config": schema.StringAttribute{
-                Computed: true,
-                Description: "The kubeconfig for the Kubernetes cluster associated with the KAAS resource.",
-            },
-            "status": schema.StringAttribute{
-                Computed: true,
-                Description: "The status of the KAAS resource.",
             },
         },
-	}
+        PlanModifiers: []planmodifier.List{
+            listplanmodifier.RequiresReplace(),
+        },
+    }
+    attributes["nodes_subnet"] = schema.SingleNestedAttribute{
+        Required: true,
+        Attributes: map[string]schema.Attribute{
+            "dhcp_enabled": schema.BoolAttribute{
+                Required: true,
+                Description: "Whether DHCP is enabled for the nodes subnet.",
+            },
+            "cidr": schema.StringAttribute{
+                Required: true,
+                Description: "The CIDR block for the nodes subnet.",
+            },
+        },
+		PlanModifiers: []planmodifier.Object{
+			objectplanmodifier.RequiresReplace(),
+		},
+    }
+    attributes["update_policy"] = schema.StringAttribute{
+        Required: true,
+        Description: "The update policy for the KAAS resource (e.g., 'ALWAYS').",
+        PlanModifiers: []planmodifier.String{
+            stringplanmodifier.RequiresReplace(),
+        },
+    }
+    attributes["kubernetes_version"] = schema.StringAttribute{
+        Required: true,
+        Description: "The Kubernetes version for the KAAS resource.",
+        PlanModifiers: []planmodifier.String{
+            stringplanmodifier.RequiresReplace(),
+        },
+    }
+    attributes["control_plane_ha_enabled"] = schema.BoolAttribute{
+        Required: true,
+        Description: "Whether high availability is enabled for the control plane.",
+        PlanModifiers: []planmodifier.Bool{
+            boolplanmodifier.RequiresReplace(),
+        },
+    }
+    attributes["cluster_name"] = schema.StringAttribute{
+        Computed: true,
+        Description: "The name of the Kubernetes cluster associated with the KAAS resource.",
+    }
+    attributes["cluster_status"] = schema.StringAttribute{
+        Computed: true,
+        Description: "The status of the Kubernetes cluster associated with the KAAS resource.",
+    }
+    attributes["endpoint"] = schema.StringAttribute{
+        Computed: true,
+        Description: "The endpoint for the KAAS resource.",
+    }
+    attributes["kube_config"] = schema.StringAttribute{
+        Computed: true,
+        Description: "The kubeconfig for the Kubernetes cluster associated with the KAAS resource.",
+    }
+
+    resp.Schema = schema.Schema{
+        Attributes: attributes,
+    }
 }
 
 func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

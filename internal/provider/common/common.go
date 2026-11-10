@@ -62,6 +62,9 @@ func BaseSchema() map[string]rschema.Attribute {
 		"billing_frequency": rschema.StringAttribute{
 			Optional:    true,
 			Description: "The billing frequency for the resource (e.g., 'monthly', 'yearly'). Required for public mesons.",
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
 		},
 		"billing_uuid": rschema.StringAttribute{
 			Computed:    true,
