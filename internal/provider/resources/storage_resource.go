@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -84,6 +85,7 @@ func volumeAttributes() map[string]schema.Attribute {
             PlanModifiers: []planmodifier.Bool {
                 boolplanmodifier.RequiresReplace(),
             },
+            Default: booldefault.StaticBool(true),
         },
         "alg": schema.StringAttribute{
            	Optional: true,
@@ -202,7 +204,7 @@ func (r *storageResource) Schema(_ context.Context, _ resource.SchemaRequest, re
     }
 
     resp.Schema = schema.Schema{
-		Attributes: volumeAttributes(),
+		Attributes: attributes,
 	}
 }
 
@@ -219,7 +221,7 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
     resp.Diagnostics.Append(diags...)
 
     var priority *int
-    if !plan.Priority.IsNull() {
+    if !(plan.Priority.IsNull() || plan.Priority.IsUnknown()){
         priorityValue := int(plan.Priority.ValueInt32())
         priority = &priorityValue
     }
