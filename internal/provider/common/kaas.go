@@ -51,7 +51,7 @@ type nodeSubnetModel struct {
 	CIDR        types.String `tfsdk:"cidr"`
 }
 
-func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
+func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
 	var diags diag.Diagnostics
 	var resource *client.KAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
@@ -98,8 +98,9 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 		status = nil
 	}
 
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		onNotFound(ctx)
+	if resource == nil {
+		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
+		onNotFound(ctx, statusDeleted)
 		return diags
 	}
 

@@ -216,14 +216,18 @@ func ValidateCanCreate(check *client.CanCreateResponse, diags *diag.Diagnostics,
 	return true
 }
 
-func RemoveResource(resp *resource.ReadResponse) func(context.Context) {
-	return func(ctx context.Context) {
-		resp.State.RemoveResource(ctx)
+type OnNotFound func(ctx context.Context, statusDeleted bool)
+
+func RemoveResource(resp *resource.ReadResponse) OnNotFound {
+	return func(ctx context.Context, statusDeleted bool) {
+		if statusDeleted {
+			resp.State.RemoveResource(ctx)
+		}
 	}
 }
 
-func AddNotFoundError(diags diag.Diagnostics, typeName string) func(context.Context) {
-	return func(ctx context.Context) {
+func AddNotFoundError(diags diag.Diagnostics, typeName string) OnNotFound {
+	return func(ctx context.Context, _ bool) {
 		diags.AddError(
 			fmt.Sprintf("No matching %s Found", typeName),
 			fmt.Sprintf(

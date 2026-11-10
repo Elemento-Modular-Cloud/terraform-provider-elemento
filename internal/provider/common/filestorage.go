@@ -28,7 +28,7 @@ type FileStorageResourceModel struct {
 	IsPublic types.Bool `tfsdk:"is_public"`
 }
 
-func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
+func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	var resource *client.FileStorageResponse
@@ -76,8 +76,9 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 		status = nil
 	}
 
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		onNotFound(ctx)
+	if resource == nil {
+		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
+		onNotFound(ctx, statusDeleted)
 		return diags
 	}
 

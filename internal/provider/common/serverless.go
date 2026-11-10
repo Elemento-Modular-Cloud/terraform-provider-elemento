@@ -32,7 +32,7 @@ type ServerlessResourceModel struct {
 	CodeZipB64  types.String `tfsdk:"code_zip_b64"`
 }
 
-func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
+func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	var resource *client.ServerlessResponse
@@ -80,8 +80,9 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 		status = nil
 	}
 
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		onNotFound(ctx)
+	if resource == nil {
+		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
+		onNotFound(ctx, statusDeleted)
 		return diags
 	}
 

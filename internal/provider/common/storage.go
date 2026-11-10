@@ -33,7 +33,7 @@ type StorageResourceModel struct {
 	Tags           types.List   `tfsdk:"tags"`
 }
 
-func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound func(ctx context.Context)) diag.Diagnostics {
+func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	var resource *client.StorageResourceResponse
@@ -81,8 +81,9 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 		status = nil
 	}
 
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		onNotFound(ctx)
+	if resource == nil {
+		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
+		onNotFound(ctx, statusDeleted)
 		return diags
 	}
 
