@@ -205,98 +205,22 @@ func (r *queueAASResource) Create(ctx context.Context, req resource.CreateReques
 }
 
 func (r *queueAASResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state common.QueueAASResourceModel
-	diags := req.State.Get(ctx, &state)
+	var model common.QueueAASResourceModel
+	diags := req.State.Get(ctx, &model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var resource *client.QueueAASResponse
-	if state.UUID.IsNull() || state.UUID.IsUnknown() || state.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.QueueAASResponse](r.Client, "queueaas")
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading QueueAAS Resources",
-				"Could not list queueaas resources: "+err.Error(),
-			)
-			return
-		}
-
-		for _, res := range resources {
-			if res.BillingUUID == state.BillingUUID.ValueString() {
-				resource = &res
-				break
-			}
-		}
-	} else {
-		res, code, err := client.GetResource[client.QueueAASResponse](r.Client, state.UUID.ValueString(), "queueaas")
-		if err != nil && code != 404 {
-			resp.Diagnostics.AddError(
-				"Error Reading QueueAAS Resource"+string(code),
-				"Could not read queueaas resource: "+err.Error(),
-			)
-			return
-		}
-		resource = res
-	}
-
-	billing_uuid := state.BillingUUID.ValueStringPointer()
-	var status *string
-	if billing_uuid != nil && *billing_uuid != "" {
-		var err error
-		status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
-			)
-			return
-		}
-	} else {
-		status = nil
-	}
-
-	if resource == nil && (status == nil || *status == "deleted" || *status == "error" || *status == "canceled") {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	state.Status = types.StringPointerValue(status)
-	state.Name = types.StringValue(resource.Name)
-	state.Region = types.StringValue(resource.Region)
-	state.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
-	state.UUID = types.StringValue(resource.ServiceUUID)
-	state.CreatorUUID = types.StringValue(resource.CreatorUUID)
-	state.CreationDate = types.StringValue(resource.CreationDate)
-	state.NodeNumber = types.Int64Value(resource.NodeNumber)
-	state.NodeSize = types.StringValue(resource.NodeSize)
-	state.SizeGB = types.Int64Value(resource.SizeGB)
-	state.Username = types.StringValue(resource.Username)
-	state.Password = types.StringValue(resource.Password)
-	state.KafkaVersion = types.StringValue(resource.KafkaVersion)
-	state.IsHA = types.BoolValue(resource.IsHA)
-	state.IsPublic = types.BoolValue(resource.IsPublic)
-	state.NetworkUUID = types.StringValue(resource.NetworkUUID)
-	state.PaymentURL = types.StringNull()
-
-	credentials, err := r.Client.GetQueueAASCredentials(resource.ServiceUUID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading QueueAAS Credentials",
-			"Could not read queueaas credentials: "+err.Error(),
-		)
-		return
-	}
-
-	state.BootstrapServers = types.StringValue(credentials.BootstrapServers)
-	state.KafkaCert = types.StringValue(credentials.KafkaCert)
-
-	diags = resp.State.Set(ctx, &state)
+	found, diags := model.Read(ctx, r.Client, common.RemoveResource(resp))
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if resp.Diagnostics.HasError() || !found {
 		return
 	}
+	model.PaymentURL = types.StringNull()
+
+	diags = resp.State.Set(ctx, &model)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *queueAASResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
