@@ -133,6 +133,8 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
 		plan.Status = types.StringValue(res.Status)
 	}
 
+	plan.CreationDate = types.StringNull()
+	plan.CreatorUUID = types.StringNull()
 	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
 	plan.ActiveStorage = types.Int32Null()
