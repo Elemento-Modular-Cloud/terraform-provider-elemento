@@ -106,6 +106,7 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 		},
 		Name:   plan.Name.ValueString(),
 		SizeGB: int64(plan.SizeGB.ValueInt64()),
+		IsPublic: plan.IsPublic.ValueBool(),
 	}
 
 	canCreateResponse, err := r.Client.CanCreateFileStorageResource(fileStorageResource)
