@@ -118,9 +118,12 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
+		diags = resp.State.Set(ctx, plan)
+		resp.Diagnostics.Append(diags...)
+
 		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
-			resp.Diagnostics.AddError(
+			resp.Diagnostics.AddWarning(
 				"Error Reading AIServerless Resource Status",
 				"Could not read aiserverless resource status: "+err.Error(),
 			)

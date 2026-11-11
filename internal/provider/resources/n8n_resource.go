@@ -200,9 +200,12 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
+		diags = resp.State.Set(ctx, plan)
+		resp.Diagnostics.Append(diags...)
+
 		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
-			resp.Diagnostics.AddError(
+			resp.Diagnostics.AddWarning(
 				"Error Reading n8n Resource Status",
 				"Could not read n8n resource status: "+err.Error(),
 			)

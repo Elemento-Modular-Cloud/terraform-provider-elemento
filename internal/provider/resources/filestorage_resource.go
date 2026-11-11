@@ -129,9 +129,12 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
+		diags = resp.State.Set(ctx, plan)
+		resp.Diagnostics.Append(diags...)
+
 		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
-			resp.Diagnostics.AddError(
+			resp.Diagnostics.AddWarning(
 				"Error Reading FileStorage Resource Status",
 				"Could not read filestorage resource status: "+err.Error(),
 			)

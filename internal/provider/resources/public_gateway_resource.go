@@ -120,9 +120,12 @@ func (r *publicGatewayResource) Create(ctx context.Context, req resource.CreateR
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
+		diags = resp.State.Set(ctx, plan)
+		resp.Diagnostics.Append(diags...)
+
 		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
-			resp.Diagnostics.AddError(
+			resp.Diagnostics.AddWarning(
 				"Error Reading PublicGateway Resource Status",
 				"Could not read publicgateway resource status: "+err.Error(),
 			)

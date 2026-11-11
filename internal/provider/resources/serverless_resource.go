@@ -176,9 +176,12 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
+		diags = resp.State.Set(ctx, plan)
+		resp.Diagnostics.Append(diags...)
+
 		status, err := r.Client.GetResourceStatus(res.BillingUUID)
 		if err != nil {
-			resp.Diagnostics.AddError(
+			resp.Diagnostics.AddWarning(
 				"Error Reading Serverless Resource Status",
 				"Could not read serverless resource status: "+err.Error(),
 			)

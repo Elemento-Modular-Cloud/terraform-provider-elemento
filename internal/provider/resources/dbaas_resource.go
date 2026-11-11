@@ -152,9 +152,12 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
 
+			diags = resp.State.Set(ctx, plan)
+			resp.Diagnostics.Append(diags...)
+
             status, err := r.Client.GetResourceStatus(res.BillingUUID)
             if err != nil {
-                resp.Diagnostics.AddError(
+                resp.Diagnostics.AddWarning(
                     "Error Reading DBAAS Resource Status",
                     "Could not read dbaas resource status: "+err.Error(),
                 )

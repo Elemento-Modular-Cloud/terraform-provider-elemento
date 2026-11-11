@@ -219,9 +219,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
             plan.PaymentURL  = types.StringValue(res.PaymentURL)
             plan.UUID        = types.StringNull()
 
+			diags = resp.State.Set(ctx, plan)
+			resp.Diagnostics.Append(diags...)
+
             status, err := r.Client.GetResourceStatus(res.BillingUUID)
             if err != nil {
-                resp.Diagnostics.AddError(
+                resp.Diagnostics.AddWarning(
                     "Error Reading KAAS Resource Status",
                     "Could not read kaas resource status: "+err.Error(),
                 )
