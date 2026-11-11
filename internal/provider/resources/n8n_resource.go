@@ -265,6 +265,14 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting n8n Resource",
+			"Could not delete n8n resource: resource uuid is null.",
+		)
+		return
+	}
+
 	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {

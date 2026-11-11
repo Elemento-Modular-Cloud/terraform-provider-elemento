@@ -205,6 +205,14 @@ func (r *fileStorageResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting FileStorage Resource",
+			"Could not delete filestorage resource: resource uuid is null.",
+		)
+		return
+	}
+
 	statusCode, err := r.Client.DeleteFileStorageResource(state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {

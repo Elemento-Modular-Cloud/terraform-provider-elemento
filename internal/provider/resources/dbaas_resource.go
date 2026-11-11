@@ -222,6 +222,14 @@ func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, 
         return
     }
 
+    if state.UUID.IsNull() {
+	    resp.Diagnostics.AddError(
+		    "Error Deleting DBAAS Resource",
+		    "Could not delete dbaas resource: resource uuid is null.",
+	    )
+		return
+     }
+
     statusCode, err := r.Client.DeleteDBAASResource(state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {

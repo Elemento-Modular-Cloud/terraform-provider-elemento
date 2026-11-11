@@ -185,6 +185,14 @@ func (r *objectStorageResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting ObjectStorage Resource",
+			"Could not delete objectstorage resource: resource uuid is null.",
+		)
+		return
+	}
+
 	statusCode, err := r.Client.DeleteObjectStorageResource(state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {

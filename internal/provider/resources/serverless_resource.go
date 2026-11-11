@@ -251,6 +251,13 @@ func (r *serverlessResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting Serverless Resource",
+			"Could not delete serverless resource: resource uuid is null.",
+		)
+	}
+
 	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "serverless")
 	if err != nil {
 		if statusCode == 404 {

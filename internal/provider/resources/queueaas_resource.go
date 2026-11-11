@@ -238,6 +238,14 @@ func (r *queueAASResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting QueueAAS Resource",
+			"Could not delete queueaas resource: resource uuid is null.",
+		)
+		return
+	}
+
 	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "queueaas")
 	if err != nil {
 		if statusCode == 404 {

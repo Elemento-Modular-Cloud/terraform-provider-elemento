@@ -286,6 +286,14 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
         return
     }
 
+    if state.UUID.IsNull() {
+	    resp.Diagnostics.AddError(
+		    "Error Deleting KAAS Resource",
+		    "Could not delete kaas resource: missing resource uuid is null.",
+	    )
+		return
+    }
+
     statusCode, err := r.Client.DeleteKAASResource(state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {

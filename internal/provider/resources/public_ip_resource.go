@@ -193,6 +193,14 @@ func (r *publicIPResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting PublicIP Resource",
+			"Could not delete publicip resource: resource uuid is null.",
+		)
+		return
+	}
+
 	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "publicip")
 	if err != nil {
 		if statusCode == 404 {

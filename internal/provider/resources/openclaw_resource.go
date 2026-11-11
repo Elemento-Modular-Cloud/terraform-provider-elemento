@@ -273,6 +273,14 @@ func (r *openclawResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting OpenClaw Resource",
+			"Could not delete openclaw resource: resource uuid is null.",
+		)
+		return
+	}
+
 	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {

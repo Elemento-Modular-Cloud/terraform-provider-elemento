@@ -213,6 +213,14 @@ func (r *loadBalancerResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
+	if state.UUID.IsNull() {
+		resp.Diagnostics.AddError(
+			"Error Deleting LoadBalancer Resource",
+			"Could not delete loadbalancer resource: resource uuid is null.",
+		)
+		return
+	}
+
 	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "loadbalancer")
 	if err != nil {
 		if statusCode == 404 {

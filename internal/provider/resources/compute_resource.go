@@ -634,6 +634,14 @@ func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest
         return
     }
 
+    if state.UUID.IsNull() {
+	    resp.Diagnostics.AddError(
+		    "Error Deleting Compute Resource",
+		    "Could not delete compute resource: resource uuid is null.",
+	    )
+		return
+    }
+
     statusCode, err := r.Client.DeleteComputeResource(state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {
