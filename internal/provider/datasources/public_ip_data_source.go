@@ -76,7 +76,7 @@ func (d *publicIPDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(resp.Diagnostics, "PublicIP"))
+	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "PublicIP"))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() || !found {
 		return

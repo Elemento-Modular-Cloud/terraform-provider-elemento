@@ -229,7 +229,7 @@ func RemoveResource(resp *resource.ReadResponse) OnNotFound {
 	}
 }
 
-func AddNotFoundError(diags diag.Diagnostics, typeName string) OnNotFound {
+func AddNotFoundError(diags *diag.Diagnostics, typeName string) OnNotFound {
 	return func(ctx context.Context, _ bool) {
 		diags.AddError(
 			fmt.Sprintf("No matching %s Found", typeName),

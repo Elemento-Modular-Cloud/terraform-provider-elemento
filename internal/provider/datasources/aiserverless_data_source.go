@@ -72,7 +72,7 @@ func (d *aiServerlessDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(resp.Diagnostics, "AIServerless"))
+	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "AIServerless"))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() || !found {
 		return
