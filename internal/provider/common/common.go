@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"terraform-provider-elemento/internal/client"
 
@@ -81,29 +82,33 @@ func BaseSchema() map[string]rschema.Attribute {
 	}
 }
 
-func identifierExactlyOneOf(paths ...string) []validator.String {
+func identifierExactlyOneOf(paths ...string) validator.String {
 	exprs := make([]path.Expression, 0, len(paths))
 	for _, p := range paths {
 		exprs = append(exprs, path.MatchRoot(p))
 	}
-	return []validator.String{stringvalidator.ExactlyOneOf(exprs...)}
+	return stringvalidator.ExactlyOneOf(exprs...)
 }
 
 func BaseDataSourceSchema() map[string]dschema.Attribute {
 	ids := identifierExactlyOneOf("uuid", "billing_uuid")
+	uuid := stringvalidator.RegexMatches(
+		regexp.MustCompile("^(?i)[0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+		"value must be a valid UUID.",
+	)
 
 	return map[string]dschema.Attribute{
 		"uuid": dschema.StringAttribute{
 			Optional:    true,
 			Computed:    true,
 			Description: "Service UUID of the datasource. Exactly one of uuid or billing_uuidmust be set.",
-			Validators:  ids,
+			Validators:  []validator.String{ids, uuid},
 		},
 		"billing_uuid": dschema.StringAttribute{
 			Optional:    true,
 			Computed:    true,
 			Description: "Portal billing UUID of the datasource.",
-			Validators:  ids,
+			Validators:  []validator.String{ids, uuid},
 		},
 		"creator_uuid": dschema.StringAttribute{
 			Computed:    true,
