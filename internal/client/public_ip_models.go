@@ -13,7 +13,7 @@ type PublicIPResponse struct {
 	Domain                       string `json:"domain"`
 	AssociationID                string `json:"association_id"`
 	AssociatedInstanceID         string `json:"associated_instance_id"`
-	AssociatedNetworkInterfaceID string `json:"associated_network_instance_id"`
+	AssociatedNetworkInterfaceID string `json:"associated_network_interface_id"`
 	State                        string `json:"state"`
 }
 
