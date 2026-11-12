@@ -116,8 +116,10 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 			ID:   types.StringValue(subnet.ID),
 		})
 	}
-	m.Subnets, diags = types.ListValueFrom(ctx, PrivateNetworkSubnetObjectType(), subnets)
-	diags.Append(diags...)
+
+	var tmpDiags diag.Diagnostics
+	m.Subnets, tmpDiags = types.ListValueFrom(ctx, PrivateNetworkSubnetObjectType(), subnets)
+	diags.Append(tmpDiags...)
 
 	// // NOTE: current network credentials are not useful so we ignore them.
 	// credentials, err := c.GetPrivateNetworkCredentials(resource.ServiceUUID)

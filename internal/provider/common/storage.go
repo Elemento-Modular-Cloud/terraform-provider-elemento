@@ -95,8 +95,10 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 	m.Clonable = types.BoolValue(resource.Clonable)
 	m.Size = types.Int64Value(int64(resource.Size))
 	m.Priority = types.Int32Value(int32(resource.Priority))
-	m.Tags, diags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
-	diags.Append(diags...)
+
+	var tmpDiags diag.Diagnostics
+	m.Tags, tmpDiags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
+	diags.Append(tmpDiags...)
 
 	m.Region = types.StringValue(resource.Region)
 	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))

@@ -119,8 +119,9 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 		return !statusDeleted, diags
 	}
 
-	m.CPU.Arch, diags = types.ListValueFrom(ctx, types.StringType, resource.CPU.Arch)
-	diags.Append(diags...)
+	var tmpDiags diag.Diagnostics
+	m.CPU.Arch, tmpDiags = types.ListValueFrom(ctx, types.StringType, resource.CPU.Arch)
+	diags.Append(tmpDiags...)
 
 	m.CPU.Slots = types.Int32Value(int32(resource.CPU.Slots))
 	m.CPU.SharedCores = types.BoolValue(resource.CPU.SharedCores)
@@ -150,15 +151,16 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 			MAC:  types.StringPointerValue(network.MAC),
 		})
 	}
-	m.Networks, diags = types.ListValueFrom(ctx, SpotVMNetworkObjectType(), networks)
+	m.Networks, tmpDiags = types.ListValueFrom(ctx, SpotVMNetworkObjectType(), networks)
+	diags.Append(tmpDiags...)
 
 	m.Status = types.StringPointerValue(status)
 	m.VMName = types.StringValue(resource.VMName)
 	m.Region = types.StringValue(resource.Region)
 	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)
-	m.Tags, diags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
-	diags.Append(diags...)
+	m.Tags, tmpDiags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
+	diags.Append(tmpDiags...)
 
 	return true, diags
 }
