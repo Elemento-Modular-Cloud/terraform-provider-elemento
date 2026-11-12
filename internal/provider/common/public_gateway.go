@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -52,7 +53,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 		res, code, err := client.GetResource[client.PublicGatewayResponse](c, m.UUID.ValueString(), "publicgateway")
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading PublicGateway Resource"+string(code),
+				"Error Reading PublicGateway Resource"+strconv.Itoa(code),
 				"Could not read publicgateway resource: "+err.Error(),
 			)
 			return true, diags

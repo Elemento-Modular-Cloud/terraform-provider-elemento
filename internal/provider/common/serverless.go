@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -56,7 +57,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 		res, code, err := client.GetResource[client.ServerlessResponse](c, m.UUID.ValueString(), "serverless")
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading Serverless Resource"+string(code),
+				"Error Reading Serverless Resource"+strconv.Itoa(code),
 				"Could not read serverless resource: "+err.Error(),
 			)
 			return true, diags

@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -65,7 +66,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 		res, code, err := c.GetPrivateNetworkResource(m.UUID.ValueString())
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading PrivateNetwork Resource"+string(code),
+				"Error Reading PrivateNetwork Resource"+strconv.Itoa(code),
 				"Could not read privatenetwork resource: "+err.Error(),
 			)
 			return true, diags

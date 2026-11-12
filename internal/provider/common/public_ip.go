@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -50,7 +51,7 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 		res, code, err := client.GetResource[client.PublicIPResponse](c, model.UUID.ValueString(), "publicip")
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading PublicIP Resource"+string(code),
+				"Error Reading PublicIP Resource"+strconv.Itoa(code),
 				"Could not read publicip resource: "+err.Error(),
 			)
 			return true, diags

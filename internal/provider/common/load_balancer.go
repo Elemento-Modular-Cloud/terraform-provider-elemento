@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -53,7 +54,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 		res, code, err := client.GetResource[client.LoadBalancerResponse](c, m.UUID.ValueString(), "loadbalancer")
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading LoadBalancer Resource"+string(code),
+				"Error Reading LoadBalancer Resource"+strconv.Itoa(code),
 				"Could not read loadbalancer resource: "+err.Error(),
 			)
 			return true, diags

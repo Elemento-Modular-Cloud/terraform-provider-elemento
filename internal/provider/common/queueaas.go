@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -54,7 +55,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 		res, code, err := client.GetResource[client.QueueAASResponse](c, m.UUID.ValueString(), "queueaas")
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading QueueAAS Resource"+string(code),
+				"Error Reading QueueAAS Resource"+strconv.Itoa(code),
 				"Could not read queueaas resource: "+err.Error(),
 			)
 			return true, diags

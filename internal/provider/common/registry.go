@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -54,7 +55,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 		res, code, err := client.GetResource[client.RegistryResponse](c, m.UUID.ValueString(), "registry")
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading Registry Resource"+string(code),
+				"Error Reading Registry Resource"+strconv.Itoa(code),
 				"Could not read registry resource: "+err.Error(),
 			)
 			return true, diags

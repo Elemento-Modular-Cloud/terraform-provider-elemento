@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"terraform-provider-elemento/internal/client"
 	"time"
 
@@ -52,7 +53,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 		res, code, err := c.GetFileStorageResource(m.UUID.ValueString())
 		if err != nil && code != 404 {
 			diags.AddError(
-				"Error Reading FileStorage Resource"+string(code),
+				"Error Reading FileStorage Resource"+strconv.Itoa(code),
 				"Could not read filestorage resource: "+err.Error(),
 			)
 			return true, diags
