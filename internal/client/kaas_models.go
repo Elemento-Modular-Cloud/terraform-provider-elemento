@@ -8,7 +8,7 @@ type KAASRequest struct {
 	UpdatePolicy          string         `json:"update_policy"`
 	KubernetesVersion     string         `json:"kubernetes_version"`
 	ControlPlaneHAEnabled bool           `json:"controlplane_ha"`
-	BillingFrequency      string         `json:"billing_frequency"`
+	BillingFrequency      *string        `json:"billing_frequency,omitempty"`
 }
 
 type KAASNodePool struct {

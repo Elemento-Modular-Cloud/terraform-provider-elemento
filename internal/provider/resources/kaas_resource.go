@@ -188,7 +188,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
     kaasResource := client.KAASRequest{
         Name:             plan.Name.ValueString(),
         Region:           plan.Region.ValueString(),
-        BillingFrequency: plan.BillingFrequency.ValueString(),
+        BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
         NodePools:        nodePools,
         NodesSubnet: client.KaasNodeSubnet{
             DHCPEnabled: plan.NodesSubnet.DHCPEnabled.ValueBool(),

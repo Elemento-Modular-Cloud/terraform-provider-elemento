@@ -1,10 +1,10 @@
 package client
 
 type ObjectStorageRequest struct {
-	Name             string `json:"name"`
-	SizeTB           int    `json:"purchasedTB"`
-	Region           string `json:"region"`
-	BillingFrequency string `json:"billing_frequency"`
+	Name             string  `json:"name"`
+	SizeTB           int     `json:"purchasedTB"`
+	Region           string  `json:"region"`
+	BillingFrequency *string `json:"billing_frequency,omitempty"`
 }
 
 type ObjectStorageResponse struct {

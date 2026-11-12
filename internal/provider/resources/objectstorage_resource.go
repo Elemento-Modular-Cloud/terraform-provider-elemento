@@ -93,7 +93,7 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
 		Name:             plan.Name.ValueString(),
 		SizeTB:           int(plan.SizeTB.ValueInt64()),
 		Region:           plan.Region.ValueString(),
-		BillingFrequency: plan.BillingFrequency.ValueString(),
+		BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
 	}
 
 	canCreateResponse, err := r.Client.CanCreateObjectStorageResource(objectStorageResource)

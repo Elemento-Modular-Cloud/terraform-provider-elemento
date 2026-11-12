@@ -129,7 +129,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
         Password:         plan.Password.ValueString(),
         NodesNumber:      plan.NodesNumber.ValueInt32(),
         Region:           plan.Region.ValueString(),
-        BillingFrequency: plan.BillingFrequency.ValueString(),
+        BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
     }
 
     canCreateResponse, err := r.Client.CanCreateDBAASResource(dbaasResource)

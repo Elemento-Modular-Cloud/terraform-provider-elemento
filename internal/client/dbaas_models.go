@@ -8,7 +8,7 @@ type DBAASRequest struct {
     Password         string    `json:"password"`
     NodesNumber      int32     `json:"nodes_number"`
     Region           string    `json:"region"`
-    BillingFrequency string    `json:"billing_frequency"`
+    BillingFrequency *string   `json:"billing_frequency,omitempty"`
 }
 
 type DBAASResponse struct {
