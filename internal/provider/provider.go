@@ -206,6 +206,18 @@ func (p *ElementoProvider) DataSources(_ context.Context) []func() datasource.Da
 		datasources.NewObjectStorageDataSource,
 		datasources.NewDBAASDataSource,
 		datasources.NewKAASDataSource,
+		datasources.NewN8NDataSource,
+		datasources.NewOpenClawDataSource,
+		datasources.NewFileStorageDataSource,
+		datasources.NewPrivateNetworkDataSource,
+		datasources.NewPublicIPDataSource,
+		datasources.NewRegistryDataSource,
+		datasources.NewLoadBalancerDataSource,
+		datasources.NewPublicGatewayDataSource,
+		datasources.NewServerlessDataSource,
+		datasources.NewAIServerlessDataSource,
+		datasources.NewQueueAASDataSource,
+
 	}
 }
 
