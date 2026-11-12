@@ -64,10 +64,12 @@ func (d *registryDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The ID of the access key of the resource.",
+		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The secret access key of the resource.",
+		Sensitive:   true,
 	}
 	attributes["registry_type"] = schema.StringAttribute{
 		Computed:    true,
@@ -76,6 +78,7 @@ func (d *registryDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 	attributes["login_command"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The command used to login to the resource.",
+		Sensitive:   true,
 	}
 
 	resp.Schema = schema.Schema{

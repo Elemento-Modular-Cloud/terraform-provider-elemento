@@ -52,7 +52,7 @@ func (d *queueAASDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 	attributes["password"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The password to use for the queue.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 	attributes["kafka_version"] = schema.StringAttribute{
 		Computed:    true,
@@ -77,8 +77,8 @@ func (d *queueAASDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 	attributes["kafka_cert"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The Kafka certificate for the resource.",
+		Sensitive:   true,
 	}
-
 
 	resp.Schema = schema.Schema{
 		Description:         "Looks up an existing Elemento queueaas resource on the cloud selected by host.",

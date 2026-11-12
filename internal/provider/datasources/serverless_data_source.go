@@ -68,16 +68,17 @@ func (d *ServerlessDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The access key ID for the resource.",
+		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The secret access key of the resource.",
+		Sensitive:   true,
 	}
 	attributes["auth_type"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The type of auth used by the resource.",
 	}
-
 
 	resp.Schema = schema.Schema{
 		Description:         "Looks up an existing Elemento serverless resource on the cloud selected by host.",
