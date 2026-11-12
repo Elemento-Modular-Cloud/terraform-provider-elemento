@@ -79,7 +79,7 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 
 	credentials, err := c.GetN8NCredentials(resource.UUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading n8n Credentials",
 			"Could not read n8n credentials: "+err.Error(),
 		)

@@ -89,7 +89,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
 
     credentials, err := c.GetObjectStorageCredentials(resource.UUID)
     if err != nil {
-        diags.AddError(
+        diags.AddWarning(
             "Error Reading ObjectStorage Credentials",
             "Could not read objectstorage credentials: "+err.Error(),
         )

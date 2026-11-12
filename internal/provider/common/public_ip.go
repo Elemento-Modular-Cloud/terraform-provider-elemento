@@ -98,7 +98,7 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	// // NOTE: PublicIP credentials contain no useful extra information
 	// credentials, err := c.GetPublicIPCredentials(resource.ServiceUUID)
 	// if err != nil {
-	// 	diags.AddError(
+	// 	diags.AddWarning(
 	// 		"Error Reading PublicIP Credentials",
 	// 		"Could not read publicip credentials: "+err.Error(),
 	// 	)

@@ -103,7 +103,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 
 	credentials, err := c.GetQueueAASCredentials(resource.ServiceUUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading QueueAAS Credentials",
 			"Could not read queueaas credentials: "+err.Error(),
 		)

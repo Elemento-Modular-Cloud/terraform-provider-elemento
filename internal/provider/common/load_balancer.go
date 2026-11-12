@@ -104,7 +104,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	// // NOTE: LoadBalancer credentials contain no useful extra information
 	// credentials, err := c.GetLoadBalancerCredentials(resource.ServiceUUID)
 	// if err != nil {
-	// 	diags.AddError(
+	// 	diags.AddWarning(
 	// 		"Error Reading LoadBalancer Credentials",
 	// 		"Could not read loadbalancer credentials: "+err.Error(),
 	// 	)

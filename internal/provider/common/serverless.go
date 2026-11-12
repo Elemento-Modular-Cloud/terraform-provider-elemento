@@ -104,7 +104,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 
 	credentials, err := c.GetServerlessCredentials(resource.ServiceUUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading Serverless Credentials",
 			"Could not read serverless credentials: "+err.Error(),
 		)

@@ -96,7 +96,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 
 	credentials, err := c.GetFileStorageCredentials(resource.ServiceUUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading FileStorage Credentials",
 			"Could not read filestorage credentials: "+err.Error(),
 		)

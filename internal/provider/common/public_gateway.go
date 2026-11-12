@@ -99,7 +99,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	// // NOTE: PublicGateway credentials contain no useful extra information
 	// credentials, err := c.GetPublicGatewayCredentials(resource.ServiceUUID)
 	// if err != nil {
-	// 	diags.AddError(
+	// 	diags.AddWarning(
 	// 		"Error Reading PublicGateway Credentials",
 	// 		"Could not read publicgateway credentials: "+err.Error(),
 	// 	)

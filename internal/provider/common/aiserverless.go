@@ -93,7 +93,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 
 	credentials, err := c.GetAIServerlessCredentials(resource.ServiceUUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading AIServerless Credentials",
 			"Could not read aiserverless credentials: "+err.Error(),
 		)

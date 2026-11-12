@@ -101,7 +101,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 
 	credentials, err := c.GetRegistryCredentials(resource.ServiceUUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading Registry Credentials",
 			"Could not read registry credentials: "+err.Error(),
 		)

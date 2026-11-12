@@ -121,7 +121,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 	// // NOTE: current network credentials are not useful so we ignore them.
 	// credentials, err := c.GetPrivateNetworkCredentials(resource.ServiceUUID)
 	// if err != nil {
-	// 	diags.AddError(
+	// 	diags.AddWarning(
 	// 		"Error Reading PrivateNetwork Credentials",
 	// 		"Could not read privatenetwork credentials: "+err.Error(),
 	// 	)

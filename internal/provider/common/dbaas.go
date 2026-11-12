@@ -98,7 +98,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 
 	credentials, err := c.GetDBAASCredentials(resource.UUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading DBAAS Credentials",
 			"Could not read dbaas credentials: "+err.Error(),
 		)

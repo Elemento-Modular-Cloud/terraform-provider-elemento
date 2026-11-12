@@ -118,7 +118,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 
 	// credentials, err := c.GetKAASCredentials(resource.UUID)
 	// if err != nil {
-	//     diags.AddError(
+	//     diags.AddWarning(
 	//         "Error Reading KAAS Credentials",
 	//         "Could not read kaas credentials: "+err.Error(),
 	//     )

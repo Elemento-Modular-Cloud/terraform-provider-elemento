@@ -80,7 +80,7 @@ func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 
 	credentials, err := c.GetOpenClawCredentials(resource.UUID)
 	if err != nil {
-		diags.AddError(
+		diags.AddWarning(
 			"Error Reading OpenClaw Credentials",
 			"Could not read openclaw credentials: "+err.Error(),
 		)
