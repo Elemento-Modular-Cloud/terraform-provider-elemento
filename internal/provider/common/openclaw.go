@@ -31,7 +31,7 @@ type OpenClawResourceModel struct {
 func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	resources, err := c.ListComputeResources()
+	resources, err := c.ListSpotVMResources()
 	if err != nil {
 		diags.AddError(
 			"Error Reading OpenClaw Resources",
@@ -40,7 +40,7 @@ func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 		return true, diags
 	}
 
-	var resource *client.ComputeListItem
+	var resource *client.SpotVMListItem
 	for _, res := range resources {
 		if res.BillingUUID == m.BillingUUID.ValueString() || res.UUID == m.UUID.ValueString() {
 			resource = &res
@@ -70,10 +70,10 @@ func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	}
 
 	m.Status = types.StringPointerValue(status)
-	m.VMName = types.StringValue(resource.Requirements.VMName)
-	m.CPUCores = types.Int32Value(int32(resource.Requirements.Slots))
-	m.RAMSizeMB = types.Int32Value(int32(resource.Requirements.RamSize))
-	m.VMName = types.StringValue(resource.Requirements.VMName)
+	m.VMName = types.StringValue(resource.VMName)
+	m.CPUCores = types.Int32Value(int32(resource.CPU.Slots))
+	m.RAMSizeMB = types.Int32Value(int32(resource.Mem.CapacityMB))
+	m.DiskSizeGB = types.Int64Value(int64(resource.Storage.Boot.SizeGB))
 	m.Region = types.StringValue(resource.Region)
 	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)

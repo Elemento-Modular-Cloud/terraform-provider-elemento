@@ -142,6 +142,10 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 		})
 	}
 	m.Storage.Data = dataVolumes
+	m.Storage.Boot = spotVMVolumeModel {
+		Name: types.StringValue(resource.Storage.Boot.Name),
+		SizeGB: types.Int64Value(int64(resource.Storage.Boot.SizeGB)),
+	}
 
 	var networks []spotVMNetworkModel
 	for _, network := range resource.Networks {

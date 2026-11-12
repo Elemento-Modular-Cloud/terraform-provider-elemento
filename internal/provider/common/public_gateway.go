@@ -95,6 +95,8 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	m.PublicSubnetID = types.StringValue(resource.PublicSubnetID)
 	m.EgressEnabled = types.BoolValue(resource.EgressEnabled)
 	m.BytesOutMonth = types.Int64Value(resource.BytesOutMonth)
+	m.NetworkUUID = types.StringValue(resource.NetworkUUID)
+	m.NATGatewayID = types.StringValue(resource.NATGatewayID)
 	m.State = types.StringValue(resource.State)
 
 	// // NOTE: PublicGateway credentials contain no useful extra information

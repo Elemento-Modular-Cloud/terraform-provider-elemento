@@ -115,6 +115,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 	m.Endpoint = types.StringValue(resource.Endpoint)
 	m.KubeConfig = types.StringValue(resource.KubeConfig)
 	m.NetworkCIDR = types.StringValue(resource.NetworkCIDR)
+	m.Version = types.StringValue(resource.Version)
 
 	// credentials, err := c.GetKAASCredentials(resource.UUID)
 	// if err != nil {
