@@ -101,7 +101,7 @@ func BaseDataSourceSchema() map[string]dschema.Attribute {
 		"uuid": dschema.StringAttribute{
 			Optional:    true,
 			Computed:    true,
-			Description: "Service UUID of the datasource. Exactly one of uuid or billing_uuidmust be set.",
+			Description: "Service UUID of the datasource. Exactly one of uuid or billing_uuid must be set.",
 			Validators:  []validator.String{ids, uuid},
 		},
 		"billing_uuid": dschema.StringAttribute{
