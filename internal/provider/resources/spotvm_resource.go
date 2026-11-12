@@ -226,15 +226,6 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 		Optional:    true,
 		Description: "The tags associated with the spotvm resource, assigned by the Elemento API after creation.",
 		ElementType: types.StringType,
-		Validators: []validator.List{
-			listvalidator.SizeAtLeast(1),
-			listvalidator.ValueStringsAre(
-				stringvalidator.OneOf(
-					"X86_64",
-					"arm64",
-				),
-			),
-		},
 		PlanModifiers: []planmodifier.List{
 			listplanmodifier.RequiresReplace(),
 		},
