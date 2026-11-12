@@ -173,12 +173,6 @@ func (r *publicIPResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
-
-	diags = resp.State.Set(ctx, &model)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
 
 func (r *publicIPResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
