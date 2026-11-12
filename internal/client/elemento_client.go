@@ -71,7 +71,7 @@ func (c *ElementoClient) request(
 		reqBody = bytes.NewReader(body)
 	}
 
-	req, err := http.NewRequest(method, url, reqBody)
+	req, err := http.NewRequestWithContext(c.context, method, url, reqBody)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (c *ElementoClient) getAuth() (*string, error) {
 	c.cachedToken.mutex.Lock()
 	defer c.cachedToken.mutex.Unlock()
 
-	if c.cachedToken.inner.token != nil && c.cachedToken.inner.expiry > time.Now().Unix() {
+	if c.cachedToken.inner.token != nil && c.cachedToken.inner.expiry - 60 * 2 > time.Now().Unix() {
 		return c.cachedToken.inner.token, nil
 	}
 
