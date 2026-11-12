@@ -66,8 +66,8 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 		status, err = c.GetResourceStatus(model.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading PublicIP Resource Status",
+				"Could not read publicip resource status: "+err.Error(),
 			)
 			return true, diags
 		}

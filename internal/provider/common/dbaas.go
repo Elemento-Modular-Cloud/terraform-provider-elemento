@@ -69,8 +69,8 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading DBAAS Resource Status",
+				"Could not read dbaas resource status: "+err.Error(),
 			)
 			return true, diags
 		}

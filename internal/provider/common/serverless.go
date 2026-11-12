@@ -72,8 +72,8 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading Serverless Resource Status",
+				"Could not read serverless resource status: "+err.Error(),
 			)
 			return true, diags
 		}

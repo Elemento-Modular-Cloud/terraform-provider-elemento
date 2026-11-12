@@ -71,8 +71,8 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading Storage Resource Status",
+				"Could not read storage resource status: "+err.Error(),
 			)
 			return true, diags
 		}

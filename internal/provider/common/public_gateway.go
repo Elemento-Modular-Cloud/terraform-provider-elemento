@@ -68,8 +68,8 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading PublicGateway Resource Status",
+				"Could not read publicgateway resource status: "+err.Error(),
 			)
 			return true, diags
 		}

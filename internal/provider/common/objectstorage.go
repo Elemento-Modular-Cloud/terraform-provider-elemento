@@ -64,8 +64,8 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading ObjectStorage Resource Status",
+				"Could not read objectstorage resource status: "+err.Error(),
 			)
 			return true, diags
 		}

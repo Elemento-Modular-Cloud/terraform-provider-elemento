@@ -81,8 +81,8 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading PrivateNetwork Resource Status",
+				"Could not read privatenetwork resource status: "+err.Error(),
 			)
 			return true, diags
 		}

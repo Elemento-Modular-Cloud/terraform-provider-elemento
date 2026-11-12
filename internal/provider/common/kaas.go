@@ -88,8 +88,8 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading KAAS Resource Status",
+				"Could not read kaas resource status: "+err.Error(),
 			)
 			return true, diags
 		}

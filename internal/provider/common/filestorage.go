@@ -68,8 +68,8 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading FileStorage Resource Status",
+				"Could not read filestorage resource status: "+err.Error(),
 			)
 			return true, diags
 		}

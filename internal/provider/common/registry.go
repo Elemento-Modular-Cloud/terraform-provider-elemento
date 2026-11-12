@@ -70,8 +70,8 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
-				"Error Reading Compute Resource Status",
-				"Could not read compute resource status: "+err.Error(),
+				"Error Reading Registry Resource Status",
+				"Could not read registry resource status: "+err.Error(),
 			)
 			return true, diags
 		}
