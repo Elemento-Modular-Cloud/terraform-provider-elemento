@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -17,8 +18,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &queueAASResource{}
-	_ resource.ResourceWithConfigure = &queueAASResource{}
+	_ resource.Resource                = &queueAASResource{}
+	_ resource.ResourceWithConfigure   = &queueAASResource{}
+	_ resource.ResourceWithImportState = &queueAASResource{}
 )
 
 func NewQueueAASResource() resource.Resource {
@@ -114,7 +116,7 @@ func (r *queueAASResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	attributes["kafka_cert"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The Kafka certificate for the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 
 	resp.Schema = schema.Schema{
@@ -261,4 +263,8 @@ func (r *queueAASResource) Delete(ctx context.Context, req resource.DeleteReques
 		}
 		return
 	}
+}
+
+func (r *queueAASResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

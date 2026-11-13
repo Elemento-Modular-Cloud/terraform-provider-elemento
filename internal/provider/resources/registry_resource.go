@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -17,8 +18,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &registryResource{}
-	_ resource.ResourceWithConfigure = &registryResource{}
+	_ resource.Resource                = &registryResource{}
+	_ resource.ResourceWithConfigure   = &registryResource{}
+	_ resource.ResourceWithImportState = &registryResource{}
 )
 
 func NewRegistryResource() resource.Resource {
@@ -80,12 +82,12 @@ func (r *registryResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The ID of the access key of the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The secret access key of the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 	attributes["registry_type"] = schema.StringAttribute{
 		Computed:    true,
@@ -94,7 +96,7 @@ func (r *registryResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	attributes["login_command"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The command used to login to the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 
 	resp.Schema = schema.Schema{
@@ -242,4 +244,8 @@ func (r *registryResource) Delete(ctx context.Context, req resource.DeleteReques
 		}
 		return
 	}
+}
+
+func (r *registryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

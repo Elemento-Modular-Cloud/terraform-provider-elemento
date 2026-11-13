@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -23,6 +24,7 @@ import (
 var (
 	_ resource.Resource = &storageResource{}
 	_ resource.ResourceWithConfigure = &storageResource{}
+	_ resource.ResourceWithImportState = &storageResource{}
 )
 
 func NewStorageResource() resource.Resource {
@@ -373,4 +375,8 @@ func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest
 		}
 		return
     }
+}
+
+func (r *storageResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

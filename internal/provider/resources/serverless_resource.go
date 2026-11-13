@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -18,8 +19,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &serverlessResource{}
-	_ resource.ResourceWithConfigure = &serverlessResource{}
+	_ resource.Resource                = &serverlessResource{}
+	_ resource.ResourceWithConfigure   = &serverlessResource{}
+	_ resource.ResourceWithImportState = &serverlessResource{}
 )
 
 func NewServerlessResource() resource.Resource {
@@ -109,12 +111,12 @@ func (r *serverlessResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The access key ID for the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The secret access key of the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 	attributes["auth_type"] = schema.StringAttribute{
 		Computed:    true,
@@ -228,12 +230,12 @@ func (r *serverlessResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-    found, diags := model.Read(ctx, r.Client, common.RemoveResource(resp))
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() || !found {
-    	return
-    }
-    model.PaymentURL = types.StringNull()
+	found, diags := model.Read(ctx, r.Client, common.RemoveResource(resp))
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || !found {
+		return
+	}
+	model.PaymentURL = types.StringNull()
 
 	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
@@ -273,4 +275,8 @@ func (r *serverlessResource) Delete(ctx context.Context, req resource.DeleteRequ
 		}
 		return
 	}
+}
+
+func (r *serverlessResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

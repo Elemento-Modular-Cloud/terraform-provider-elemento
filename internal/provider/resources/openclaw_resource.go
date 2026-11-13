@@ -9,6 +9,7 @@ import (
 	"terraform-provider-elemento/internal/client"
 	"terraform-provider-elemento/internal/provider/common"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
@@ -19,8 +20,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &openclawResource{}
-	_ resource.ResourceWithConfigure = &openclawResource{}
+	_ resource.Resource                = &openclawResource{}
+	_ resource.ResourceWithConfigure   = &openclawResource{}
+	_ resource.ResourceWithImportState = &openclawResource{}
 )
 
 func NewOpenClawResource() resource.Resource {
@@ -296,4 +298,8 @@ func (r *openclawResource) Delete(ctx context.Context, req resource.DeleteReques
 		}
 		return
 	}
+}
+
+func (r *openclawResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

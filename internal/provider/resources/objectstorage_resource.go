@@ -6,6 +6,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -15,8 +16,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &objectStorageResource{}
-	_ resource.ResourceWithConfigure = &objectStorageResource{}
+	_ resource.Resource                = &objectStorageResource{}
+	_ resource.ResourceWithConfigure   = &objectStorageResource{}
+	_ resource.ResourceWithImportState = &objectStorageResource{}
 )
 
 func NewObjectStorageResource() resource.Resource {
@@ -47,7 +49,6 @@ func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaReque
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
-
 	}
 	attributes["active_storage"] = schema.Int32Attribute{
 		Computed:    true,
@@ -68,12 +69,12 @@ func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaReque
 	attributes["sas_token"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The SAS token for accessing the storage account.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 	attributes["azure_cli_command"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The Azure CLI command to access the storage account.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 
 	resp.Schema = schema.Schema{
@@ -208,4 +209,8 @@ func (r *objectStorageResource) Delete(ctx context.Context, req resource.DeleteR
 		}
 		return
 	}
+}
+
+func (r *objectStorageResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

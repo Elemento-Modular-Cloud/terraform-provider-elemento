@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -17,6 +18,7 @@ import (
 var (
 	_ resource.Resource              = &publicGatewayResource{}
 	_ resource.ResourceWithConfigure = &publicGatewayResource{}
+	_ resource.ResourceWithImportState = &publicGatewayResource{}
 )
 
 func NewPublicGatewayResource() resource.Resource {
@@ -219,4 +221,8 @@ func (r *publicGatewayResource) Delete(ctx context.Context, req resource.DeleteR
 		}
 		return
 	}
+}
+
+func (r *publicGatewayResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

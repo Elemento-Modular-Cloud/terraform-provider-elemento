@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
@@ -28,6 +29,7 @@ import (
 var (
 	_ resource.Resource = &computeResource{}
 	_ resource.ResourceWithConfigure = &computeResource{}
+	_ resource.ResourceWithImportState = &computeResource{}
 )
 
 func NewComputeResource() resource.Resource {
@@ -658,4 +660,8 @@ func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest
 
         return
     }
+}
+
+func (r *computeResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

@@ -6,6 +6,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
@@ -18,6 +19,7 @@ import (
 var (
 	_ resource.Resource = &dbaasResource{}
 	_ resource.ResourceWithConfigure = &dbaasResource{}
+	_ resource.ResourceWithImportState = &dbaasResource{}
 )
 
 func NewDBAASResource() resource.Resource {
@@ -245,4 +247,8 @@ func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		}
 		return
     }
+}
+
+func (r *dbaasResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

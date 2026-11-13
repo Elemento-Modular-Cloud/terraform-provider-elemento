@@ -6,6 +6,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -19,6 +20,7 @@ import (
 var (
 	_ resource.Resource = &kaasResource{}
 	_ resource.ResourceWithConfigure = &kaasResource{}
+	_ resource.ResourceWithImportState = &kaasResource{}
 )
 
 func NewKAASResource() resource.Resource {
@@ -309,4 +311,8 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		}
 		return
     }
+}
+
+func (r *kaasResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

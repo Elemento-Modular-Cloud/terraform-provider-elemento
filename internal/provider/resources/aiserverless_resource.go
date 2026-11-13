@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &aiserverlessResource{}
-	_ resource.ResourceWithConfigure = &aiserverlessResource{}
+	_ resource.Resource                = &aiserverlessResource{}
+	_ resource.ResourceWithConfigure   = &aiserverlessResource{}
+	_ resource.ResourceWithImportState = &aiserverlessResource{}
 )
 
 func NewAIServerlessResource() resource.Resource {
@@ -67,12 +69,12 @@ func (r *aiserverlessResource) Schema(_ context.Context, _ resource.SchemaReques
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The access key ID for the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
 		Description: "The secret access key of the resource.",
-		Sensitive: true,
+		Sensitive:   true,
 	}
 
 	resp.Schema = schema.Schema{
@@ -215,4 +217,8 @@ func (r *aiserverlessResource) Delete(ctx context.Context, req resource.DeleteRe
 
 		return
 	}
+}
+
+func (r *aiserverlessResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

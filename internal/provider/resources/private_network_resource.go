@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -18,6 +19,7 @@ import (
 var (
 	_ resource.Resource              = &privateNetworkResource{}
 	_ resource.ResourceWithConfigure = &privateNetworkResource{}
+	_ resource.ResourceWithImportState = &privateNetworkResource{}
 )
 
 func NewPrivateNetworkResource() resource.Resource {
@@ -227,4 +229,8 @@ func (r *privateNetworkResource) Delete(ctx context.Context, req resource.Delete
 		}
 		return
 	}
+}
+
+func (r *privateNetworkResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

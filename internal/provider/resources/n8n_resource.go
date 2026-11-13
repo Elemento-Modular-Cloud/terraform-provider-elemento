@@ -9,6 +9,7 @@ import (
 	"terraform-provider-elemento/internal/client"
 	"terraform-provider-elemento/internal/provider/common"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
@@ -19,8 +20,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &n8nResource{}
-	_ resource.ResourceWithConfigure = &n8nResource{}
+	_ resource.Resource                = &n8nResource{}
+	_ resource.ResourceWithConfigure   = &n8nResource{}
+	_ resource.ResourceWithImportState = &n8nResource{}
 )
 
 func NewN8NResource() resource.Resource {
@@ -288,4 +290,8 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		}
 		return
 	}
+}
+
+func (r *n8nResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

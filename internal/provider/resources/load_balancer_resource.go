@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -17,8 +18,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &loadBalancerResource{}
-	_ resource.ResourceWithConfigure = &loadBalancerResource{}
+	_ resource.Resource                = &loadBalancerResource{}
+	_ resource.ResourceWithConfigure   = &loadBalancerResource{}
+	_ resource.ResourceWithImportState = &loadBalancerResource{}
 )
 
 func NewLoadBalancerResource() resource.Resource {
@@ -236,4 +238,8 @@ func (r *loadBalancerResource) Delete(ctx context.Context, req resource.DeleteRe
 		}
 		return
 	}
+}
+
+func (r *loadBalancerResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

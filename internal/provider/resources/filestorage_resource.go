@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
@@ -17,8 +18,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &fileStorageResource{}
-	_ resource.ResourceWithConfigure = &fileStorageResource{}
+	_ resource.Resource                = &fileStorageResource{}
+	_ resource.ResourceWithConfigure   = &fileStorageResource{}
+	_ resource.ResourceWithImportState = &fileStorageResource{}
 )
 
 func NewFileStorageResource() resource.Resource {
@@ -104,15 +106,15 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 			Region:           plan.Region.ValueString(),
 			BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
 		},
-		Name:   plan.Name.ValueString(),
-		SizeGB: int64(plan.SizeGB.ValueInt64()),
+		Name:     plan.Name.ValueString(),
+		SizeGB:   int64(plan.SizeGB.ValueInt64()),
 		IsPublic: plan.IsPublic.ValueBool(),
 	}
 
 	canCreateResponse, err := r.Client.CanCreateFileStorageResource(ctx, fileStorageResource)
-    if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "FileStorage", err) {
-	    return
-    }
+	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "FileStorage", err) {
+		return
+	}
 
 	response, err := r.Client.CreateFileStorageResource(ctx, fileStorageResource)
 	if err != nil {
@@ -182,12 +184,12 @@ func (r *fileStorageResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-    found, diags := model.Read(ctx, r.Client, common.RemoveResource(resp))
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() || !found {
-    	return
-    }
-    model.PaymentURL = types.StringNull()
+	found, diags := model.Read(ctx, r.Client, common.RemoveResource(resp))
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || !found {
+		return
+	}
+	model.PaymentURL = types.StringNull()
 
 	diags = resp.State.Set(ctx, &model)
 	resp.Diagnostics.Append(diags...)
@@ -228,4 +230,8 @@ func (r *fileStorageResource) Delete(ctx context.Context, req resource.DeleteReq
 		}
 		return
 	}
+}
+
+func (r *fileStorageResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }

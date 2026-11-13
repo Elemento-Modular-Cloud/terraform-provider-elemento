@@ -7,6 +7,7 @@ import (
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -15,8 +16,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = &publicIPResource{}
-	_ resource.ResourceWithConfigure = &publicIPResource{}
+	_ resource.Resource                = &publicIPResource{}
+	_ resource.ResourceWithConfigure   = &publicIPResource{}
+	_ resource.ResourceWithImportState = &publicIPResource{}
 )
 
 func NewPublicIPResource() resource.Resource {
@@ -210,4 +212,8 @@ func (r *publicIPResource) Delete(ctx context.Context, req resource.DeleteReques
 		}
 		return
 	}
+}
+
+func (r *publicIPResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("uuid"), req, resp)
 }
