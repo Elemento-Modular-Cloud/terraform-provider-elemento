@@ -35,7 +35,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 	var diags diag.Diagnostics
 	var resource *client.DBAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := c.ListDBAASResources()
+		resources, err := c.ListDBAASResources(ctx)
 		if err != nil {
 			diags.AddError(
 				"Error Reading DBAAS Resources",
@@ -51,7 +51,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 			}
 		}
 	} else {
-		res, code, err := c.GetDBAASResource(m.UUID.ValueString())
+		res, code, err := c.GetDBAASResource(ctx, m.UUID.ValueString())
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading DBAAS Resource",
@@ -66,7 +66,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading DBAAS Resource Status",
@@ -96,7 +96,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 	m.NodesNumber = types.Int32Value(resource.NodesNumber)
 	m.Engine = types.StringValue(resource.Engine)
 
-	credentials, err := c.GetDBAASCredentials(resource.UUID)
+	credentials, err := c.GetDBAASCredentials(ctx, resource.UUID)
 	if err != nil {
 		diags.AddWarning(
 			"Error Reading DBAAS Credentials",

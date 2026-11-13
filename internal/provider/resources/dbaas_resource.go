@@ -132,12 +132,12 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
         BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
     }
 
-    canCreateResponse, err := r.Client.CanCreateDBAASResource(dbaasResource)
+    canCreateResponse, err := r.Client.CanCreateDBAASResource(ctx, dbaasResource)
     if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "DBAAS", err) {
 	    return
     }
 
-    response, err := r.Client.CreateDBAASResource(dbaasResource)
+    response, err := r.Client.CreateDBAASResource(ctx, dbaasResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating DBAAS Resource",
@@ -155,7 +155,7 @@ func (r *dbaasResource) Create(ctx context.Context, req resource.CreateRequest, 
 			diags = resp.State.Set(ctx, plan)
 			resp.Diagnostics.Append(diags...)
 
-            status, err := r.Client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddWarning(
                     "Error Reading DBAAS Resource Status",
@@ -230,7 +230,7 @@ func (r *dbaasResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 		return
      }
 
-    statusCode, err := r.Client.DeleteDBAASResource(state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteDBAASResource(ctx, state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

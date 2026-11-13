@@ -319,12 +319,12 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 		CloudInitBase64: plan.CloudInitB64.ValueString(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(spotVMResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, spotVMResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "SpotVM", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(spotVMResource)
+	response, err := r.Client.CreateResource(ctx, spotVMResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating SpotVM Resource",
@@ -342,7 +342,7 @@ func (r *spotVMResource) Create(ctx context.Context, req resource.CreateRequest,
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading SpotVM Resource Status",
@@ -411,7 +411,7 @@ func (r *spotVMResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteSpotVMResource(ctx, state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

@@ -120,12 +120,12 @@ func (r *registryResource) Create(ctx context.Context, req resource.CreateReques
 		IsPublic: plan.IsPublic.ValueBool(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(registryResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, registryResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Registry", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(registryResource)
+	response, err := r.Client.CreateResource(ctx, registryResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Registry Resource",
@@ -143,7 +143,7 @@ func (r *registryResource) Create(ctx context.Context, req resource.CreateReques
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading Registry Resource Status",
@@ -227,7 +227,7 @@ func (r *registryResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "registry")
+	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "registry")
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

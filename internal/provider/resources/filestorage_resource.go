@@ -109,12 +109,12 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 		IsPublic: plan.IsPublic.ValueBool(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateFileStorageResource(fileStorageResource)
+	canCreateResponse, err := r.Client.CanCreateFileStorageResource(ctx, fileStorageResource)
     if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "FileStorage", err) {
 	    return
     }
 
-	response, err := r.Client.CreateFileStorageResource(fileStorageResource)
+	response, err := r.Client.CreateFileStorageResource(ctx, fileStorageResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating FileStorage Resource",
@@ -132,7 +132,7 @@ func (r *fileStorageResource) Create(ctx context.Context, req resource.CreateReq
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading FileStorage Resource Status",
@@ -213,7 +213,7 @@ func (r *fileStorageResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	statusCode, err := r.Client.DeleteFileStorageResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteFileStorageResource(ctx, state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

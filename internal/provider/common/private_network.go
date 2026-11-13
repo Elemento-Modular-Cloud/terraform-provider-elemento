@@ -47,7 +47,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 
 	var resource *client.PrivateNetworkResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := c.ListPrivateNetworkResources()
+		resources, err := c.ListPrivateNetworkResources(ctx)
 		if err != nil {
 			diags.AddError(
 				"Error Reading PrivateNetwork Resources",
@@ -63,7 +63,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 			}
 		}
 	} else {
-		res, code, err := c.GetPrivateNetworkResource(m.UUID.ValueString())
+		res, code, err := c.GetPrivateNetworkResource(ctx, m.UUID.ValueString())
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading PrivateNetwork Resource"+strconv.Itoa(code),
@@ -78,7 +78,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading PrivateNetwork Resource Status",
@@ -122,7 +122,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 	diags.Append(tmpDiags...)
 
 	// // NOTE: current network credentials are not useful so we ignore them.
-	// credentials, err := c.GetPrivateNetworkCredentials(resource.ServiceUUID)
+	// credentials, err := c.GetPrivateNetworkCredentials(ctx, resource.ServiceUUID)
 	// if err != nil {
 	// 	diags.AddWarning(
 	// 		"Error Reading PrivateNetwork Credentials",

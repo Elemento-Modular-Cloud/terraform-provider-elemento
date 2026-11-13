@@ -54,7 +54,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 	var diags diag.Diagnostics
 	var resource *client.KAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := c.ListKAASResources()
+		resources, err := c.ListKAASResources(ctx)
 		if err != nil {
 			diags.AddError(
 				"Error Reading KAAS Resources",
@@ -70,7 +70,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 			}
 		}
 	} else {
-		res, code, err := c.GetKAASResource(m.UUID.ValueString())
+		res, code, err := c.GetKAASResource(ctx, m.UUID.ValueString())
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading KAAS Resource",
@@ -85,7 +85,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading KAAS Resource Status",
@@ -117,7 +117,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 	m.NetworkCIDR = types.StringValue(resource.NetworkCIDR)
 	m.Version = types.StringValue(resource.Version)
 
-	// credentials, err := c.GetKAASCredentials(resource.UUID)
+	// credentials, err := c.GetKAASCredentials(ctx, resource.UUID)
 	// if err != nil {
 	//     diags.AddWarning(
 	//         "Error Reading KAAS Credentials",

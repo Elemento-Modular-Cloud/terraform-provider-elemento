@@ -38,7 +38,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 
 	var resource *client.ServerlessResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.ServerlessResponse](c, "serverless")
+		resources, err := client.ListResources[client.ServerlessResponse](c, ctx, "serverless")
 		if err != nil {
 			diags.AddError(
 				"Error Reading Serverless Resources",
@@ -54,7 +54,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.ServerlessResponse](c, m.UUID.ValueString(), "serverless")
+		res, code, err := client.GetResource[client.ServerlessResponse](c, ctx, m.UUID.ValueString(), "serverless")
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading Serverless Resource"+strconv.Itoa(code),
@@ -69,7 +69,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading Serverless Resource Status",
@@ -103,7 +103,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 	m.ARN = types.StringValue(resource.ARN)
 	m.State = types.StringValue(resource.State)
 
-	credentials, err := c.GetServerlessCredentials(resource.ServiceUUID)
+	credentials, err := c.GetServerlessCredentials(ctx, resource.ServiceUUID)
 	if err != nil {
 		diags.AddWarning(
 			"Error Reading Serverless Credentials",

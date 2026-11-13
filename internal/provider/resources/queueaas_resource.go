@@ -147,12 +147,12 @@ func (r *queueAASResource) Create(ctx context.Context, req resource.CreateReques
 		NetworkUUID:  plan.NetworkUUID.ValueString(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(queueaasResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, queueaasResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "QueueAAS", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(queueaasResource)
+	response, err := r.Client.CreateResource(ctx, queueaasResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating QueueAAS Resource",
@@ -170,7 +170,7 @@ func (r *queueAASResource) Create(ctx context.Context, req resource.CreateReques
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading QueueAAS Resource Status",
@@ -246,7 +246,7 @@ func (r *queueAASResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "queueaas")
+	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "queueaas")
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

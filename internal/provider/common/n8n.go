@@ -30,7 +30,7 @@ type N8NResourceModel struct {
 func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	resources, err := c.ListSpotVMResources()
+	resources, err := c.ListSpotVMResources(ctx)
 	if err != nil {
 		diags.AddError(
 			"Error Reading n8n Resources",
@@ -50,7 +50,7 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 	billing_uuid := m.BillingUUID.ValueStringPointer()
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading n8n Resource Status",
@@ -77,7 +77,7 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)
 
-	credentials, err := c.GetN8NCredentials(resource.UUID)
+	credentials, err := c.GetN8NCredentials(ctx, resource.UUID)
 	if err != nil {
 		diags.AddWarning(
 			"Error Reading n8n Credentials",

@@ -129,7 +129,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	cloudinit, err := r.Client.RenderCloudinit("n8n", map[string]string{})
+	cloudinit, err := r.Client.RenderCloudinit(ctx, "n8n", map[string]string{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating n8n Resource",
@@ -180,12 +180,12 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		CloudInitBase64: cloudinit_b64,
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(n8nResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, n8nResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "n8n", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(n8nResource)
+	response, err := r.Client.CreateResource(ctx, n8nResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating n8n Resource",
@@ -203,7 +203,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading n8n Resource Status",
@@ -273,7 +273,7 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
-	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteSpotVMResource(ctx, state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

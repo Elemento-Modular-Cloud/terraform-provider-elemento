@@ -91,12 +91,12 @@ func (r *publicIPResource) Create(ctx context.Context, req resource.CreateReques
 		Name: plan.Name.ValueString(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(publicIPResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, publicIPResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicIP", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(publicIPResource)
+	response, err := r.Client.CreateResource(ctx, publicIPResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating PublicIP Resource",
@@ -114,7 +114,7 @@ func (r *publicIPResource) Create(ctx context.Context, req resource.CreateReques
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading PublicIP Resource Status",
@@ -195,7 +195,7 @@ func (r *publicIPResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "publicip")
+	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "publicip")
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

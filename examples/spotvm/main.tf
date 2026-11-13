@@ -41,7 +41,7 @@ resource "elemento_spotvm" "n8n_cloudinit_test" {
     password = "elemento123"
     ssh_key  = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBS/qkkoKOEmkCANzrvPki5t5crf0mwRItAXWnw45R3v"
   }
-  tags = ""
+  tags          = []
   region        = "eu-south-1"
   cloudinit_b64 = "I2Nsb3VkLWNvbmZpZwpwYWNrYWdlczoKICAtIG5naW54CnJ1bmNtZDoKICAtIFsgc3lzdGVtY3RsLCBlbmFibGUsIG5naW54IF0K"
 }

@@ -98,12 +98,12 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 		EnableStreaming: plan.EnableStreaming.ValueBool(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(aiserverlessResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, aiserverlessResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "AIServerless", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(aiserverlessResource)
+	response, err := r.Client.CreateResource(ctx, aiserverlessResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating AIServerless Resource",
@@ -121,7 +121,7 @@ func (r *aiserverlessResource) Create(ctx context.Context, req resource.CreateRe
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading AIServerless Resource Status",
@@ -199,7 +199,7 @@ func (r *aiserverlessResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "aiserverless")
+	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "aiserverless")
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

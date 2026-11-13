@@ -199,12 +199,12 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
         ControlPlaneHAEnabled: plan.ControlPlaneHAEnabled.ValueBool(),
     }
 
-    canCreateResponse, err := r.Client.CanCreateKAASResource(kaasResource)
+    canCreateResponse, err := r.Client.CanCreateKAASResource(ctx, kaasResource)
     if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "KAAS", err) {
 	    return
     }
 
-    response, err := r.Client.CreateKAASResource(kaasResource)
+    response, err := r.Client.CreateKAASResource(ctx, kaasResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating KAAS Resource",
@@ -222,7 +222,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
 			diags = resp.State.Set(ctx, plan)
 			resp.Diagnostics.Append(diags...)
 
-            status, err := r.Client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddWarning(
                     "Error Reading KAAS Resource Status",
@@ -294,7 +294,7 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
     }
 
-    statusCode, err := r.Client.DeleteKAASResource(state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteKAASResource(ctx, state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

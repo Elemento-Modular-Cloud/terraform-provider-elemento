@@ -12,16 +12,15 @@ import (
 
 type SpotVMDataSourceModel struct {
 	BaseDataSourceModel
-	VMName         types.String       `tfsdk:"vm_name"`
-	CPU            spotVMCPUModel     `tfsdk:"cpu"`
-	Mem            spotVMMemoryModel  `tfsdk:"mem"`
-	OS             spotVMOSModel      `tfsdk:"os"`
-	Storage        spotVMStorageModel `tfsdk:"storage"`
-	Networks       types.List         `tfsdk:"networks"`
-	Authentication *spotVMAuthModel   `tfsdk:"auth"`
-	CloudInitB64   types.String       `tfsdk:"cloudinit_b64"`
-	Tags           types.List         `tfsdk:"tags"`
-
+	VMName         types.String        `tfsdk:"vm_name"`
+	CPU            *spotVMCPUModel     `tfsdk:"cpu"`
+	Mem            *spotVMMemoryModel  `tfsdk:"mem"`
+	OS             *spotVMOSModel      `tfsdk:"os"`
+	Storage        *spotVMStorageModel `tfsdk:"storage"`
+	Networks       types.List          `tfsdk:"networks"`
+	Authentication *spotVMAuthModel    `tfsdk:"auth"`
+	CloudInitB64   types.String        `tfsdk:"cloudinit_b64"`
+	Tags           types.List          `tfsdk:"tags"`
 }
 
 type SpotVMResourceModel struct {
@@ -67,7 +66,6 @@ type spotVMAuthModel struct {
 	SSHKey   types.String `tfsdk:"ssh_key"`
 }
 
-
 func SpotVMNetworkObjectType() types.ObjectType {
 	return types.ObjectType{
 		AttrTypes: map[string]attr.Type{
@@ -81,7 +79,7 @@ func SpotVMNetworkObjectType() types.ObjectType {
 func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	resources, err := c.ListSpotVMResources()
+	resources, err := c.ListSpotVMResources(ctx)
 	if err != nil {
 		diags.AddError(
 			"Error Reading SpotVM Resources",
@@ -101,7 +99,7 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 	billing_uuid := m.BillingUUID.ValueStringPointer()
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading SpotVM Resource Status",
@@ -119,20 +117,26 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 		return !statusDeleted, diags
 	}
 
-	var tmpDiags diag.Diagnostics
-	m.CPU.Arch, tmpDiags = types.ListValueFrom(ctx, types.StringType, resource.CPU.Arch)
+	arch, tmpDiags := types.ListValueFrom(ctx, types.StringType, resource.CPU.Arch)
 	diags.Append(tmpDiags...)
 
-	m.CPU.Slots = types.Int32Value(int32(resource.CPU.Slots))
-	m.CPU.SharedCores = types.BoolValue(resource.CPU.SharedCores)
+	m.CPU = &spotVMCPUModel{
+		Slots: types.Int32Value(int32(resource.CPU.Slots)),
+		SharedCores: types.BoolValue(resource.CPU.SharedCores),
+		Arch: arch,
+	}
 
-	m.Mem.CapacityMB = types.Int32Value(int32(resource.Mem.CapacityMB))
+	m.Mem = &spotVMMemoryModel{
+		CapacityMB: types.Int32Value(int32(resource.Mem.CapacityMB)),
+	}
 
 	// TODO: PCI DEVICES
 
-	m.OS.Family = types.StringValue(resource.OS.Family)
-	m.OS.Flavour = types.StringValue(resource.OS.Flavour)
-	m.OS.Version = types.StringValue(resource.OS.Version)
+	m.OS = &spotVMOSModel{
+		Family: types.StringValue(resource.OS.Family),
+		Flavour: types.StringValue(resource.OS.Flavour),
+		Version: types.StringValue(resource.OS.Version),
+	}
 
 	var dataVolumes []spotVMVolumeModel
 	for _, volume := range resource.Storage.Data {
@@ -141,10 +145,13 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 			SizeGB: types.Int64Value(int64(volume.SizeGB)),
 		})
 	}
-	m.Storage.Data = dataVolumes
-	m.Storage.Boot = spotVMVolumeModel {
-		Name: types.StringValue(resource.Storage.Boot.Name),
-		SizeGB: types.Int64Value(int64(resource.Storage.Boot.SizeGB)),
+
+	m.Storage = &spotVMStorageModel{
+		Data: dataVolumes,
+		Boot: spotVMVolumeModel{
+			Name:   types.StringValue(resource.Storage.Boot.Name),
+			SizeGB: types.Int64Value(int64(resource.Storage.Boot.SizeGB)),
+		},
 	}
 
 	var networks []spotVMNetworkModel

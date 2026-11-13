@@ -111,12 +111,12 @@ func (r *privateNetworkResource) Create(ctx context.Context, req resource.Create
 		AutoAssignCIDR: plan.AutoAssignCIDR.ValueBool(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreatePrivateNetworkResource(privateNetworkResource)
+	canCreateResponse, err := r.Client.CanCreatePrivateNetworkResource(ctx, privateNetworkResource)
     if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PrivateNetwork", err) {
 	    return
     }
 
-	response, err := r.Client.CreatePrivateNetworkResource(privateNetworkResource)
+	response, err := r.Client.CreatePrivateNetworkResource(ctx, privateNetworkResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating PrivateNetwork Resource",
@@ -134,7 +134,7 @@ func (r *privateNetworkResource) Create(ctx context.Context, req resource.Create
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading PrivateNetwork Resource Status",
@@ -212,7 +212,7 @@ func (r *privateNetworkResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	statusCode, err := r.Client.DeletePrivateNetworkResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeletePrivateNetworkResource(ctx, state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

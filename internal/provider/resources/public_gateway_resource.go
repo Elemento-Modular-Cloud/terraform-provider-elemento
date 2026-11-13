@@ -100,12 +100,12 @@ func (r *publicGatewayResource) Create(ctx context.Context, req resource.CreateR
 		NetworkUUID: plan.NetworkUUID.ValueString(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(publicGatewayResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, publicGatewayResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "PublicGateway", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(publicGatewayResource)
+	response, err := r.Client.CreateResource(ctx, publicGatewayResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating PublicGateway Resource",
@@ -123,7 +123,7 @@ func (r *publicGatewayResource) Create(ctx context.Context, req resource.CreateR
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading PublicGateway Resource Status",
@@ -204,7 +204,7 @@ func (r *publicGatewayResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "publicgateway")
+	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "publicgateway")
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

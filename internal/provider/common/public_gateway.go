@@ -34,7 +34,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 
 	var resource *client.PublicGatewayResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.PublicGatewayResponse](c, "publicgateway")
+		resources, err := client.ListResources[client.PublicGatewayResponse](c, ctx, "publicgateway")
 		if err != nil {
 			diags.AddError(
 				"Error Reading PublicGateway Resources",
@@ -50,7 +50,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.PublicGatewayResponse](c, m.UUID.ValueString(), "publicgateway")
+		res, code, err := client.GetResource[client.PublicGatewayResponse](c, ctx, m.UUID.ValueString(), "publicgateway")
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading PublicGateway Resource"+strconv.Itoa(code),
@@ -65,7 +65,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading PublicGateway Resource Status",
@@ -100,7 +100,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	m.State = types.StringValue(resource.State)
 
 	// // NOTE: PublicGateway credentials contain no useful extra information
-	// credentials, err := c.GetPublicGatewayCredentials(resource.ServiceUUID)
+	// credentials, err := c.GetPublicGatewayCredentials(ctx, resource.ServiceUUID)
 	// if err != nil {
 	// 	diags.AddWarning(
 	// 		"Error Reading PublicGateway Credentials",

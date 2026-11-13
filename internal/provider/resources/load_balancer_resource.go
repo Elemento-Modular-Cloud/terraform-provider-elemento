@@ -117,12 +117,12 @@ func (r *loadBalancerResource) Create(ctx context.Context, req resource.CreateRe
 		Port:     plan.Port.ValueInt64(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(loadBalancerResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, loadBalancerResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "LoadBalancer", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(loadBalancerResource)
+	response, err := r.Client.CreateResource(ctx, loadBalancerResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating LoadBalancer Resource",
@@ -140,7 +140,7 @@ func (r *loadBalancerResource) Create(ctx context.Context, req resource.CreateRe
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading LoadBalancer Resource Status",
@@ -221,7 +221,7 @@ func (r *loadBalancerResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "loadbalancer")
+	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "loadbalancer")
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

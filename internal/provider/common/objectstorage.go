@@ -30,7 +30,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	var diags diag.Diagnostics
     var resource *client.ObjectStorageResponse
     if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-        resources, err := c.ListObjectStorageResources()
+        resources, err := c.ListObjectStorageResources(ctx)
         if err != nil {
             diags.AddError(
                 "Error Reading ObjectStorage Resources",
@@ -46,7 +46,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
             }
         }
     } else {
-        res, code, err := c.GetObjectStorageResource(m.UUID.ValueString())
+        res, code, err := c.GetObjectStorageResource(ctx, m.UUID.ValueString())
         if err != nil && code != 404 {
             diags.AddError(
                 "Error Reading ObjectStorage Resource",
@@ -61,7 +61,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading ObjectStorage Resource Status",
@@ -87,7 +87,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
     m.LastUpdated   = types.StringValue(time.Now().Format(time.RFC850))
     m.UUID          = types.StringValue(resource.UUID)
 
-    credentials, err := c.GetObjectStorageCredentials(resource.UUID)
+    credentials, err := c.GetObjectStorageCredentials(ctx, resource.UUID)
     if err != nil {
         diags.AddWarning(
             "Error Reading ObjectStorage Credentials",

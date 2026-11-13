@@ -34,7 +34,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 
 	var resource *client.FileStorageResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := c.ListFileStorageResources()
+		resources, err := c.ListFileStorageResources(ctx)
 		if err != nil {
 			diags.AddError(
 				"Error Reading FileStorage Resources",
@@ -50,7 +50,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 			}
 		}
 	} else {
-		res, code, err := c.GetFileStorageResource(m.UUID.ValueString())
+		res, code, err := c.GetFileStorageResource(ctx, m.UUID.ValueString())
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading FileStorage Resource"+strconv.Itoa(code),
@@ -65,7 +65,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading FileStorage Resource Status",
@@ -95,7 +95,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 	m.DNSName = types.StringValue(resource.DNSName)
 	m.State = types.StringValue(resource.State)
 
-	credentials, err := c.GetFileStorageCredentials(resource.ServiceUUID)
+	credentials, err := c.GetFileStorageCredentials(ctx, resource.ServiceUUID)
 	if err != nil {
 		diags.AddWarning(
 			"Error Reading FileStorage Credentials",

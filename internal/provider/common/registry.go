@@ -36,7 +36,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 
 	var resource *client.RegistryResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.RegistryResponse](c, "registry")
+		resources, err := client.ListResources[client.RegistryResponse](c, ctx, "registry")
 		if err != nil {
 			diags.AddError(
 				"Error Reading Registry Resources",
@@ -52,7 +52,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.RegistryResponse](c, m.UUID.ValueString(), "registry")
+		res, code, err := client.GetResource[client.RegistryResponse](c, ctx, m.UUID.ValueString(), "registry")
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading Registry Resource"+strconv.Itoa(code),
@@ -67,7 +67,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading Registry Resource Status",
@@ -100,7 +100,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	m.UsedBytes = types.Int64Value(resource.UsedBytes)
 	m.State = types.StringValue(resource.State)
 
-	credentials, err := c.GetRegistryCredentials(resource.ServiceUUID)
+	credentials, err := c.GetRegistryCredentials(ctx, resource.ServiceUUID)
 	if err != nil {
 		diags.AddWarning(
 			"Error Reading Registry Credentials",

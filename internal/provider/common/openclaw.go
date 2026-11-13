@@ -31,7 +31,7 @@ type OpenClawResourceModel struct {
 func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	resources, err := c.ListSpotVMResources()
+	resources, err := c.ListSpotVMResources(ctx)
 	if err != nil {
 		diags.AddError(
 			"Error Reading OpenClaw Resources",
@@ -51,7 +51,7 @@ func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	billing_uuid := m.BillingUUID.ValueStringPointer()
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading OpenClaw Resource Status",
@@ -78,7 +78,7 @@ func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)
 
-	credentials, err := c.GetOpenClawCredentials(resource.UUID)
+	credentials, err := c.GetOpenClawCredentials(ctx, resource.UUID)
 	if err != nil {
 		diags.AddWarning(
 			"Error Reading OpenClaw Credentials",

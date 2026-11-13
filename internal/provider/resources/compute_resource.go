@@ -457,12 +457,12 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
         Volumes: volumes,
     }
 
-    canCreateResponse, err := r.Client.CanCreateComputeResource(computeResource)
+    canCreateResponse, err := r.Client.CanCreateComputeResource(ctx, computeResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Compute", err) {
 		return
 	}
 
-    response, err := r.Client.CreateComputeResource(computeResource)
+    response, err := r.Client.CreateComputeResource(ctx, computeResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating Compute Resource",
@@ -480,7 +480,7 @@ func (r *computeResource) Create(ctx context.Context, req resource.CreateRequest
 			diags = resp.State.Set(ctx, plan)
 			resp.Diagnostics.Append(diags...)
 
-            status, err := r.Client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddWarning(
                     "Error Reading Compute Resource Status",
@@ -529,7 +529,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
         return
     }
 
-    resources, err := r.Client.ListComputeResources()
+    resources, err := r.Client.ListComputeResources(ctx)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Reading Compute Resources",
@@ -549,7 +549,7 @@ func (r *computeResource) Read(ctx context.Context, req resource.ReadRequest, re
     billing_uuid := state.BillingUUID.ValueStringPointer()
     var status *string
     if billing_uuid != nil && *billing_uuid != "" {
-        status, err = r.Client.GetResourceStatus(state.BillingUUID.ValueString())
+        status, err = r.Client.GetResourceStatus(ctx, state.BillingUUID.ValueString())
         if err != nil {
             resp.Diagnostics.AddError(
                 "Error Reading Compute Resource Status",
@@ -642,7 +642,7 @@ func (r *computeResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
     }
 
-    statusCode, err := r.Client.DeleteComputeResource(state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteComputeResource(ctx, state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

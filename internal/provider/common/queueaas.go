@@ -36,7 +36,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 
 	var resource *client.QueueAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.QueueAASResponse](c, "queueaas")
+		resources, err := client.ListResources[client.QueueAASResponse](c, ctx, "queueaas")
 		if err != nil {
 			diags.AddError(
 				"Error Reading QueueAAS Resources",
@@ -52,7 +52,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.QueueAASResponse](c, m.UUID.ValueString(), "queueaas")
+		res, code, err := client.GetResource[client.QueueAASResponse](c, ctx, m.UUID.ValueString(), "queueaas")
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading QueueAAS Resource"+strconv.Itoa(code),
@@ -67,7 +67,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading QueueAAS Resource Status",
@@ -102,7 +102,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	m.IsPublic = types.BoolValue(resource.IsPublic)
 	m.NetworkUUID = types.StringValue(resource.NetworkUUID)
 
-	credentials, err := c.GetQueueAASCredentials(resource.ServiceUUID)
+	credentials, err := c.GetQueueAASCredentials(ctx, resource.ServiceUUID)
 	if err != nil {
 		diags.AddWarning(
 			"Error Reading QueueAAS Credentials",

@@ -32,7 +32,7 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 
 	var resource *client.PublicIPResponse
 	if model.UUID.IsNull() || model.UUID.IsUnknown() || model.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.PublicIPResponse](c, "publicip")
+		resources, err := client.ListResources[client.PublicIPResponse](c, ctx, "publicip")
 		if err != nil {
 			diags.AddError(
 				"Error Reading PublicIP Resources",
@@ -48,7 +48,7 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.PublicIPResponse](c, model.UUID.ValueString(), "publicip")
+		res, code, err := client.GetResource[client.PublicIPResponse](c, ctx, model.UUID.ValueString(), "publicip")
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading PublicIP Resource"+strconv.Itoa(code),
@@ -63,7 +63,7 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(model.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, model.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading PublicIP Resource Status",
@@ -97,7 +97,7 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	model.State = types.StringValue(resource.State)
 
 	// // NOTE: PublicIP credentials contain no useful extra information
-	// credentials, err := c.GetPublicIPCredentials(resource.ServiceUUID)
+	// credentials, err := c.GetPublicIPCredentials(ctx, resource.ServiceUUID)
 	// if err != nil {
 	// 	diags.AddWarning(
 	// 		"Error Reading PublicIP Credentials",

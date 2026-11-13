@@ -156,12 +156,12 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		CodeZipB64:  plan.CodeZipB64.ValueString(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(serverlessResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, serverlessResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Serverless", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(serverlessResource)
+	response, err := r.Client.CreateResource(ctx, serverlessResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Serverless Resource",
@@ -179,7 +179,7 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading Serverless Resource Status",
@@ -258,7 +258,7 @@ func (r *serverlessResource) Delete(ctx context.Context, req resource.DeleteRequ
 		)
 	}
 
-	statusCode, err := r.Client.DeleteResource(state.UUID.ValueString(), "serverless")
+	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "serverless")
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

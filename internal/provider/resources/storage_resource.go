@@ -269,12 +269,12 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
         Ceph:             nil,
     }
 
-    canCreateResponse, err := r.Client.CanCreateStorageResource(canCreateRequest)
+    canCreateResponse, err := r.Client.CanCreateStorageResource(ctx, canCreateRequest)
     if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "Storage", err) {
 	    return
     }
 
-    response, err := r.Client.CreateStorageResource(&storageResource)
+    response, err := r.Client.CreateStorageResource(ctx, &storageResource)
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Creating Storage Resource",
@@ -292,7 +292,7 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
 			diags = resp.State.Set(ctx, plan)
 			resp.Diagnostics.Append(diags...)
 
-            status, err := r.Client.GetResourceStatus(res.BillingUUID)
+            status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
             if err != nil {
                 resp.Diagnostics.AddWarning(
                     "Error Reading Storage Resource Status",
@@ -358,7 +358,7 @@ func (r *storageResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
     }
 
-    statusCode, err := r.Client.DeleteStorageResource(state.UUID.ValueString())
+    statusCode, err := r.Client.DeleteStorageResource(ctx, state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

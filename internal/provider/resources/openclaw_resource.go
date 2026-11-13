@@ -135,7 +135,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	cloudinit, err := r.Client.RenderCloudinit("openclaw", map[string]string{})
+	cloudinit, err := r.Client.RenderCloudinit(ctx, "openclaw", map[string]string{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating openclaw Resource",
@@ -186,12 +186,12 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 		CloudInitBase64: cloudinit_b64,
 	}
 
-	canCreateResponse, err := r.Client.CanCreateResource(openclawResource)
+	canCreateResponse, err := r.Client.CanCreateResource(ctx, openclawResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "OpenClaw", err) {
 		return
 	}
 
-	response, err := r.Client.CreateResource(openclawResource)
+	response, err := r.Client.CreateResource(ctx, openclawResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating OpenClaw Resource",
@@ -209,7 +209,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading OpenClaw Resource Status",
@@ -281,7 +281,7 @@ func (r *openclawResource) Delete(ctx context.Context, req resource.DeleteReques
 		return
 	}
 
-	statusCode, err := r.Client.DeleteSpotVMResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteSpotVMResource(ctx, state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

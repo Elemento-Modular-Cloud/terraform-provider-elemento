@@ -96,12 +96,12 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
 		BillingFrequency: plan.BillingFrequency.ValueStringPointer(),
 	}
 
-	canCreateResponse, err := r.Client.CanCreateObjectStorageResource(objectStorageResource)
+	canCreateResponse, err := r.Client.CanCreateObjectStorageResource(ctx, objectStorageResource)
 	if !common.ValidateCanCreate(canCreateResponse, &resp.Diagnostics, "ObjectStorage", err) {
 		return
 	}
 
-	response, err := r.Client.CreateObjectStorageResource(objectStorageResource)
+	response, err := r.Client.CreateObjectStorageResource(ctx, objectStorageResource)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating ObjectStorage Resource",
@@ -119,7 +119,7 @@ func (r *objectStorageResource) Create(ctx context.Context, req resource.CreateR
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 
-		status, err := r.Client.GetResourceStatus(res.BillingUUID)
+		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading ObjectStorage Resource Status",
@@ -193,7 +193,7 @@ func (r *objectStorageResource) Delete(ctx context.Context, req resource.DeleteR
 		return
 	}
 
-	statusCode, err := r.Client.DeleteObjectStorageResource(state.UUID.ValueString())
+	statusCode, err := r.Client.DeleteObjectStorageResource(ctx, state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddWarning(

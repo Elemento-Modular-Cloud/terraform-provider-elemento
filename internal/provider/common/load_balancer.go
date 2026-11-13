@@ -35,7 +35,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 
 	var resource *client.LoadBalancerResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
-		resources, err := client.ListResources[client.LoadBalancerResponse](c, "loadbalancer")
+		resources, err := client.ListResources[client.LoadBalancerResponse](c, ctx, "loadbalancer")
 		if err != nil {
 			diags.AddError(
 				"Error Reading LoadBalancer Resources",
@@ -51,7 +51,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 			}
 		}
 	} else {
-		res, code, err := client.GetResource[client.LoadBalancerResponse](c, m.UUID.ValueString(), "loadbalancer")
+		res, code, err := client.GetResource[client.LoadBalancerResponse](c, ctx, m.UUID.ValueString(), "loadbalancer")
 		if err != nil && code != 404 {
 			diags.AddError(
 				"Error Reading LoadBalancer Resource"+strconv.Itoa(code),
@@ -66,7 +66,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	var status *string
 	if billing_uuid != nil && *billing_uuid != "" {
 		var err error
-		status, err = c.GetResourceStatus(m.BillingUUID.ValueString())
+		status, err = c.GetResourceStatus(ctx, m.BillingUUID.ValueString())
 		if err != nil {
 			diags.AddError(
 				"Error Reading LoadBalancer Resource Status",
@@ -103,7 +103,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	m.State = types.StringValue(resource.State)
 
 	// // NOTE: LoadBalancer credentials contain no useful extra information
-	// credentials, err := c.GetLoadBalancerCredentials(resource.ServiceUUID)
+	// credentials, err := c.GetLoadBalancerCredentials(ctx, resource.ServiceUUID)
 	// if err != nil {
 	// 	diags.AddWarning(
 	// 		"Error Reading LoadBalancer Credentials",
