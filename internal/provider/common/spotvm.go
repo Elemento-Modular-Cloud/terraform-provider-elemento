@@ -138,7 +138,7 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 		Version: types.StringValue(resource.OS.Version),
 	}
 
-	var dataVolumes []spotVMVolumeModel
+	dataVolumes := []spotVMVolumeModel{}
 	for _, volume := range resource.Storage.Data {
 		dataVolumes = append(dataVolumes, spotVMVolumeModel{
 			Name:   types.StringValue(volume.Name),
@@ -154,7 +154,7 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 		},
 	}
 
-	var networks []spotVMNetworkModel
+	networks := []spotVMNetworkModel{}
 	for _, network := range resource.Networks {
 		networks = append(networks, spotVMNetworkModel{
 			Kind: types.StringValue(network.Kind),
