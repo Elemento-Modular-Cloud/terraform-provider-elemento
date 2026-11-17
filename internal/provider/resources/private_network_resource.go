@@ -208,8 +208,8 @@ func (r *privateNetworkResource) Delete(ctx context.Context, req resource.Delete
 
 	if state.UUID.IsNull() {
 		resp.Diagnostics.AddError(
-			"Error deleting Resource",
-			"Could not delete resource: resource uuid is null.",
+			"Error deleting PrivateNetwork Resource",
+			"Could not delete privatenetwork resource: resource uuid is null.",
 		)
 		return
 	}
