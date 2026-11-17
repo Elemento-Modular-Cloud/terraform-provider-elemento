@@ -18,7 +18,6 @@ resource "elemento_dbaas" "test" {
   password          = "mysecretpassword"
   nodes_number      = %[4]d
   region            = %[5]q
-  billing_frequency = "day"
 }
 `
 
@@ -44,10 +43,10 @@ resource "elemento_dbaas" "test" {
 				resource.TestCheckResourceAttr(resourceName, "password", "mysecretpassword"),
 				resource.TestCheckResourceAttr(resourceName, "nodes_number", "1"),
 				resource.TestCheckResourceAttr(resourceName, "region", "eu-south-1"),
-				resource.TestCheckResourceAttr(resourceName, "billing_frequency", "day"),
 
 				// Computed attributes
 				resource.TestCheckNoResourceAttr(resourceName, "payment_url"),
+				resource.TestCheckNoResourceAttr(resourceName, "billing_frequency"),
 			}
 		},
 		[]string{"password", "payment_url", "status", "last_updated"},

@@ -9,16 +9,21 @@ import (
 
 func TestAccObjectStorageResource(t *testing.T) {
 	const resourceName = "elemento_objectstorage.test"
-	testAccCreateImport(t, resourceName,
-		func(name string) string {
-			return providerConfig + fmt.Sprintf(`
+	const resourceFormat = `
 resource "elemento_objectstorage" "test" {
   name              = %[1]q
   size_tb           = 1
-  region            = "italynorth"
-  billing_frequency = "day"
+  region            = "%[2]s"
 }
-`, name)
+`
+
+	testAccCreateImport(t, resourceName,
+		func(name string) string {
+			return providerConfig + fmt.Sprintf(
+				resourceFormat,
+				name,
+				"eu-south-1",
+			)
 		},
 		func(name string) []resource.TestCheckFunc {
 			return []resource.TestCheckFunc{
