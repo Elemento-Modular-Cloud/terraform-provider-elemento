@@ -23,7 +23,7 @@ type KAASResourceModel struct {
 	KAASDataSourceModel
 	ResourceExtraModel
 	NodePools             []nodePoolModel `tfsdk:"node_pools"`
-	NodesSubnet           nodeSubnetModel `tfsdk:"nodes_subnet"`
+	NodesSubnet           *nodeSubnetModel `tfsdk:"nodes_subnet"`
 	UpdatePolicy          types.String    `tfsdk:"update_policy"`
 	ControlPlaneHAEnabled types.Bool      `tfsdk:"control_plane_ha_enabled"`
 }
