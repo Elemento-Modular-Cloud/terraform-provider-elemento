@@ -9,7 +9,7 @@ terraform {
 }
 
 provider "elemento" {
-  host     = "upcloud.dev.meson.elemento.cloud"
+  target   = "upcloud-dev-private"
   username = "user@elemento.cloud"
   password = "password"
 }

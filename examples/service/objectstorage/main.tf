@@ -7,7 +7,7 @@ terraform {
 }
 
 provider "elemento" {
-  host     = "azure.dev.meson.elemento.cloud"
+  target   = "azure-dev-private"
   username = "user@elemento.cloud"
   password = "password"
 }
