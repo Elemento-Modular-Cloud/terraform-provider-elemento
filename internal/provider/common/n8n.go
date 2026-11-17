@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"terraform-provider-elemento/internal/client"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -74,7 +73,6 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 	m.RAMSizeMB = types.Int32Value(int32(resource.Mem.CapacityMB))
 	m.DiskSizeGB = types.Int64Value(int64(resource.Storage.Boot.SizeGB))
 	m.Region = types.StringValue(resource.Region)
-	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)
 
 	credentials, err := c.GetN8NCredentials(ctx, resource.UUID)

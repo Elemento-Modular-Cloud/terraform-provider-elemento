@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"terraform-provider-elemento/internal/client"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -101,7 +100,6 @@ func (m *StorageDataSourceModel) Read(ctx context.Context, c *client.ElementoCli
 	diags.Append(tmpDiags...)
 
 	m.Region = types.StringValue(resource.Region)
-	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)
 
 	return true, diags

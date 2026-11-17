@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"terraform-provider-elemento/internal/client"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -168,7 +167,7 @@ func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClie
 	m.Status = types.StringPointerValue(status)
 	m.VMName = types.StringValue(resource.VMName)
 	m.Region = types.StringValue(resource.Region)
-	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+
 	m.UUID = types.StringValue(resource.UUID)
 	m.Tags, tmpDiags = types.ListValueFrom(ctx, types.StringType, resource.Tags)
 	diags.Append(tmpDiags...)

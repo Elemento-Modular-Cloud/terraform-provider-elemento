@@ -4,7 +4,6 @@ import (
 	"context"
 	"strconv"
 	"terraform-provider-elemento/internal/client"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -84,7 +83,6 @@ func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	model.Status = types.StringPointerValue(status)
 	model.Name = types.StringValue(resource.Name)
 	model.Region = types.StringValue(resource.Region)
-	model.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	model.UUID = types.StringValue(resource.ServiceUUID)
 	model.CreatorUUID = types.StringValue(resource.CreatorUUID)
 	model.CreationDate = types.StringValue(resource.CreationDate)

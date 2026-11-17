@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"terraform-provider-elemento/internal/client"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -84,7 +83,6 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
     m.ActiveStorage = types.Int32Value(int32(resource.ActiveStorage))
     m.Endpoint      = types.StringValue(resource.Endpoint)
     m.Region        = types.StringValue(resource.Region)
-    m.LastUpdated   = types.StringValue(time.Now().Format(time.RFC850))
     m.UUID          = types.StringValue(resource.UUID)
 
     credentials, err := c.GetObjectStorageCredentials(ctx, resource.UUID)

@@ -3,7 +3,6 @@ package common
 import (
 	"context"
 	"terraform-provider-elemento/internal/client"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -87,7 +86,6 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 	m.Status = types.StringPointerValue(status)
 	m.Name = types.StringValue(resource.Name)
 	m.Region = types.StringValue(resource.Region)
-	m.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	m.UUID = types.StringValue(resource.UUID)
 	m.CreatorUUID = types.StringValue(resource.CreatorUUID)
 	m.CreationDate = types.StringValue(resource.CreationDate)
