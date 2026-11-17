@@ -61,16 +61,16 @@ func (c *ElementoClient) request(
 	headers map[string]string,
 	body any,
 ) (*http.Response, error) {
+	tflog.Debug(ctx, fmt.Sprintf("Sending %s request to %s", method, url))
+
 	var reqBody io.Reader = nil
 	if body != nil {
 		body, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
 		}
-		tflog.Debug(ctx, fmt.Sprintf("Sending %s request to %s with body: %s", method, url, string(body)))
+
 		reqBody = bytes.NewReader(body)
-	} else {
-		tflog.Debug(ctx, fmt.Sprintf("Sending %s request to %s with nil body", method, url))
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, url, reqBody)
