@@ -249,6 +249,7 @@ func (r *kaasResource) Create(ctx context.Context, req resource.CreateRequest, r
     plan.ClusterStatus = types.StringNull()
     plan.Endpoint      = types.StringNull()
     plan.KubeConfig    = types.StringNull()
+    plan.NetworkCIDR   = types.StringNull()
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
