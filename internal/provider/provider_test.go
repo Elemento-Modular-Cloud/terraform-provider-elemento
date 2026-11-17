@@ -2,9 +2,12 @@ package provider
 
 import (
 	"fmt"
+	"os"
+	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -45,4 +48,36 @@ func AttrImportStateIdFunc(resourceName, attrName string) resource.ImportStateId
 
 		return val, nil
 	}
+}
+
+func testAccPreCheck(t *testing.T) {
+	for _, envVar := range []string{"ELEMENTO_TARGET", "ELEMENTO_USERNAME", "ELEMENTO_PASSWORD"} {
+		if os.Getenv(envVar) == "" {
+			t.Fatalf("%s must be set for acceptance tests", envVar)
+		}
+	}
+}
+
+func testAccCreateImport(t *testing.T, resourceName string, config func(name string) string, checks func(name string) []resource.TestCheckFunc, ignore []string) {
+	rName := acctest.RandomWithPrefix("test")
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: config(rName),
+				Check:  resource.ComposeAggregateTestCheckFunc(checks(rName)...),
+			},
+			// ImportState testing
+			{
+				ResourceName:                         resourceName,
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateVerifyIgnore:              ignore,
+				ImportStateIdFunc:                    AttrImportStateIdFunc(resourceName, "uuid"),
+				ImportStateVerifyIdentifierAttribute: "uuid",
+			},
+		},
+	})
 }
