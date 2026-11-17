@@ -93,7 +93,7 @@ func identifierExactlyOneOf(paths ...string) validator.String {
 func BaseDataSourceSchema() map[string]dschema.Attribute {
 	ids := identifierExactlyOneOf("uuid", "billing_uuid")
 	uuid := stringvalidator.RegexMatches(
-		regexp.MustCompile("^(?i)[0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"),
+		regexp.MustCompile("^(?i)([0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"),
 		"value must be a valid UUID.",
 	)
 
