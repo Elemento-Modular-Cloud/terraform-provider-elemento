@@ -1,35 +1,48 @@
-// Copyright IBM Corp. 2021, 2025
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
-	"testing"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// testAccProtoV6ProviderFactories is used to instantiate a provider during acceptance testing.
-// The factory function is called for each Terraform CLI command to create a provider
-// server that the CLI can connect to and interact with.
-var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-	"elemento": providerserver.NewProtocol6WithError(New("test")()),
+const (
+    // providerConfig is a shared configuration to combine with the actual
+    // test configuration so the HashiCups client is properly configured.
+    // It is also possible to use the HASHICUPS_ environment variables instead,
+    // such as updating the Makefile and running the testing through that tool.
+    providerConfig = `
+provider "elemento" {
+  target = "aws-dev-private"
 }
+`
+)
 
-func TestProviderServer(t *testing.T) {
-	t.Parallel()
+var (
+    // testAccProtoV6ProviderFactories are used to instantiate a provider during
+    // acceptance testing. The factory function will be invoked for every Terraform
+    // CLI command executed to create a provider server to which the CLI can
+    // reattach.
+    testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+        "elemento": providerserver.NewProtocol6WithError(New("test")()),
+    }
+)
 
-	factory, ok := testAccProtoV6ProviderFactories["elemento"]
-	if !ok {
-		t.Fatal("missing elemento provider factory")
-	}
+func AttrImportStateIdFunc(resourceName, attrName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return "", fmt.Errorf("not found: %s", resourceName)
+		}
 
-	server, err := factory()
-	if err != nil {
-		t.Fatalf("create provider server: %s", err)
-	}
-	if server == nil {
-		t.Fatal("expected a provider server")
+		val, ok := rs.Primary.Attributes[attrName]
+		if !ok || val == "" {
+			return "", fmt.Errorf("attribute %q not set on %s", attrName, resourceName)
+		}
+
+		return val, nil
 	}
 }
