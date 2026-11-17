@@ -133,19 +133,16 @@ func (r *privateNetworkResource) Create(ctx context.Context, req resource.Create
 		plan.PaymentURL = types.StringValue(res.PaymentURL)
 		plan.UUID = types.StringNull()
 
-		diags = resp.State.Set(ctx, plan)
-		resp.Diagnostics.Append(diags...)
-
 		status, err := r.Client.GetResourceStatus(ctx, res.BillingUUID)
 		if err != nil {
 			resp.Diagnostics.AddWarning(
 				"Error Reading PrivateNetwork Resource Status",
 				"Could not read privatenetwork resource status: "+err.Error(),
 			)
-			return
+			status = nil
 		}
 
-		plan.Status = types.StringValue(*status)
+		plan.Status = types.StringPointerValue(status)
 	case client.PrivateCreateResponse:
 		plan.BillingUUID = types.StringNull()
 		plan.PaymentURL = types.StringNull()
