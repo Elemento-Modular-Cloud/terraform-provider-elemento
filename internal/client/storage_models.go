@@ -26,7 +26,7 @@ type StorageResource struct {
     Region           string   `json:"region"`
     Readonly         bool     `json:"readonly"`
     Priority         *int     `json:"priority,omitempty"`
-    BillingFrequency string   `json:"billing_frequency"`
+    BillingFrequency string   `json:"billing_frequency,omitempty"`
 }
 
 type CanCreateStorageRequest struct {
