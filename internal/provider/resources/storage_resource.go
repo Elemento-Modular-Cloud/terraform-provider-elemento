@@ -186,6 +186,10 @@ func volumeAttributes() map[string]schema.Attribute {
             Computed: true,
             Description: "The current status of the storage resource, computed by the Elemento API.",
         },
+		"creation_date": schema.StringAttribute{
+			Computed:    true,
+			Description: "The creation date of the datasource.",
+		},
     }
 }
 
@@ -313,6 +317,7 @@ func (r *storageResource) Create(ctx context.Context, req resource.CreateRequest
 
     plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
     plan.CreatorUUID = types.StringNull()
+    plan.CreationDate = types.StringNull()
 
     diags = resp.State.Set(ctx, plan)
     resp.Diagnostics.Append(diags...)
