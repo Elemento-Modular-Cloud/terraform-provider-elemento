@@ -200,7 +200,7 @@ func (c *ElementoClient) getTargetData(ctx context.Context) (*TargetGrant, error
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
@@ -232,7 +232,7 @@ func (c *ElementoClient) getTargetData(ctx context.Context) (*TargetGrant, error
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
@@ -303,7 +303,7 @@ func (c *ElementoClient) RenderCloudinit(ctx context.Context, service string, va
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	if resp.StatusCode >= 400 {
 		body, _ := io.ReadAll(resp.Body)
@@ -1165,7 +1165,7 @@ func (c *ElementoClient) ListSpotVMResources(ctx context.Context) ([]SpotVMListI
         return nil, err
     }
 
-    defer resp.Body.Close()
+    defer closeResponseBody(resp)
 
     if resp.StatusCode >= 400 {
         body, _ := io.ReadAll(resp.Body)
