@@ -24,7 +24,7 @@ terraform {
 }
 
 provider "elemento" {
-  target   = "upcloud.dev.meson.elemento.cloud"
+  target   = "upcloud-private"
   username = var.elemento_username
   password = var.elemento_password
 }
@@ -45,7 +45,7 @@ Provider arguments can also be set with environment variables:
 
 | Argument   | Environment variable | Description                                                    |
 | ---------- | -------------------- | -------------------------------------------------------------- |
-| `target`   | `ELEMENTO_TARGET`    | Atomosphere endpoint of the cloud to manage                    |
+| `target`   | `ELEMENTO_TARGET`    | Atomosphere target name of the cloud to manage                    |
 | `username` | `ELEMENTO_USERNAME`  | Account username                                               |
 | `password` | `ELEMENTO_PASSWORD`  | Account password                                               |
 | `portal`   | `ELEMENTO_PORTAL`    | Portal hostname, defaults to `portal.elemento.cloud`           |

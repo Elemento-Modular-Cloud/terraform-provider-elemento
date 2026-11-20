@@ -39,7 +39,7 @@ func (d *dbaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 	}
 	attributes["backup_time"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Daily backup time, in `HH:MM` format.",
+		Description: "Daily backup time, in `HH:MM:SS` format.",
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
 		Computed:    true,
@@ -67,7 +67,8 @@ func (d *dbaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 	}
 	attributes["database_password"] = schema.StringAttribute{
 		Computed:  true,
-		Sensitive: true, Description: "Password for connections.",
+		Sensitive: true,
+		Description: "Password for connections.",
 	}
 	attributes["database_name"] = schema.StringAttribute{
 		Computed:    true,

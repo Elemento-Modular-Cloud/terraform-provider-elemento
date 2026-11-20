@@ -53,7 +53,7 @@ func (r *dbaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
     }
     attributes["backup_time"] = schema.StringAttribute{
         Required: true,
-        Description: "Daily backup time, in `HH:MM` format.",
+        Description: "Daily backup time, in `HH:MM:SS` format.",
         PlanModifiers: []planmodifier.String{
             stringplanmodifier.RequiresReplace(),
         },
