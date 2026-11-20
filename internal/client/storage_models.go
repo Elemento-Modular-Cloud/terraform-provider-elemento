@@ -32,7 +32,7 @@ type StorageResource struct {
 type CanCreateStorageRequest struct {
     Size             int                        `json:"size"`
     Region           string                     `json:"region"`
-    BillingFrequency string                     `json:"billing_frequency"`
+    BillingFrequency string                     `json:"billing_frequency,omitempty"`
     Benchmark        CanCreateStorageBenchmark  `json:"benchmark"`
     HardwareDevice   *string                    `json:"hw_device"`
     Filesystem       *string                    `json:"fs"`
