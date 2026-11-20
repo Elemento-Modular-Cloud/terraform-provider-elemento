@@ -31,15 +31,15 @@ func (d *kaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Cluster name as returned by the API, or the Terraform-facing name. Not unique.",
+		Description: "Name of the cluster.",
 	}
 	attributes["cluster_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Kubernetes cluster name.",
+		Description: "Name of the Kubernetes cluster as known to the backend.",
 	}
 	attributes["cluster_status"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Cluster status from Meson (for example PENDING or RUNNING).",
+		Description: "Cluster status, e.g. `PENDING` or `RUNNING`.",
 	}
 	attributes["endpoint"] = schema.StringAttribute{
 		Computed:    true,
@@ -48,7 +48,7 @@ func (d *kaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 	attributes["kube_config"] = schema.StringAttribute{
 		Computed:    true,
 		Sensitive:   true,
-		Description: "Kubeconfig. Empty while the cluster is still pending.",
+		Description: "Kubeconfig for the cluster. Empty while the cluster is `PENDING`.",
 	}
 	attributes["kubernetes_version"] = schema.StringAttribute{
 		Computed:    true,
@@ -56,7 +56,7 @@ func (d *kaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 	}
 	attributes["network_cidr"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Cluster network CIDR.",
+		Description: "CIDR block of the cluster network.",
 	}
 
 	resp.Schema = schema.Schema{

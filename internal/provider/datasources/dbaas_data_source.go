@@ -31,19 +31,19 @@ func (d *dbaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "DB name.",
+		Description: "Name of the database service.",
 	}
 	attributes["engine"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Database engine (for example postgres or mysql).",
+		Description: "Database engine, e.g. `postgres` or `mysql`.",
 	}
 	attributes["backup_time"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Daily backup time.",
+		Description: "Daily backup time, in `HH:MM` format.",
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "Disk size as returned by the API.",
+		Description: "Disk size in GB.",
 	}
 	attributes["nodes_number"] = schema.Int32Attribute{
 		Computed:    true,
@@ -55,27 +55,27 @@ func (d *dbaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 	}
 	attributes["database_host"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Database host.",
+		Description: "Host to connect to.",
 	}
 	attributes["database_port"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Database port.",
+		Description: "Port to connect to.",
 	}
 	attributes["database_user"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Database username.",
+		Description: "Username for connections.",
 	}
 	attributes["database_password"] = schema.StringAttribute{
 		Computed:  true,
-		Sensitive: true, Description: "Database password.",
+		Sensitive: true, Description: "Password for connections.",
 	}
 	attributes["database_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Database name used for connections.",
+		Description: "Name of the database to connect to.",
 	}
 	attributes["database_ssl_mode"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "SSL mode for the database connection.",
+		Description: "SSL mode for connections.",
 	}
 	attributes["public_uri"] = schema.StringAttribute{
 		Computed:    true,

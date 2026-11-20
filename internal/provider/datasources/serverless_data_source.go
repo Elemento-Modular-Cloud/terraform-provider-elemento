@@ -31,53 +31,53 @@ func (d *ServerlessDataSource) Schema(_ context.Context, _ datasource.SchemaRequ
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the function.",
 	}
 	attributes["runtime"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The runtime to use for the serverless resource.",
+		Description: "Function runtime.",
 	}
 	attributes["handler"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The handler to use for the serverless resource.",
+		Description: "Entry point of the function.",
 	}
 	attributes["memory"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The memory to allocate for the serverless resource.",
+		Description: "Memory allocated to the function.",
 	}
 	attributes["timeout"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The timeout for the serverless resource.",
+		Description: "Execution timeout of the function.",
 	}
 	attributes["is_public"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the resource is public or not.",
+		Description: "Whether the function URL is reachable from the public internet.",
 	}
 	attributes["url"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The URL of the resource.",
+		Description: "Invocation URL of the function.",
 	}
 	attributes["arn"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ARN of the resource.",
+		Description: "ARN of the resource.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The access key ID for the resource.",
+		Description: "Access key ID for the resource.",
 		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The secret access key of the resource.",
+		Description: "Secret access key for the resource.",
 		Sensitive:   true,
 	}
 	attributes["auth_type"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The type of auth used by the resource.",
+		Description: "Authentication type of the function URL.",
 	}
 
 	resp.Schema = schema.Schema{

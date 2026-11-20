@@ -42,35 +42,35 @@ func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the virtual machine for the n8n resource.",
+		Description: "Name of the virtual machine running n8n.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["cpu_cores"] = schema.Int32Attribute{
 		Required:    true,
-		Description: "The number of CPU cores for the n8n resource.",
+		Description: "Number of CPU cores.",
 		PlanModifiers: []planmodifier.Int32{
 			int32planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["ram_size_mb"] = schema.Int32Attribute{
 		Required:    true,
-		Description: "The amount of RAM in MB for the n8n resource.",
+		Description: "RAM in MB.",
 		PlanModifiers: []planmodifier.Int32{
 			int32planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The size (in GB) of the boot disk for the n8n resource.",
+		Description: "Boot disk size in GB.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["username"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The username for the n8n resource.",
+		Description: "Username of the VM user.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -78,7 +78,7 @@ func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 	attributes["password"] = schema.StringAttribute{
 		Required:    true,
 		Sensitive:   true,
-		Description: "The password for the n8n resource.",
+		Description: "Password of the VM user.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -86,18 +86,18 @@ func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 	attributes["ssh_key"] = schema.StringAttribute{
 		Optional:    true,
 		Sensitive:   true,
-		Description: "The SSH key for the n8n resource.",
+		Description: "SSH public key authorized on the VM.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["service_url"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The service URL for the n8n resource, assigned after creation.",
+		Description: "URL of the n8n instance.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the n8n resource (e.g., 'ERROR', 'SUCCESS').",
+		Description: "Deployment state, e.g. `ERROR` or `SUCCESS`.",
 	}
 
 	resp.Schema = schema.Schema{

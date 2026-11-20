@@ -31,27 +31,27 @@ func (d *n8nDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the virtual machine for the n8n resource.",
+		Description: "Name of the virtual machine running n8n.",
 	}
 	attributes["cpu_cores"] = schema.Int32Attribute{
 		Computed:    true,
-		Description: "The number of CPU cores for the n8n resource.",
+		Description: "Number of CPU cores.",
 	}
 	attributes["ram_size_mb"] = schema.Int32Attribute{
 		Computed:    true,
-		Description: "The amount of RAM in MB for the n8n resource.",
+		Description: "RAM in MB.",
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The size (in GB) of the boot disk for the n8n resource.",
+		Description: "Boot disk size in GB.",
 	}
 	attributes["service_url"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The service URL for the n8n resource, assigned after creation.",
+		Description: "URL of the n8n instance.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the n8n resource (e.g., 'ERROR', 'SUCCESS').",
+		Description: "Deployment state, e.g. `ERROR` or `SUCCESS`.",
 	}
 
 	resp.Schema = schema.Schema{

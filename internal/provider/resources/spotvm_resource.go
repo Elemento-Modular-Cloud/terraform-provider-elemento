@@ -47,17 +47,17 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	volumeAttributes := map[string]schema.Attribute{
 		"name": schema.StringAttribute{
 			Required:    true,
-			Description: "The name of the volume.",
+			Description: "Volume name.",
 		},
 		"size_gb": schema.Int64Attribute{
 			Required:    true,
-			Description: "The size of the volume, in GB.",
+			Description: "Volume size in GB.",
 		},
 	}
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the spotvm resource.",
+		Description: "Name of the VM.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -65,10 +65,10 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 
 	attributes["cpu"] = schema.SingleNestedAttribute{
 		Required:    true,
-		Description: "The elemento spotvm cpu requirements",
+		Description: "CPU requirements.",
 		Attributes: map[string]schema.Attribute{
 			"slots": schema.Int32Attribute{
-				Description: "The number of CPU slots required for the spotvm resource.",
+				Description: "Number of CPU slots.",
 				Required:    true,
 				Validators: []validator.Int32{
 					int32validator.AtLeast(1),
@@ -76,11 +76,11 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"shared_cores": schema.BoolAttribute{
 				Required:    true,
-				Description: "Whether shared cores are allowed for the CPU.",
+				Description: "Whether shared cores are allowed.",
 			},
 			"arch": schema.ListAttribute{
 				Required:    true,
-				Description: "The list of alternative CPU architectures required for the spotvm resource. Valid values are 'X86_64' and 'arm64'.",
+				Description: "Accepted CPU architectures: `X86_64`, `arm64`.",
 				ElementType: types.StringType,
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(1),
@@ -100,11 +100,11 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 
 	attributes["mem"] = schema.SingleNestedAttribute{
 		Required:    true,
-		Description: "The elemento spotvm memory requirements",
+		Description: "Memory requirements.",
 		Attributes: map[string]schema.Attribute{
 			"capacity_mb": schema.Int32Attribute{
 				Required:    true,
-				Description: "The memory capacity (in MB) required for the spotvm resource.",
+				Description: "Memory in MB.",
 				Validators: []validator.Int32{
 					int32validator.AtLeast(1),
 				},
@@ -117,10 +117,10 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 
 	attributes["os"] = schema.SingleNestedAttribute{
 		Required:    true,
-		Description: "The elemento spotvm miscellaneous requirements",
+		Description: "Operating system requirements.",
 		Attributes: map[string]schema.Attribute{
 			"family": schema.StringAttribute{
-				Description: "The operating system family required for the spotvm resource. Valid values are 'linux', 'windows', and 'macos'.",
+				Description: "OS family: `linux`, `windows` or `macos`.",
 				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
@@ -131,11 +131,11 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"flavour": schema.StringAttribute{
-				Description: "The operating system flavour required for the spotvm resource.",
+				Description: "OS flavour.",
 				Required:    true, // TODO: os_flavour validator based on iso-templates?
 			},
 			"version": schema.StringAttribute{
-				Description: "The operating system version required for the spotvm resource.",
+				Description: "OS version.",
 				Optional:    true,
 			},
 		},
@@ -146,16 +146,16 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 
 	attributes["storage"] = schema.SingleNestedAttribute{
 		Required:    true,
-		Description: "The storage required for the spotvm resource.",
+		Description: "Storage requirements.",
 		Attributes: map[string]schema.Attribute{
 			"boot": schema.SingleNestedAttribute{
 				Required:    true,
-				Description: "The boot volume required for the spotvm storage.",
+				Description: "Boot volume.",
 				Attributes:  volumeAttributes,
 			},
 			"data": schema.ListNestedAttribute{
 				Required:    true,
-				Description: "The list of optional data volumes required for the spotvm resource.",
+				Description: "Additional data volumes.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: volumeAttributes,
 				},
@@ -184,20 +184,20 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 
 	attributes["networks"] = schema.ListNestedAttribute{
 		Computed:    true,
-		Description: "The list of networks associated with the spotvm resource.",
+		Description: "Network interfaces of the VM.",
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"kind": schema.StringAttribute{
 					Computed:    true,
-					Description: "The network kind.",
+					Description: "Network kind.",
 				},
 				"ipv4": schema.StringAttribute{
 					Computed:    true,
-					Description: "The IPv4 address of the network.",
+					Description: "IPv4 address.",
 				},
 				"mac": schema.StringAttribute{
 					Computed:    true,
-					Description: "The MAC address of the network.",
+					Description: "MAC address.",
 				},
 			},
 		},
@@ -226,7 +226,7 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	attributes["tags"] = schema.ListAttribute{
 		Computed:    true,
 		Optional:    true,
-		Description: "The tags associated with the spotvm resource, assigned by the Elemento API after creation.",
+		Description: "Tags to attach to the VM.",
 		ElementType: types.StringType,
 		PlanModifiers: []planmodifier.List{
 			listplanmodifier.RequiresReplace(),
@@ -241,7 +241,7 @@ func (r *spotVMResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 
 	attributes["cloudinit_b64"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The cloudinit file for the spotvm, base64-encoded.",
+		Description: "Base64-encoded cloud-init file.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},

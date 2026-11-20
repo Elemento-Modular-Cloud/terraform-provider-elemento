@@ -41,42 +41,42 @@ func (r *serverlessResource) Schema(_ context.Context, _ resource.SchemaRequest,
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the function.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["runtime"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The runtime to use for the serverless resource.",
+		Description: "Function runtime.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["handler"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The handler to use for the serverless resource.",
+		Description: "Entry point of the function.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["memory"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The memory to allocate for the serverless resource.",
+		Description: "Memory allocated to the function.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["timeout"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The timeout for the serverless resource.",
+		Description: "Execution timeout of the function.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["is_public"] = schema.BoolAttribute{
 		Required:    true,
-		Description: "Whether the resource is public or not.",
+		Description: "Whether the function URL is reachable from the public internet.",
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.RequiresReplace(),
 		},
@@ -84,43 +84,43 @@ func (r *serverlessResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	attributes["environment"] = schema.MapAttribute{
 		Required:    true,
 		ElementType: types.StringType,
-		Description: "The environment variables for the serverless resource.",
+		Description: "Environment variables passed to the function.",
 		PlanModifiers: []planmodifier.Map{
 			mapplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["code_zip_b64"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The base64-encoded zip to use for the serverless resource.",
+		Description: "Base64-encoded zip archive of the function code.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["url"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The URL of the resource.",
+		Description: "Invocation URL of the function.",
 	}
 	attributes["arn"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ARN of the resource.",
+		Description: "ARN of the resource.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The access key ID for the resource.",
+		Description: "Access key ID for the resource.",
 		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The secret access key of the resource.",
+		Description: "Secret access key for the resource.",
 		Sensitive:   true,
 	}
 	attributes["auth_type"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The type of auth used by the resource.",
+		Description: "Authentication type of the function URL.",
 	}
 
 	resp.Schema = schema.Schema{

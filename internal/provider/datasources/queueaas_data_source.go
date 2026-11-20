@@ -31,52 +31,52 @@ func (d *queueAASDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the queue.",
 	}
 	attributes["node_number"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The number of nodes of the queue.",
+		Description: "Number of nodes.",
 	}
 	attributes["node_size"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The size of each node of the queue.",
+		Description: "Size of each node.",
 	}
 	attributes["size_gb"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The size (in GB) of the queue.",
+		Description: "Storage size in GB.",
 	}
 	attributes["username"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The username to use for the queue.",
+		Description: "Username for connections.",
 	}
 	attributes["password"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The password to use for the queue.",
+		Description: "Password for connections.",
 		Sensitive:   true,
 	}
 	attributes["kafka_version"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The version of Kafka to use for the queue.",
+		Description: "Kafka version.",
 	}
 	attributes["is_ha"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether HA should be enabled for the resource or not.",
+		Description: "Whether the cluster runs in high availability.",
 	}
 	attributes["is_public"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whetherthe resource should be public or not.",
+		Description: "Whether the cluster is reachable from the public internet.",
 	}
 	attributes["network_uuid"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the model used by the resource.",
+		Description: "UUID of the private network to attach to.",
 	}
 	attributes["bootstrap_servers"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The boostrap servers of the resource.",
+		Description: "Kafka bootstrap servers.",
 	}
 	attributes["kafka_cert"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The Kafka certificate for the resource.",
+		Description: "Kafka certificate.",
 		Sensitive:   true,
 	}
 

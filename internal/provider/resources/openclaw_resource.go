@@ -42,35 +42,35 @@ func (r *openclawResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the virtual machine for the openclaw resource.",
+		Description: "Name of the virtual machine running OpenClaw.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["cpu_cores"] = schema.Int32Attribute{
 		Required:    true,
-		Description: "The number of CPU cores for the openclaw resource.",
+		Description: "Number of CPU cores.",
 		PlanModifiers: []planmodifier.Int32{
 			int32planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["ram_size_mb"] = schema.Int32Attribute{
 		Required:    true,
-		Description: "The amount of RAM in MB for the openclaw resource.",
+		Description: "RAM in MB.",
 		PlanModifiers: []planmodifier.Int32{
 			int32planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The size (in GB) of the boot disk for the openclaw resource.",
+		Description: "Boot disk size in GB.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["username"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The username for the openclaw resource.",
+		Description: "Username of the VM user.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -78,7 +78,7 @@ func (r *openclawResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	attributes["password"] = schema.StringAttribute{
 		Required:    true,
 		Sensitive:   true,
-		Description: "The password for the openclaw resource.",
+		Description: "Password of the VM user.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -86,24 +86,24 @@ func (r *openclawResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	attributes["ssh_key"] = schema.StringAttribute{
 		Optional:    true,
 		Sensitive:   true,
-		Description: "The SSH key for the openclaw resource.",
+		Description: "SSH public key authorized on the VM.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["service_url"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The service URL for the openclaw resource, assigned after creation.",
+		Description: "URL of the OpenClaw instance.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the openclaw resource (e.g., 'ERROR', 'SUCCESS').",
+		Description: "Deployment state, e.g. `ERROR` or `SUCCESS`.",
 	}
 
 	attributes["token"] = schema.StringAttribute{
 		Computed:    true,
 		Sensitive:   true,
-		Description: "The token for the openclaw resource, assigned after creation.",
+		Description: "Access token for the instance.",
 	}
 
 	resp.Schema = schema.Schema{

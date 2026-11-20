@@ -31,39 +31,39 @@ func (d *fileStorageDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the file storage.",
 	}
 	attributes["size_gb"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The size (in GB) of the resource.",
+		Description: "Provisioned size in GB.",
 	}
 	attributes["used_gb"] = schema.Float64Attribute{
 		Computed:    true,
-		Description: "The size (in GB) currently used by the resource.",
+		Description: "Space currently used, in GB.",
 	}
 	attributes["dns_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the DNS associated with the resource.",
+		Description: "DNS name of the NFS server.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 	attributes["nfs_host"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The nfs host associated with the resource",
+		Description: "NFS server host.",
 	}
 	attributes["nfs_path"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The nfs path associated with the resource",
+		Description: "Exported NFS path.",
 	}
 	attributes["nfs_version"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The nfs version associated with the resource",
+		Description: "NFS protocol version.",
 	}
 	attributes["mount_command"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The command used to connect to the resource",
+		Description: "Command that mounts the share.",
 	}
 
 	resp.Schema = schema.Schema{

@@ -39,28 +39,28 @@ func (r *dbaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 
     attributes["name"] = schema.StringAttribute{
         Required: true,
-        Description: "The name of the DBAAS resource.",
+        Description: "Name of the database service.",
         PlanModifiers: []planmodifier.String{
             stringplanmodifier.RequiresReplace(),
         },
     }
     attributes["engine"] = schema.StringAttribute{
         Required: true,
-        Description: "The database engine for the DBAAS resource (e.g., 'postgres', 'mysql').",
+        Description: "Database engine, e.g. `postgres` or `mysql`.",
         PlanModifiers: []planmodifier.String{
             stringplanmodifier.RequiresReplace(),
         },
     }
     attributes["backup_time"] = schema.StringAttribute{
         Required: true,
-        Description: "The time for the daily backup in HH:MM format.",
+        Description: "Daily backup time, in `HH:MM` format.",
         PlanModifiers: []planmodifier.String{
             stringplanmodifier.RequiresReplace(),
         },
     }
     attributes["disk_size_gb"] = schema.Int64Attribute{
         Required: true,
-        Description: "The size of the disk in GB for the DBAAS resource.",
+        Description: "Disk size in GB.",
         PlanModifiers: []planmodifier.Int64{
             int64planmodifier.RequiresReplace(),
         },
@@ -68,46 +68,46 @@ func (r *dbaasResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
     attributes["password"] = schema.StringAttribute{
         Required: true,
         Sensitive: true,
-        Description: "The password for the DBAAS resource.",
+        Description: "Administrator password for the service.",
         PlanModifiers: []planmodifier.String{
             stringplanmodifier.RequiresReplace(),
         },
     }
     attributes["nodes_number"] = schema.Int32Attribute{
         Required: true,
-        Description: "The number of nodes for the DBAAS resource.",
+        Description: "Number of database nodes.",
         PlanModifiers: []planmodifier.Int32{
             int32planmodifier.RequiresReplace(),
         },
     }
     attributes["database_host"] = schema.StringAttribute{
         Computed: true,
-        Description: "The host address of the database for the DBAAS resource.",
+        Description: "Host to connect to.",
     }
     attributes["database_port"] = schema.StringAttribute{
         Computed: true,
-        Description: "The port number of the database for the DBAAS resource.",
+        Description: "Port to connect to.",
     }
     attributes["database_user"] = schema.StringAttribute{
         Computed: true,
-        Description: "The username for the database of the DBAAS resource.",
+        Description: "Username for connections.",
     }
     attributes["database_password"] = schema.StringAttribute{
         Computed: true,
         Sensitive: true,
-        Description: "The password for the database of the DBAAS resource.",
+        Description: "Password for connections.",
     }
     attributes["database_name"] = schema.StringAttribute{
         Computed: true,
-        Description: "The name of the database for the DBAAS resource.",
+        Description: "Name of the database to connect to.",
     }
     attributes["database_ssl_mode"] = schema.StringAttribute{
         Computed: true,
-        Description: "The SSL mode for the database connection of the DBAAS resource.",
+        Description: "SSL mode for connections.",
     }
     attributes["public_uri"] = schema.StringAttribute{
         Computed: true,
-        Description: "The public URI for accessing the DBAAS resource.",
+        Description: "Public connection URI.",
     }
 
     resp.Schema = schema.Schema{

@@ -31,33 +31,33 @@ func (d *openClawDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the virtual machine for the openclaw resource.",
+		Description: "Name of the virtual machine running OpenClaw.",
 	}
 	attributes["cpu_cores"] = schema.Int32Attribute{
 		Computed:    true,
-		Description: "The number of CPU cores for the openclaw resource.",
+		Description: "Number of CPU cores.",
 	}
 	attributes["ram_size_mb"] = schema.Int32Attribute{
 		Computed:    true,
-		Description: "The amount of RAM in MB for the openclaw resource.",
+		Description: "RAM in MB.",
 	}
 	attributes["disk_size_gb"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The size (in GB) of the boot disk for the openclaw resource.",
+		Description: "Boot disk size in GB.",
 	}
 	attributes["service_url"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The service URL for the openclaw resource, assigned after creation.",
+		Description: "URL of the OpenClaw instance.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the openclaw resource (e.g., 'ERROR', 'SUCCESS').",
+		Description: "Deployment state, e.g. `ERROR` or `SUCCESS`.",
 	}
 
 	attributes["token"] = schema.StringAttribute{
 		Computed:    true,
 		Sensitive:   true,
-		Description: "The token for the openclaw resource, assigned after creation.",
+		Description: "Access token for the instance.",
 	}
 
 	resp.Schema = schema.Schema{

@@ -40,62 +40,62 @@ func (r *registryResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the registry.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["size_gb"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The size (in GB) of the resource.",
+		Description: "Storage size in GB.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["is_public"] = schema.BoolAttribute{
 		Required:    true,
-		Description: "The size (in GB) of the resource.",
+		Description: "Whether the registry is reachable from the public internet.",
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["repository_uri"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The URI of the repository.",
+		Description: "URI of the repository.",
 	}
 	attributes["registry_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the registry.",
+		Description: "ID of the registry.",
 	}
 	attributes["image_count"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The number of images in the registry.",
+		Description: "Number of images stored.",
 	}
 	attributes["used_bytes"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The size (in bytes) currently used by the resource.",
+		Description: "Storage in use, in bytes.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the access key of the resource.",
+		Description: "Access key ID for the registry.",
 		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The secret access key of the resource.",
+		Description: "Secret access key for the resource.",
 		Sensitive:   true,
 	}
 	attributes["registry_type"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The type of the registry.",
+		Description: "Registry type.",
 	}
 	attributes["login_command"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The command used to login to the resource.",
+		Description: "Command that logs in to the registry.",
 		Sensitive:   true,
 	}
 

@@ -40,42 +40,42 @@ func (r *queueAASResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the queue.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["node_number"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The number of nodes of the queue.",
+		Description: "Number of nodes.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["node_size"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The size of each node of the queue.",
+		Description: "Size of each node.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["size_gb"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The size (in GB) of the queue.",
+		Description: "Storage size in GB.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["username"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The username to use for the queue.",
+		Description: "Username for connections.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["password"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The password to use for the queue.",
+		Description: "Password for connections.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -83,39 +83,39 @@ func (r *queueAASResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	}
 	attributes["kafka_version"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The version of Kafka to use for the queue.",
+		Description: "Kafka version.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["is_ha"] = schema.BoolAttribute{
 		Required:    true,
-		Description: "Whether HA should be enabled for the resource or not.",
+		Description: "Whether the cluster runs in high availability.",
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["is_public"] = schema.BoolAttribute{
 		Required:    true,
-		Description: "Whetherthe resource should be public or not.",
+		Description: "Whether the cluster is reachable from the public internet.",
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["network_uuid"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The ID of the model used by the resource.",
+		Description: "UUID of the private network to attach to.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["bootstrap_servers"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The boostrap servers of the resource.",
+		Description: "Kafka bootstrap servers.",
 	}
 	attributes["kafka_cert"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The Kafka certificate for the resource.",
+		Description: "Kafka certificate.",
 		Sensitive:   true,
 	}
 

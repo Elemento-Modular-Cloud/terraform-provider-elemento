@@ -40,15 +40,12 @@ func (p *ElementoProvider) Metadata(_ context.Context, _ provider.MetadataReques
 
 func (p *ElementoProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "The Elemento provider manages infrastructure across every Atomosphere-connected cloud through a single Terraform schema.",
-		MarkdownDescription: "The Elemento provider is the Terraform interface to [Elemento Modular Cloud](https://elemento.cloud). " +
-			"It replaces the *many clouds, many providers* model with **one provider** and a destination cloud passed as an argument.\n\n" +
-			"Set `target` to the [Atomosphere](https://elemento.cloud/atomosphere.html) target name for the backend you intend to use. " +
-			"Resource types stay the same across clouds. Use provider aliases to target more than one cloud in a single root module.\n\n" +
-			"Arguments may also be supplied with `ELEMENTO_TARGET`, `ELEMENTO_USERNAME`, `ELEMENTO_PASSWORD`, and `ELEMENTO_PORTAL`.\n\n" +
+		Description: "Manages Elemento Modular Cloud resources on any cloud connected through Atomosphere.",
+		MarkdownDescription: "Manages [Elemento Modular Cloud](https://elemento.cloud) resources on any cloud connected through [Atomosphere](https://elemento.cloud/atomosphere.html). " +
+			"The same resource types work on every cloud; `target` selects which one. To use several clouds in one configuration, declare one provider block per cloud with an `alias`.\n\n" +
 			"```terraform\n" +
 			"provider \"elemento\" {\n" +
-			"  target     = \"azure.dev.meson.elemento.cloud\"\n" +
+			"  target   = \"azure.dev.meson.elemento.cloud\"\n" +
 			"  username = var.elemento_username\n" +
 			"  password = var.elemento_password\n" +
 			"}\n" +
@@ -56,20 +53,20 @@ func (p *ElementoProvider) Schema(_ context.Context, _ provider.SchemaRequest, r
 		Attributes: map[string]schema.Attribute{
 			"target": schema.StringAttribute{
 				Optional:    true,
-				Description: "The elemento API target name. Can also be set via the ELEMENTO_TARGET environment variable.",
+				Description: "Hostname of the Atomosphere (Meson) endpoint of the cloud to manage. Falls back to `ELEMENTO_TARGET`.",
 			},
 			"username": schema.StringAttribute{
 				Optional:    true,
-				Description: "The Elemento API username. Can also be set via the ELEMENTO_USERNAME environment variable.",
+				Description: "Elemento account username. Falls back to `ELEMENTO_USERNAME`.",
 			},
 			"password": schema.StringAttribute{
 				Optional:    true,
 				Sensitive:   true,
-				Description: "The Elemento API password. Can also be set via the ELEMENTO_PASSWORD environment variable.",
+				Description: "Elemento account password. Falls back to `ELEMENTO_PASSWORD`.",
 			},
 			"portal": schema.StringAttribute{
 				Optional:    true,
-				Description: "Portal hostname for authentication and billing. Defaults to portal.elemento.cloud. Can also be set via the ELEMENTO_PORTAL environment variable.",
+				Description: "Hostname of the Elemento Portal, used for authentication and billing. Defaults to `portal.elemento.cloud`. Falls back to `ELEMENTO_PORTAL`.",
 			},
 		},
 	}

@@ -39,45 +39,45 @@ func (r *publicGatewayResource) Schema(_ context.Context, _ resource.SchemaReque
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the gateway.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["network_uuid"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The UUID of the private network associated with the resource.",
+		Description: "UUID of the private network the gateway serves.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["vpc_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the VPC associated with the resource.",
+		Description: "ID of the VPC the resource belongs to.",
 	}
 	attributes["allocation_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The allocation ID of the resource.",
+		Description: "Allocation ID of the gateway address.",
 	}
 	attributes["nat_gateway_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the nat gateway of the resource.",
+		Description: "ID of the NAT gateway.",
 	}
 	attributes["public_subnet_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the public subnet associated with the resource.",
+		Description: "ID of the public subnet.",
 	}
 	attributes["egress_enabled"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether egress is enabled for this public gateway.",
+		Description: "Whether outbound traffic is allowed.",
 	}
 	attributes["bytes_out_month"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The traffic (in bytes) sustained last month by the public gateway.",
+		Description: "Outbound traffic over the last month, in bytes.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 
 	resp.Schema = schema.Schema{

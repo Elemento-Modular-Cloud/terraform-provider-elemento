@@ -31,15 +31,15 @@ func (d *objectStorageDataSource) Schema(_ context.Context, _ datasource.SchemaR
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Bucket name.",
+		Description: "Name of the bucket.",
 	}
 	attributes["active_storage"] = schema.Int32Attribute{
 		Computed:    true,
-		Description: "Active storage reported by the API.",
+		Description: "Storage currently in use.",
 	}
 	attributes["endpoint"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Object storage endpoint.",
+		Description: "Endpoint URL of the bucket.",
 	}
 	attributes["account_name"] = schema.StringAttribute{
 		Computed:    true,
@@ -51,11 +51,11 @@ func (d *objectStorageDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 	attributes["sas_token"] = schema.StringAttribute{
 		Computed:  true,
-		Sensitive: true, Description: "SAS token for the bucket.",
+		Sensitive: true, Description: "SAS token granting access to the bucket.",
 	}
 	attributes["azure_cli_command"] = schema.StringAttribute{
 		Computed:  true,
-		Sensitive: true, Description: "Azure CLI command returned by the credentials endpoint.",
+		Sensitive: true, Description: "Azure CLI command that accesses the bucket.",
 	}
 
 	resp.Schema = schema.Schema{

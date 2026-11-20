@@ -31,35 +31,35 @@ func (d *publicIPDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the public IP.",
 	}
 	attributes["public_ip"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The public IP of the resource.",
+		Description: "The IP address.",
 	}
 	attributes["allocation_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The allocation ID of the resource.",
+		Description: "Allocation ID of the address.",
 	}
 	attributes["domain"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The domain of the resource.",
+		Description: "Domain of the address.",
 	}
 	attributes["association_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The association ID of the resource.",
+		Description: "ID of the association with an instance.",
 	}
 	attributes["associated_instance_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the instance associated with the resource.",
+		Description: "ID of the instance the address is attached to.",
 	}
 	attributes["associated_network_interface_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the network interface associated with the resource.",
+		Description: "ID of the network interface the address is attached to.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 
 	resp.Schema = schema.Schema{

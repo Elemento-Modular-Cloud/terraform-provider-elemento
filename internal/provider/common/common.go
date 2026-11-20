@@ -39,45 +39,45 @@ func BaseSchema() map[string]rschema.Attribute {
 	return map[string]rschema.Attribute{
 		"creator_uuid": rschema.StringAttribute{
 			Computed:    true,
-			Description: "The UUID of the creator of the resource.",
+			Description: "UUID of the account that created the resource.",
 		},
 		"region": rschema.StringAttribute{
 			Required:    true,
-			Description: "The region where the resource is located.",
+			Description: "Region to deploy in. Changing it forces a new resource.",
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.RequiresReplace(),
 			},
 		},
 		"creation_date": rschema.StringAttribute{
 			Computed:    true,
-			Description: "The creation date of the resource.",
+			Description: "Creation timestamp.",
 		},
 		"uuid": rschema.StringAttribute{
 			Computed:    true,
-			Description: "The UUID of the resource.",
+			Description: "Service UUID.",
 		},
 		"last_updated": rschema.StringAttribute{
 			Computed:    true,
-			Description: "The last updated timestamp of the resource.",
+			Description: "Timestamp of the last update.",
 		},
 		"billing_frequency": rschema.StringAttribute{
 			Optional:    true,
-			Description: "The billing frequency for the resource (e.g., 'monthly', 'yearly'). Required for public mesons.",
+			Description: "Billing period, e.g. `day`, `month` or `year`. Changing it forces a new resource.",
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.RequiresReplace(),
 			},
 		},
 		"billing_uuid": rschema.StringAttribute{
 			Computed:    true,
-			Description: "The UUID of the billing information for the resource.",
+			Description: "Portal billing UUID.",
 		},
 		"payment_url": rschema.StringAttribute{
 			Computed:    true,
-			Description: "The URL for the payment information for the resource.",
+			Description: "URL where the payment for the resource is completed.",
 		},
 		"status": rschema.StringAttribute{
 			Computed:    true,
-			Description: "The status of the resource.",
+			Description: "Current status of the resource.",
 		},
 	}
 }
@@ -101,38 +101,38 @@ func BaseDataSourceSchema() map[string]dschema.Attribute {
 		"uuid": dschema.StringAttribute{
 			Optional:    true,
 			Computed:    true,
-			Description: "Service UUID of the datasource. Exactly one of uuid or billing_uuid must be set.",
+			Description: "Service UUID. Set exactly one of `uuid` or `billing_uuid`.",
 			Validators:  []validator.String{ids, uuid},
 		},
 		"billing_uuid": dschema.StringAttribute{
 			Optional:    true,
 			Computed:    true,
-			Description: "Portal billing UUID of the datasource.",
+			Description: "Portal billing UUID. Set exactly one of `uuid` or `billing_uuid`.",
 			Validators:  []validator.String{ids, uuid},
 		},
 		"creator_uuid": dschema.StringAttribute{
 			Computed:    true,
-			Description: "The UUID of the creator of the datasource.",
+			Description: "UUID of the account that created the resource.",
 		},
 		"region": dschema.StringAttribute{
 			Computed:    true,
-			Description: "The region where the datasource is located.",
+			Description: "Region the resource is in.",
 		},
 		"creation_date": dschema.StringAttribute{
 			Computed:    true,
-			Description: "The creation date of the datasource.",
+			Description: "Creation timestamp.",
 		},
 		"last_updated": dschema.StringAttribute{
 			Computed:    true,
-			Description: "The last updated timestamp of the datasource.",
+			Description: "Timestamp of the last update.",
 		},
 		"billing_frequency": dschema.StringAttribute{
 			Computed:    true,
-			Description: "The billing frequency for the datasource (e.g., 'monthly', 'yearly').",
+			Description: "Billing period.",
 		},
 		"status": dschema.StringAttribute{
 			Computed:    true,
-			Description: "The status of the resource.",
+			Description: "Current status of the resource.",
 		},
 	}
 }

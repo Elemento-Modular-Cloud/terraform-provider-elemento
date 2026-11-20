@@ -31,47 +31,47 @@ func (d *loadBalancerDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the load balancer.",
 	}
 	attributes["type"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The type of the resource.",
+		Description: "Load balancer type.",
 	}
 	attributes["is_public"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the resource is public or not.",
+		Description: "Whether the load balancer is internet-facing.",
 	}
 	attributes["port"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "The port of the resource.",
+		Description: "Listener port.",
 	}
 	attributes["scheme"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The scheme of the resource.",
+		Description: "Listener scheme.",
 	}
 	attributes["dns_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The DNS name of the resource.",
+		Description: "DNS name of the load balancer.",
 	}
 	attributes["arn"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The arn of the resource.",
+		Description: "ARN of the load balancer.",
 	}
 	attributes["target_group_arn"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ARN of the target group associated with the resource.",
+		Description: "ARN of the target group.",
 	}
 	attributes["security_group_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the security group associated with the resource.",
+		Description: "ID of the security group.",
 	}
 	attributes["vpc_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the VPC associated with the resource.",
+		Description: "ID of the VPC the resource belongs to.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 
 	resp.Schema = schema.Schema{

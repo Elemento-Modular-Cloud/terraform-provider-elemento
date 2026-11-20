@@ -31,40 +31,40 @@ func (d *privateNetworkDataSource) Schema(_ context.Context, _ datasource.Schema
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the network.",
 	}
 	attributes["cidr"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The network CIDR of the resource.",
+		Description: "CIDR block of the network.",
 	}
 	attributes["auto_assign_cidr"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the CIDR should be automatically assigned for this resource.",
+		Description: "Let the platform pick the CIDR block.",
 	}
 	attributes["vpc_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The VPC ID of the resource.",
+		Description: "ID of the VPC the resource belongs to.",
 	}
 	attributes["state"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The state of the resource.",
+		Description: "Current state reported by the service.",
 	}
 	attributes["subnets"] = schema.ListNestedAttribute{
 		Computed:    true,
-		Description: "The subnets associated with the resource",
+		Description: "Subnets of the network.",
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"az": schema.StringAttribute{
 					Computed:    true,
-					Description: "The availability zone of the subnet",
+					Description: "Availability zone of the subnet.",
 				},
 				"subnet_id": schema.StringAttribute{
 					Computed:    true,
-					Description: "The ID of the subnet",
+					Description: "ID of the subnet.",
 				},
 				"cidr": schema.StringAttribute{
 					Computed:    true,
-					Description: "The CIDR of the subnet",
+					Description: "CIDR block of the subnet.",
 				},
 			},
 		},

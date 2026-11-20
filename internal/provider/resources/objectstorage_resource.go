@@ -38,42 +38,42 @@ func (r *objectStorageResource) Schema(_ context.Context, _ resource.SchemaReque
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the object storage resource.",
+		Description: "Name of the bucket.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["size_tb"] = schema.Int64Attribute{
 		Required:    true,
-		Description: "The size of the object storage resource in TB.",
+		Description: "Bucket size in TB.",
 		PlanModifiers: []planmodifier.Int64{
 			int64planmodifier.RequiresReplace(),
 		},
 	}
 	attributes["active_storage"] = schema.Int32Attribute{
 		Computed:    true,
-		Description: "The amount of active storage in the object storage resource.",
+		Description: "Storage currently in use.",
 	}
 	attributes["endpoint"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The endpoint URL for the object storage resource.",
+		Description: "Endpoint URL of the bucket.",
 	}
 	attributes["account_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the storage account.",
+		Description: "Storage account name.",
 	}
 	attributes["container_name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The name of the storage container.",
+		Description: "Container name.",
 	}
 	attributes["sas_token"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The SAS token for accessing the storage account.",
+		Description: "SAS token granting access to the bucket.",
 		Sensitive:   true,
 	}
 	attributes["azure_cli_command"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The Azure CLI command to access the storage account.",
+		Description: "Azure CLI command that accesses the bucket.",
 		Sensitive:   true,
 	}
 

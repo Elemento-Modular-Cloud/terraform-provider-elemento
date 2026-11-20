@@ -39,41 +39,41 @@ func (r *aiserverlessResource) Schema(_ context.Context, _ resource.SchemaReques
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the resource.",
+		Description: "Name of the AI serverless endpoint.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["model_name"] = schema.StringAttribute{
 		Required:    true,
-		Description: "The name of the model to use for the aiserverless resource.",
+		Description: "Name of the model to serve.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["enable_streaming"] = schema.BoolAttribute{
 		Required:    true,
-		Description: "Whether streaming should be enabled for the resource or not.",
+		Description: "Whether responses are streamed.",
 		PlanModifiers: []planmodifier.Bool{
 			boolplanmodifier.RequiresReplace(),
 		},
 	}
 	attributes["model_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ID of the model used by the resource.",
+		Description: "ID of the model being served.",
 	}
 	attributes["arn"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The ARN of the resource.",
+		Description: "ARN of the resource.",
 	}
 	attributes["access_key_id"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The access key ID for the resource.",
+		Description: "Access key ID for the resource.",
 		Sensitive:   true,
 	}
 	attributes["secret_access_key"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "The secret access key of the resource.",
+		Description: "Secret access key for the resource.",
 		Sensitive:   true,
 	}
 

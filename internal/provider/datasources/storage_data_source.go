@@ -36,27 +36,27 @@ func (d *storageDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	}
 	attributes["size"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "Volume size in GB.",
+		Description: "Volume size in bytes.",
 	}
 	attributes["private"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the volume is private.",
+		Description: "Whether the volume is private to its owner.",
 	}
 	attributes["shareable"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the volume is shareable.",
+		Description: "Whether the volume can be attached to more than one VM.",
 	}
 	attributes["bootable"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the volume is bootable.",
+		Description: "Whether the volume can be used as a boot disk.",
 	}
 	attributes["readonly"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the volume is read-only.",
+		Description: "Whether the volume is attached read-only.",
 	}
 	attributes["clonable"] = schema.BoolAttribute{
 		Computed:    true,
-		Description: "Whether the volume is clonable.",
+		Description: "Whether the volume can be cloned.",
 	}
 	attributes["priority"] = schema.Int32Attribute{
 		Computed:    true,
@@ -65,7 +65,7 @@ func (d *storageDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	attributes["tags"] = schema.ListAttribute{
 		Computed:    true,
 		ElementType: types.StringType,
-		Description: "Tags associated with the volume.",
+		Description: "Tags attached to the volume.",
 	}
 
 	resp.Schema = schema.Schema{
