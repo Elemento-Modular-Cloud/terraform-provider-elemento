@@ -3,12 +3,12 @@
 page_title: "elemento_dbaas Data Source - elemento"
 subcategory: ""
 description: |-
-  Looks up an existing Elemento managed database on the cloud selected by host. Set exactly one of uuid, billing_uuid, or name. Names are not unique; multiple matches return an error.
+  Looks up an existing Elemento managed database on the cloud selected by target. Set exactly one of uuid or billing_uuid.
 ---
 
 # elemento_dbaas (Data Source)
 
-Looks up an existing Elemento managed database on the cloud selected by `host`. Set exactly one of `uuid`, `billing_uuid`, or `name`. Names are not unique; multiple matches return an error.
+Looks up an existing Elemento managed database on the cloud selected by `target`. Set exactly one of `uuid` or `billing_uuid`.
 
 
 
@@ -17,24 +17,26 @@ Looks up an existing Elemento managed database on the cloud selected by `host`. 
 
 ### Optional
 
-- `billing_uuid` (String) Portal billing UUID of the database.
-- `name` (String) Database name. Not unique; use uuid when more than one match exists.
-- `region` (String) Optional region filter, also populated from the API.
-- `uuid` (String) Service UUID of the database. Exactly one of uuid, billing_uuid, or name must be set.
+- `billing_uuid` (String) Portal billing UUID. Set exactly one of `uuid` or `billing_uuid`.
+- `uuid` (String) Service UUID. Set exactly one of `uuid` or `billing_uuid`.
 
 ### Read-Only
 
-- `backup_time` (String) Daily backup time.
+- `backup_time` (String) Daily backup time, in `HH:MM:SS` format.
+- `billing_frequency` (String) Billing period.
 - `creation_date` (String) Creation timestamp.
-- `creator_uuid` (String) UUID of the account that created the database.
-- `database_host` (String) Database host.
-- `database_name` (String) Database name used for connections.
-- `database_password` (String, Sensitive) Database password.
-- `database_port` (String) Database port.
-- `database_ssl_mode` (String) SSL mode for the database connection.
-- `database_user` (String) Database username.
-- `disk_size_gb` (Number) Disk size as returned by the API.
-- `engine` (String) Database engine (for example postgres or mysql).
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `database_host` (String) Host to connect to.
+- `database_name` (String) Name of the database to connect to.
+- `database_password` (String, Sensitive) Password for connections.
+- `database_port` (String) Port to connect to.
+- `database_ssl_mode` (String) SSL mode for connections.
+- `database_user` (String) Username for connections.
+- `disk_size_gb` (Number) Disk size in GB.
+- `engine` (String) Database engine, e.g. `postgres` or `mysql`.
+- `last_updated` (String) Timestamp of the last update.
+- `name` (String) Name of the database service.
 - `nodes_number` (Number) Number of database nodes.
 - `public_uri` (String) Public connection URI.
-- `status` (String) Portal billing status, when billing_uuid is available.
+- `region` (String) Region the resource is in.
+- `status` (String) Current status of the resource.

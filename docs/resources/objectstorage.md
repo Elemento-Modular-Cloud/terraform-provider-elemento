@@ -17,21 +17,26 @@ description: |-
 
 ### Required
 
-- `billing_frequency` (String) The billing frequency for the object storage resource (e.g., 'monthly', 'yearly').
-- `name` (String) The name of the object storage resource.
-- `region` (String) The region where the object storage resource will be created.
-- `size_tb` (Number) The size of the object storage resource in TB.
+- `name` (String) Name of the bucket.
+- `region` (String) Region to deploy in. Changing it forces a new resource.
+- `size_tb` (Number) Bucket size in TB.
+
+### Optional
+
+- `billing_frequency` (String) Billing period, e.g. `day`, `month` or `year`. Changing it forces a new resource.
 
 ### Read-Only
 
-- `account_name` (String) The name of the storage account.
-- `active_storage` (Number) The amount of active storage in the object storage resource.
-- `azure_cli_command` (String) The Azure CLI command to access the storage account.
-- `billing_uuid` (String) The billing UUID for the object storage resource.
-- `container_name` (String) The name of the storage container.
-- `endpoint` (String) The endpoint URL for the object storage resource.
-- `last_updated` (String) The timestamp of the last update to the object storage resource.
-- `payment_url` (String) The payment URL for the object storage resource.
-- `sas_token` (String) The SAS token for accessing the storage account.
-- `status` (String) The current status of the object storage resource.
-- `uuid` (String) The UUID for the object storage resource.
+- `account_name` (String) Storage account name.
+- `active_storage` (Number) Storage currently in use.
+- `azure_cli_command` (String, Sensitive) Azure CLI command that accesses the bucket.
+- `billing_uuid` (String) Portal billing UUID.
+- `container_name` (String) Container name.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `endpoint` (String) Endpoint URL of the bucket.
+- `last_updated` (String) Timestamp of the last update.
+- `payment_url` (String) URL where the payment for the resource is completed.
+- `sas_token` (String, Sensitive) SAS token granting access to the bucket.
+- `status` (String) Current status of the resource.
+- `uuid` (String) Service UUID.

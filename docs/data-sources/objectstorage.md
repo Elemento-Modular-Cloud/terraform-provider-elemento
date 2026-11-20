@@ -3,12 +3,12 @@
 page_title: "elemento_objectstorage Data Source - elemento"
 subcategory: ""
 description: |-
-  Looks up an existing Elemento object storage bucket on the cloud selected by host. Set exactly one of uuid, billing_uuid, or name.
+  Looks up an existing Elemento object storage bucket on the cloud selected by target. Set exactly one of uuid, billing_uuid, or name.
 ---
 
 # elemento_objectstorage (Data Source)
 
-Looks up an existing Elemento object storage bucket on the cloud selected by `host`. Set exactly one of `uuid`, `billing_uuid`, or `name`.
+Looks up an existing Elemento object storage bucket on the cloud selected by `target`. Set exactly one of `uuid`, `billing_uuid`, or `name`.
 
 
 
@@ -17,17 +17,21 @@ Looks up an existing Elemento object storage bucket on the cloud selected by `ho
 
 ### Optional
 
-- `billing_uuid` (String) Portal billing UUID of the bucket.
-- `name` (String) Bucket name. Not unique; use uuid when more than one match exists.
-- `region` (String) Optional region filter, also populated from the API.
-- `uuid` (String) Service UUID of the bucket. Exactly one of uuid, billing_uuid, or name must be set.
+- `billing_uuid` (String) Portal billing UUID. Set exactly one of `uuid` or `billing_uuid`.
+- `uuid` (String) Service UUID. Set exactly one of `uuid` or `billing_uuid`.
 
 ### Read-Only
 
 - `account_name` (String) Storage account name.
-- `active_storage` (Number) Active storage reported by the API.
-- `azure_cli_command` (String, Sensitive) Azure CLI command returned by the credentials endpoint.
+- `active_storage` (Number) Storage currently in use.
+- `azure_cli_command` (String, Sensitive) Azure CLI command that accesses the bucket.
+- `billing_frequency` (String) Billing period.
 - `container_name` (String) Container name.
-- `endpoint` (String) Object storage endpoint.
-- `sas_token` (String, Sensitive) SAS token for the bucket.
-- `status` (String) Portal billing status, when billing_uuid is available.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `endpoint` (String) Endpoint URL of the bucket.
+- `last_updated` (String) Timestamp of the last update.
+- `name` (String) Name of the bucket.
+- `region` (String) Region the resource is in.
+- `sas_token` (String, Sensitive) SAS token granting access to the bucket.
+- `status` (String) Current status of the resource.

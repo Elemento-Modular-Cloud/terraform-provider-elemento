@@ -17,24 +17,27 @@ description: |-
 
 ### Required
 
-- `billing_frequency` (String) The billing frequency for the n8n resource (e.g., 'hour', 'month').
-- `cpu_cores` (Number) The number of CPU cores for the n8n resource.
-- `password` (String, Sensitive) The password for the n8n resource.
-- `ram_size_mb` (Number) The amount of RAM in MB for the n8n resource.
-- `region` (String) The region where the n8n resource will be created.
-- `username` (String) The username for the n8n resource.
-- `vm_name` (String) The name of the virtual machine for the n8n resource.
+- `cpu_cores` (Number) Number of CPU cores.
+- `disk_size_gb` (Number) Boot disk size in GB.
+- `password` (String, Sensitive) Password of the VM user.
+- `ram_size_mb` (Number) RAM in MB.
+- `region` (String) Region to deploy in. Changing it forces a new resource.
+- `username` (String) Username of the VM user.
+- `vm_name` (String) Name of the virtual machine running n8n.
 
 ### Optional
 
-- `ssh_key` (String, Sensitive) The SSH key for the n8n resource.
+- `billing_frequency` (String) Billing period, e.g. `day`, `month` or `year`. Changing it forces a new resource.
+- `ssh_key` (String, Sensitive) SSH public key authorized on the VM.
 
 ### Read-Only
 
-- `billing_uuid` (String) The billing UUID for the n8n resource, assigned after creation.
-- `last_updated` (String) The timestamp of the last update to the n8n resource.
-- `payment_url` (String) The payment URL for the n8n resource, assigned after creation.
-- `service_url` (String) The service URL for the n8n resource, assigned after creation.
-- `state` (String) The state of the n8n resource (e.g., 'ERROR', 'SUCCESS').
-- `status` (String) The status of the n8n resource (e.g., 'paid', 'provisioning', 'running').
-- `uuid` (String) The UUID of the n8n resource, assigned after creation.
+- `billing_uuid` (String) Portal billing UUID.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `last_updated` (String) Timestamp of the last update.
+- `payment_url` (String) URL where the payment for the resource is completed.
+- `service_url` (String) URL of the n8n instance.
+- `state` (String) Deployment state, e.g. `ERROR` or `SUCCESS`.
+- `status` (String) Current status of the resource.
+- `uuid` (String) Service UUID.

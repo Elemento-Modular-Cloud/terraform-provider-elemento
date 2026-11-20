@@ -17,38 +17,43 @@ description: |-
 
 ### Required
 
-- `billing_frequency` (String) The billing frequency for the KAAS resource (e.g., 'month', 'year').
-- `control_plane_ha_enabled` (Boolean) Whether high availability is enabled for the control plane.
-- `kubernetes_version` (String) The Kubernetes version for the KAAS resource.
-- `name` (String) The name of the KAAS resource.
-- `node_pools` (Attributes List) A list of node pools for the KAAS resource. (see [below for nested schema](#nestedatt--node_pools))
+- `control_plane_ha_enabled` (Boolean) Whether the control plane runs in high availability.
+- `kubernetes_version` (String) Kubernetes version.
+- `name` (String) Name of the cluster.
+- `node_pools` (Attributes List) Node pools of the cluster. (see [below for nested schema](#nestedatt--node_pools))
 - `nodes_subnet` (Attributes) (see [below for nested schema](#nestedatt--nodes_subnet))
-- `region` (String) The region where the KAAS resource will be created.
-- `update_policy` (String) The update policy for the KAAS resource (e.g., 'ALWAYS').
+- `region` (String) Region to deploy in. Changing it forces a new resource.
+- `update_policy` (String) Cluster update policy, e.g. `ALWAYS`.
+
+### Optional
+
+- `billing_frequency` (String) Billing period, e.g. `day`, `month` or `year`. Changing it forces a new resource.
 
 ### Read-Only
 
-- `billing_uuid` (String) The billing UUID associated with the KAAS resource.
-- `cluster_name` (String) The name of the Kubernetes cluster associated with the KAAS resource.
-- `cluster_status` (String) The status of the Kubernetes cluster associated with the KAAS resource.
-- `creator_uuid` (String) The UUID of the user who created the KAAS resource.
-- `endpoint` (String) The endpoint for the KAAS resource.
-- `kube_config` (String) The kubeconfig for the Kubernetes cluster associated with the KAAS resource.
-- `last_updated` (String) The timestamp of the last update to the KAAS resource.
-- `payment_url` (String) The payment URL for the KAAS resource, assigned by the Elemento API after creation.
-- `status` (String) The status of the KAAS resource.
-- `uuid` (String) The unique identifier of the KAAS resource.
+- `billing_uuid` (String) Portal billing UUID.
+- `cluster_name` (String) Name of the Kubernetes cluster as known to the backend.
+- `cluster_status` (String) Cluster status, e.g. `PENDING` or `RUNNING`.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `endpoint` (String) Kubernetes API endpoint.
+- `kube_config` (String, Sensitive) Kubeconfig for the cluster. Empty while the cluster is `PENDING`.
+- `last_updated` (String) Timestamp of the last update.
+- `network_cidr` (String) CIDR block of the cluster network.
+- `payment_url` (String) URL where the payment for the resource is completed.
+- `status` (String) Current status of the resource.
+- `uuid` (String) Service UUID.
 
 <a id="nestedatt--node_pools"></a>
 ### Nested Schema for `node_pools`
 
 Required:
 
-- `auto_scale` (Boolean) Whether auto-scaling is enabled for the node pool.
-- `max_nodes` (Number) The maximum number of nodes in the node pool.
-- `min_nodes` (Number) The minimum number of nodes in the node pool.
-- `name` (String) The name of the node pool.
-- `shared_storage_gb` (Number) The amount of shared storage in GB for the node pool.
+- `auto_scale` (Boolean) Whether the pool scales automatically between `min_nodes` and `max_nodes`.
+- `max_nodes` (Number) Maximum number of nodes.
+- `min_nodes` (Number) Minimum number of nodes.
+- `name` (String) Name of the node pool.
+- `shared_storage_gb` (Number) Shared storage in GB.
 - `specs` (Attributes) (see [below for nested schema](#nestedatt--node_pools--specs))
 
 <a id="nestedatt--node_pools--specs"></a>
@@ -56,10 +61,10 @@ Required:
 
 Required:
 
-- `cpu_cores` (Number) The number of CPU cores for the node pool.
-- `disk_size_gb` (Number) The size of the disk in GB for the node pool.
-- `gpus` (Number) The number of GPUs for the node pool.
-- `memory_gb` (Number) The amount of memory in GB for the node pool.
+- `cpu_cores` (Number) CPU cores per node.
+- `disk_size_gb` (Number) Disk size per node, in GB.
+- `gpus` (Number) GPUs per node.
+- `memory_gb` (Number) Memory per node, in GB.
 
 
 
@@ -68,5 +73,5 @@ Required:
 
 Required:
 
-- `cidr` (String) The CIDR block for the nodes subnet.
-- `dhcp_enabled` (Boolean) Whether DHCP is enabled for the nodes subnet.
+- `cidr` (String) CIDR block of the subnet.
+- `dhcp_enabled` (Boolean) Whether DHCP is enabled on the subnet.

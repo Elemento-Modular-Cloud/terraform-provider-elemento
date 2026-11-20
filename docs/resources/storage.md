@@ -17,30 +17,32 @@ description: |-
 
 ### Required
 
-- `bootable` (Boolean) Whether the storage resource is bootable.
-- `name` (String) The name of the storage resource.
-- `private` (Boolean) Whether the storage resource is private.
-- `readonly` (Boolean) Whether the storage resource is read-only.
-- `shareable` (Boolean) Whether the storage resource is shareable.
-- `size` (Number) The size of the storage resource in bytes.
+- `billing_frequency` (String) Billing period, e.g. `day`, `month` or `year`. Changing it forces a new resource.
+- `bootable` (Boolean) Whether the volume can be used as a boot disk.
+- `name` (String) Volume name.
+- `private` (Boolean) Whether the volume is private to its owner.
+- `readonly` (Boolean) Whether the volume is attached read-only.
+- `region` (String)
+- `shareable` (Boolean) Whether the volume can be attached to more than one VM.
+- `size` (Number) Volume size in GB.
 
 ### Optional
 
-- `alg` (String) The algorithm used for the storage resource clone.
-- `billing_frequency` (String) The frequency at which the compute resource should be billed. Valid values are 'day', 'week', 'month', and 'year'.
-- `bus` (String) The bus type of the storage resource.
-- `clonable` (Boolean) Whether the storage resource is clonable.
-- `creator_uuid` (String) The UUID of the creator of the storage resource. If not provided, it will be set to the current user's UUID.
-- `format` (String) The format of the storage resource.
-- `fs` (String) The underlying filesystem type of the storage resource.
-- `hardware_device` (String) Tne required underlying hardware device for the storage resource.
-- `priority` (Number) The boot priority of the storage resource.
-- `region` (String) The region where the storage resource is located.
-- `tags` (List of String) A list of tags associated with the storage resource.
+- `alg` (String) Algorithm used to clone the volume.
+- `bus` (String) Bus type the volume is attached with.
+- `clonable` (Boolean) Whether the volume can be cloned.
+- `format` (String) Disk image format.
+- `fs` (String) Filesystem type of the volume.
+- `hardware_device` (String) Hardware device the volume requires.
+- `priority` (Number) Boot priority.
+- `tags` (List of String) Tags to attach to the volume.
 
 ### Read-Only
 
-- `billing_uuid` (String) The billing UUID of the storage resource, assigned by the Elemento API after creation.
-- `last_updated` (String) The last time the storage resource was updated.
-- `payment_url` (String) The payment URL for the storage resource, assigned by the Elemento API after creation.
-- `volume_uuid` (String) The UUID of the storage resource.
+- `billing_uuid` (String) Portal billing UUID.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `last_updated` (String) Timestamp of the last update.
+- `payment_url` (String) URL where the payment for the resource is completed.
+- `status` (String) Current status of the resource.
+- `uuid` (String) Service UUID.

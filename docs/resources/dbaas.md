@@ -17,28 +17,31 @@ description: |-
 
 ### Required
 
-- `backup_time` (String) The time for the daily backup in HH:MM format.
-- `billing_frequency` (String) The billing frequency for the DBAAS resource (e.g., 'monthly', 'yearly').
-- `disk_size_gb` (Number) The size of the disk in GB for the DBAAS resource.
-- `engine` (String) The database engine for the DBAAS resource (e.g., 'postgres', 'mysql').
-- `name` (String) The name of the DBAAS resource.
-- `nodes_number` (Number) The number of nodes for the DBAAS resource.
-- `password` (String, Sensitive) The password for the DBAAS resource.
-- `region` (String) The region where the DBAAS resource is located.
+- `backup_time` (String) Daily backup time, in `HH:MM:SS` format.
+- `disk_size_gb` (Number) Disk size in GB.
+- `engine` (String) Database engine, e.g. `postgres` or `mysql`.
+- `name` (String) Name of the database service.
+- `nodes_number` (Number) Number of database nodes.
+- `password` (String, Sensitive) Administrator password for the service.
+- `region` (String) Region to deploy in. Changing it forces a new resource.
+
+### Optional
+
+- `billing_frequency` (String) Billing period, e.g. `day`, `month` or `year`. Changing it forces a new resource.
 
 ### Read-Only
 
-- `billing_uuid` (String) The UUID of the billing information for the DBAAS resource.
-- `creation_date` (String) The creation date of the DBAAS resource.
-- `creator_uuid` (String) The UUID of the creator of the resource.
-- `database_host` (String) The host address of the database for the DBAAS resource.
-- `database_name` (String) The name of the database for the DBAAS resource.
-- `database_password` (String, Sensitive) The password for the database of the DBAAS resource.
-- `database_port` (String) The port number of the database for the DBAAS resource.
-- `database_ssl_mode` (String) The SSL mode for the database connection of the DBAAS resource.
-- `database_user` (String) The username for the database of the DBAAS resource.
-- `last_updated` (String) The last updated timestamp of the DBAAS resource.
-- `payment_url` (String) The URL for the payment information for the DBAAS resource.
-- `public_uri` (String) The public URI for accessing the DBAAS resource.
-- `status` (String) The status of the DBAAS resource.
-- `uuid` (String) The UUID of the DBAAS resource.
+- `billing_uuid` (String) Portal billing UUID.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `database_host` (String) Host to connect to.
+- `database_name` (String) Name of the database to connect to.
+- `database_password` (String, Sensitive) Password for connections.
+- `database_port` (String) Port to connect to.
+- `database_ssl_mode` (String) SSL mode for connections.
+- `database_user` (String) Username for connections.
+- `last_updated` (String) Timestamp of the last update.
+- `payment_url` (String) URL where the payment for the resource is completed.
+- `public_uri` (String) Public connection URI.
+- `status` (String) Current status of the resource.
+- `uuid` (String) Service UUID.

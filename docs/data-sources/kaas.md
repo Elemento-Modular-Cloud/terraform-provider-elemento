@@ -3,12 +3,12 @@
 page_title: "elemento_kaas Data Source - elemento"
 subcategory: ""
 description: |-
-  Looks up an existing Elemento managed Kubernetes cluster on the cloud selected by host. Set exactly one of uuid, billing_uuid, or name. A PENDING cluster may have an empty kubeconfig.
+  Looks up an existing Elemento managed Kubernetes cluster on the cloud selected by target. Set exactly one of uuid or billing_uuid. A PENDING cluster may have an empty kubeconfig.
 ---
 
 # elemento_kaas (Data Source)
 
-Looks up an existing Elemento managed Kubernetes cluster on the cloud selected by `host`. Set exactly one of `uuid`, `billing_uuid`, or `name`. A `PENDING` cluster may have an empty kubeconfig.
+Looks up an existing Elemento managed Kubernetes cluster on the cloud selected by `target`. Set exactly one of `uuid` or `billing_uuid`. A `PENDING` cluster may have an empty kubeconfig.
 
 
 
@@ -17,18 +17,21 @@ Looks up an existing Elemento managed Kubernetes cluster on the cloud selected b
 
 ### Optional
 
-- `billing_uuid` (String) Portal billing UUID of the cluster.
-- `name` (String) Cluster name as returned by the API, or the Terraform-facing name. Not unique.
-- `region` (String) Optional region filter (API field location), also populated from the API.
-- `uuid` (String) Service UUID of the cluster. Exactly one of uuid, billing_uuid, or name must be set.
+- `billing_uuid` (String) Portal billing UUID. Set exactly one of `uuid` or `billing_uuid`.
+- `uuid` (String) Service UUID. Set exactly one of `uuid` or `billing_uuid`.
 
 ### Read-Only
 
-- `cluster_name` (String) Kubernetes cluster name.
-- `cluster_status` (String) Cluster status from Meson (for example PENDING or RUNNING).
-- `creator_uuid` (String) UUID of the account that created the cluster.
+- `billing_frequency` (String) Billing period.
+- `cluster_name` (String) Name of the Kubernetes cluster as known to the backend.
+- `cluster_status` (String) Cluster status, e.g. `PENDING` or `RUNNING`.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
 - `endpoint` (String) Kubernetes API endpoint.
-- `kube_config` (String, Sensitive) Kubeconfig. Empty while the cluster is still pending.
+- `kube_config` (String, Sensitive) Kubeconfig for the cluster. Empty while the cluster is `PENDING`.
 - `kubernetes_version` (String) Kubernetes version.
-- `network_cidr` (String) Cluster network CIDR.
-- `status` (String) Portal billing status, when billing_uuid is available.
+- `last_updated` (String) Timestamp of the last update.
+- `name` (String) Name of the cluster.
+- `network_cidr` (String) CIDR block of the cluster network.
+- `region` (String) Region the resource is in.
+- `status` (String) Current status of the resource.

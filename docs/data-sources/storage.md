@@ -3,12 +3,12 @@
 page_title: "elemento_storage Data Source - elemento"
 subcategory: ""
 description: |-
-  Looks up an existing Elemento block volume on the cloud selected by host. Prefer volume_uuid. Set exactly one of volume_uuid, billing_uuid, or name. Size is in MB as documented by Meson.
+  Looks up an existing Elemento block volume on the cloud selected by target. Prefer volume_uuid. Set exactly one of volume_uuid or billing_uuid.
 ---
 
 # elemento_storage (Data Source)
 
-Looks up an existing Elemento block volume on the cloud selected by `host`. Prefer `volume_uuid`. Set exactly one of `volume_uuid`, `billing_uuid`, or `name`. Size is in MB as documented by Meson.
+Looks up an existing Elemento block volume on the cloud selected by `target`. Prefer `volume_uuid`. Set exactly one of `volume_uuid` or `billing_uuid`.
 
 
 
@@ -17,20 +17,23 @@ Looks up an existing Elemento block volume on the cloud selected by `host`. Pref
 
 ### Optional
 
-- `billing_uuid` (String) Portal billing UUID. Best-effort; Meson list/get payloads may omit it.
-- `creator_uuid` (String) Account UUID that owns the volume. Defaults to the authenticated account.
-- `name` (String) Volume name. Not unique; use volume_uuid when more than one match exists.
-- `region` (String) Optional region filter, also populated from the API.
-- `volume_uuid` (String) Volume UUID. Preferred lookup key. Exactly one of volume_uuid, billing_uuid, or name must be set.
+- `billing_uuid` (String) Portal billing UUID. Set exactly one of `uuid` or `billing_uuid`.
+- `uuid` (String) Service UUID. Set exactly one of `uuid` or `billing_uuid`.
 
 ### Read-Only
 
-- `bootable` (Boolean) Whether the volume is bootable.
-- `clonable` (Boolean) Whether the volume is clonable.
+- `billing_frequency` (String) Billing period.
+- `bootable` (Boolean) Whether the volume can be used as a boot disk.
+- `clonable` (Boolean) Whether the volume can be cloned.
+- `creation_date` (String) Creation timestamp.
+- `creator_uuid` (String) UUID of the account that created the resource.
+- `last_updated` (String) Timestamp of the last update.
+- `name` (String) Volume name.
 - `priority` (Number) Boot priority.
-- `private` (Boolean) Whether the volume is private.
-- `readonly` (Boolean) Whether the volume is read-only.
-- `shareable` (Boolean) Whether the volume is shareable.
-- `size` (Number) Volume size in MB, as documented by Meson.
-- `status` (String) Portal billing status, when billing_uuid is available.
-- `tags` (List of String) Tags associated with the volume.
+- `private` (Boolean) Whether the volume is private to its owner.
+- `readonly` (Boolean) Whether the volume is attached read-only.
+- `region` (String) Region the resource is in.
+- `shareable` (Boolean) Whether the volume can be attached to more than one VM.
+- `size` (Number) Volume size in bytes.
+- `status` (String) Current status of the resource.
+- `tags` (List of String) Tags attached to the volume.
