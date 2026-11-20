@@ -255,6 +255,7 @@ func (r *serverlessResource) Delete(ctx context.Context, req resource.DeleteRequ
 			"Error Deleting Serverless Resource",
 			"Could not delete serverless resource: resource uuid is null.",
 		)
+		return
 	}
 
 	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "serverless")
