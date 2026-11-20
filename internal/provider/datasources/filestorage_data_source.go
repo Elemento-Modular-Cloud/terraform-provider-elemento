@@ -67,8 +67,8 @@ func (d *fileStorageDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 	}
 
 	resp.Schema = schema.Schema{
-		Description:         "Looks up an existing Elemento filestorage on the cloud selected by host.",
-		MarkdownDescription: "Looks up an existing Elemento filestorage on the cloud selected by `host`. Set exactly one of `uuid` or `billing_uuid`.",
+		Description:         "Looks up an existing Elemento filestorage on the cloud selected by target.",
+		MarkdownDescription: "Looks up an existing Elemento filestorage on the cloud selected by `target`. Set exactly one of `uuid` or `billing_uuid`.",
 		Attributes:          attributes,
 	}
 }

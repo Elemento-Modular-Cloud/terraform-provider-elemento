@@ -13,15 +13,15 @@ provider "elemento" {
 }
 
 resource "elemento_privatenetwork" "my_privatenetwork" {
-  name              = "my-privatenetwork"
-  cidr              = "192.168.2.0/24"
-  auto_assign_cidr  = false
-  region            = "eu-south-1"
+  name             = "my-privatenetwork"
+  cidr             = "192.168.2.0/24"
+  auto_assign_cidr = false
+  region           = "eu-south-1"
 }
 
 resource "elemento_publicgateway" "my_publicgateway" {
-  name   = "my-publicgateway"
-  region = "eu-south-1"
+  name         = "my-publicgateway"
+  region       = "eu-south-1"
   network_uuid = elemento_privatenetwork.my_privatenetwork.uuid
 
   depends_on = [

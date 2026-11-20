@@ -13,9 +13,9 @@ provider "elemento" {
 }
 
 resource "elemento_aiserverless" "my_aiserverless" {
-  name   = "my-aiserverless"
-  region = "eu-south-1"
-  model_name = "claude-sonnet-5"
+  name             = "my-aiserverless"
+  region           = "eu-south-1"
+  model_name       = "claude-sonnet-5"
   enable_streaming = true
 }
 

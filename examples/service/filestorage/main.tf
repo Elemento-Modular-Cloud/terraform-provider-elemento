@@ -13,10 +13,10 @@ provider "elemento" {
 }
 
 resource "elemento_filestorage" "my_filestorage" {
-  name              = "my-filestorage"
-  size_gb           = 10
-  is_public         = false
-  region            = "eu-south-1"
+  name      = "my-filestorage"
+  size_gb   = 10
+  is_public = false
+  region    = "eu-south-1"
 }
 
 # output "payment_url" {

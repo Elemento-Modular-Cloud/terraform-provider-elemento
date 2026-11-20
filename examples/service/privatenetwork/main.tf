@@ -13,10 +13,10 @@ provider "elemento" {
 }
 
 resource "elemento_privatenetwork" "my_privatenetwork" {
-  name              = "my-privatenetwork"
-  cidr              = "192.168.2.0/24"
-  auto_assign_cidr  = false
-  region            = "eu-south-1"
+  name             = "my-privatenetwork"
+  cidr             = "192.168.2.0/24"
+  auto_assign_cidr = false
+  region           = "eu-south-1"
 }
 
 # output "payment_url" {

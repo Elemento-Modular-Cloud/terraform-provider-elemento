@@ -59,8 +59,8 @@ func (d *objectStorageDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 
 	resp.Schema = schema.Schema{
-		Description:         "Looks up an existing Elemento object storage bucket on the cloud selected by host.",
-		MarkdownDescription: "Looks up an existing Elemento object storage bucket on the cloud selected by `host`. Set exactly one of `uuid`, `billing_uuid`, or `name`.",
+		Description:         "Looks up an existing Elemento object storage bucket on the cloud selected by target.",
+		MarkdownDescription: "Looks up an existing Elemento object storage bucket on the cloud selected by `target`. Set exactly one of `uuid`, `billing_uuid`, or `name`.",
 		Attributes:          attributes,
 	}
 }

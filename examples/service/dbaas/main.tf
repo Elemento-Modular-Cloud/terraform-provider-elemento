@@ -9,7 +9,7 @@ terraform {
 }
 
 provider "elemento" {
-  target = "aws-dev-private"
+  target   = "aws-dev-private"
   username = "user@elemento.cloud"
   password = "password"
 }
@@ -21,7 +21,7 @@ resource "elemento_dbaas" "my_db" {
   backup_time       = "12:00:00"
   password          = "mysecretpassword"
   nodes_number      = 1
-  region            = "fi-hel2"
+  region            = "eu-south-1"
   billing_frequency = "day"
 }
 

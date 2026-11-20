@@ -13,12 +13,12 @@ provider "elemento" {
 }
 
 resource "elemento_serverless" "my_serverless" {
-  name   = "my-serverless"
-  region = "eu-south-1"
-  runtime = "python3.13"
-  handler = "main.handler"
-  memory = 512
-  timeout = 30
+  name      = "my-serverless"
+  region    = "eu-south-1"
+  runtime   = "python3.13"
+  handler   = "main.handler"
+  memory    = 512
+  timeout   = 30
   is_public = true
   environment = {
     STAGE = "test"

@@ -8,13 +8,13 @@ The industry default is *many clouds, many providers*: a new plugin, a new schem
 
 ```hcl
 provider "elemento" {
-  host     = "azure.dev.meson.elemento.cloud" # the target cloud
+  target   = "azure-private" # the target cloud
   username = var.elemento_username
   password = var.elemento_password
 }
 ```
 
-That `host` is the argument. It addresses the [Atomosphere](https://elemento.cloud/atomosphere.html) (Meson) endpoint for the backend you intend to use. The same `elemento_compute`, `elemento_dbaas`, or `elemento_kaas` resource is valid on Azure, UpCloud, AWS, and every other connected cloud. Capability coverage follows Atomosphere; the Terraform schema does not fork.
+That `target` is the argument. It addresses the [Atomosphere](https://elemento.cloud/atomosphere.html) (Meson) endpoint for the backend you intend to use. The same `elemento_compute`, `elemento_dbaas`, or `elemento_kaas` resource is valid on Azure, UpCloud, AWS, and every other connected cloud. Capability coverage follows Atomosphere; the Terraform schema does not fork.
 
 ---
 

@@ -8,7 +8,7 @@ terraform {
 
 # host selects the destination cloud. The resource catalog does not change.
 provider "elemento" {
-  host     = "azure.dev.meson.elemento.cloud"
+  target   = "azure-dev-private"
   username = var.elemento_username
   password = var.elemento_password
 }

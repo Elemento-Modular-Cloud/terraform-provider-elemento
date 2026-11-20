@@ -83,8 +83,8 @@ func (d *dbaasDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 	}
 
 	resp.Schema = schema.Schema{
-		Description:         "Looks up an existing Elemento managed database on the cloud selected by host.",
-		MarkdownDescription: "Looks up an existing Elemento managed database on the cloud selected by `host`. Set exactly one of `uuid`, `billing_uuid`, or `name`. Names are not unique; multiple matches return an error.",
+		Description:         "Looks up an existing Elemento managed database on the cloud selected by target.",
+		MarkdownDescription: "Looks up an existing Elemento managed database on the cloud selected by `target`. Set exactly one of `uuid` or `billing_uuid`.",
 		Attributes:          attributes,
 	}
 }

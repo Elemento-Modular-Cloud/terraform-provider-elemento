@@ -32,11 +32,11 @@ func (d *storageDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 
 	attributes["name"] = schema.StringAttribute{
 		Computed:    true,
-		Description: "Volume name. Not unique; use volume_uuid when more than one match exists.",
+		Description: "Volume name.",
 	}
 	attributes["size"] = schema.Int64Attribute{
 		Computed:    true,
-		Description: "Volume size in MB, as documented by Meson.",
+		Description: "Volume size in GB.",
 	}
 	attributes["private"] = schema.BoolAttribute{
 		Computed:    true,
@@ -69,8 +69,8 @@ func (d *storageDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	}
 
 	resp.Schema = schema.Schema{
-		Description:         "Looks up an existing Elemento block volume on the cloud selected by host.",
-		MarkdownDescription: "Looks up an existing Elemento block volume on the cloud selected by `host`. Prefer `volume_uuid`. Set exactly one of `volume_uuid`, `billing_uuid`, or `name`. Size is in MB as documented by Meson.",
+		Description:         "Looks up an existing Elemento block volume on the cloud selected by target.",
+		MarkdownDescription: "Looks up an existing Elemento block volume on the cloud selected by `target`. Prefer `volume_uuid`. Set exactly one of `volume_uuid` or `billing_uuid`.",
 		Attributes:          attributes,
 	}
 }
