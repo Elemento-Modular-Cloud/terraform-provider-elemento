@@ -6,7 +6,9 @@ import (
 	"regexp"
 	"strings"
 	"terraform-provider-elemento/internal/client"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	dschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -32,10 +34,11 @@ type BaseDataSourceModel struct {
 }
 
 type ResourceExtraModel struct {
-	PaymentURL types.String `tfsdk:"payment_url"`
+	PaymentURL types.String   `tfsdk:"payment_url"`
+	Timeouts   timeouts.Value `tfsdk:"timeouts"`
 }
 
-func BaseSchema() map[string]rschema.Attribute {
+func BaseSchema(ctx context.Context) map[string]rschema.Attribute {
 	return map[string]rschema.Attribute{
 		"creator_uuid": rschema.StringAttribute{
 			Computed:    true,
@@ -79,6 +82,9 @@ func BaseSchema() map[string]rschema.Attribute {
 			Computed:    true,
 			Description: "Current status of the resource.",
 		},
+		"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
+			Create: true,
+		}),
 	}
 }
 
@@ -136,7 +142,6 @@ func BaseDataSourceSchema() map[string]dschema.Attribute {
 		},
 	}
 }
-
 
 type BaseResource struct {
 	Client *client.ElementoClient
@@ -245,3 +250,5 @@ func AddNotFoundError(diags *diag.Diagnostics, typeName string) OnNotFound {
 		)
 	}
 }
+
+const DefaultCreateTimeout = 20 * time.Minute

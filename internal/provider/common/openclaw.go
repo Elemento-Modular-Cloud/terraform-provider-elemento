@@ -28,7 +28,7 @@ type OpenClawResourceModel struct {
 }
 
 func (m *OpenClawDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
-	var diags diag.Diagnostics
+	var diags diag.Diagnostics = nil
 
 	resources, err := c.ListSpotVMResources(ctx)
 	if err != nil {

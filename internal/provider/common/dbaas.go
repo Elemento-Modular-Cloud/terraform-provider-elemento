@@ -31,7 +31,7 @@ type DBAASResourceModel struct {
 }
 
 func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
-	var diags diag.Diagnostics
+	var diags diag.Diagnostics = nil
 	var resource *client.DBAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
 		resources, err := c.ListDBAASResources(ctx)

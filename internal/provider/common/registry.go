@@ -31,7 +31,7 @@ type RegistryResourceModel struct {
 }
 
 func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
-	var diags diag.Diagnostics
+	var diags diag.Diagnostics = nil
 
 	var resource *client.RegistryResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {

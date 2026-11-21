@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var (
@@ -37,8 +38,8 @@ func (r *n8nResource) Metadata(_ context.Context, req resource.MetadataRequest, 
 	resp.TypeName = req.ProviderTypeName + "_n8n"
 }
 
-func (r *n8nResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := common.BaseSchema()
+func (r *n8nResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	attributes := common.BaseSchema(ctx)
 
 	attributes["vm_name"] = schema.StringAttribute{
 		Required:    true,
@@ -131,6 +132,12 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, common.DefaultCreateTimeout)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	cloudinit, err := r.Client.RenderCloudinit(ctx, "n8n", map[string]string{})
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -196,6 +203,7 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
+	mustRead := false
 	switch res := response.(type) {
 	case client.PublicCreateResponse:
 		plan.BillingUUID = types.StringValue(res.BillingUUID)
@@ -230,6 +238,33 @@ func (r *n8nResource) Create(ctx context.Context, req resource.CreateRequest, re
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if mustRead {
+		stateConf := &retry.StateChangeConf{
+			Pending:    []string{"CREATING"},
+			Target:     []string{"READY"},
+			Delay:      5 * time.Second,
+			MinTimeout: 3 * time.Second,
+			Timeout:    createTimeout,
+			Refresh: func() (any, string, error) {
+				found, diags := plan.Read(ctx, r.Client, func(_ context.Context, _ bool) {})
+				if diags.HasError() {
+					return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
+				}
+				if !found {
+					return &plan, "CREATING", nil
+				}
+				return &plan, "READY", nil
+			},
+		}
+
+		if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+			resp.Diagnostics.AddError("Timeout waiting for resource creation", err.Error())
+			return
+		}
+
+		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	}
 }
 

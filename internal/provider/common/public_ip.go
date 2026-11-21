@@ -27,7 +27,7 @@ type PublicIPResourceModel struct {
 }
 
 func (model *PublicIPDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
-	var diags diag.Diagnostics
+	var diags diag.Diagnostics = nil
 
 	var resource *client.PublicIPResponse
 	if model.UUID.IsNull() || model.UUID.IsUnknown() || model.UUID.ValueString() == "" {

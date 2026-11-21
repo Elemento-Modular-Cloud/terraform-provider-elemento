@@ -76,7 +76,7 @@ func SpotVMNetworkObjectType() types.ObjectType {
 }
 
 func (m *SpotVMDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
-	var diags diag.Diagnostics
+	var diags diag.Diagnostics = nil
 
 	resources, err := c.ListSpotVMResources(ctx)
 	if err != nil {

@@ -28,6 +28,7 @@ require (
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-exec v0.25.1 // indirect
 	github.com/hashicorp/terraform-json v0.27.2 // indirect
+	github.com/hashicorp/terraform-plugin-framework-timeouts v0.7.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect

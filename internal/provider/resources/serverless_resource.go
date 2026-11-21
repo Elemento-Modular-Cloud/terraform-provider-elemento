@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var (
@@ -36,8 +37,8 @@ func (r *serverlessResource) Metadata(_ context.Context, req resource.MetadataRe
 	resp.TypeName = req.ProviderTypeName + "_serverless"
 }
 
-func (r *serverlessResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-	attributes := common.BaseSchema()
+func (r *serverlessResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	attributes := common.BaseSchema(ctx)
 
 	attributes["name"] = schema.StringAttribute{
 		Required:    true,
@@ -136,6 +137,12 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	createTimeout, diags := plan.Timeouts.Create(ctx, common.DefaultCreateTimeout)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	var environment map[string]string
 	diags = plan.Environment.ElementsAs(ctx, &environment, false)
 	resp.Diagnostics.Append(diags...)
@@ -172,6 +179,7 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
+	mustRead := false
 	switch res := response.(type) {
 	case client.PublicCreateResponse:
 		plan.BillingUUID = types.StringValue(res.BillingUUID)
@@ -193,6 +201,8 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 		plan.PaymentURL = types.StringNull()
 		plan.UUID = types.StringValue(res.ServiceUUID)
 		plan.Status = types.StringValue(res.Status)
+
+		mustRead = true
 	default:
 		resp.Diagnostics.AddError(
 			"Unexpected API Response Type",
@@ -216,6 +226,33 @@ func (r *serverlessResource) Create(ctx context.Context, req resource.CreateRequ
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if mustRead {
+		stateConf := &retry.StateChangeConf{
+			Pending:    []string{"CREATING"},
+			Target:     []string{"READY"},
+			Delay:      5 * time.Second,
+			MinTimeout: 3 * time.Second,
+			Timeout:    createTimeout,
+			Refresh: func() (any, string, error) {
+				found, diags := plan.Read(ctx, r.Client, func(_ context.Context, _ bool) {})
+				if diags.HasError() {
+					return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
+				}
+				if !found {
+					return &plan, "CREATING", nil
+				}
+				return &plan, "READY", nil
+			},
+		}
+
+		if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+			resp.Diagnostics.AddError("Timeout waiting for resource creation", err.Error())
+			return
+		}
+
+		resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 	}
 }
 
