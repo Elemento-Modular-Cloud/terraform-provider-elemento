@@ -12,26 +12,37 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-const (
-    // providerConfig is a shared configuration to combine with the actual
-    // test configuration so the HashiCups client is properly configured.
-    // It is also possible to use the HASHICUPS_ environment variables instead,
-    // such as updating the Makefile and running the testing through that tool.
-    providerConfig = `
+func (p ProviderConfig) ProviderBlock() string {
+	return fmt.Sprintf(`
 provider "elemento" {
-  target = "aws-dev-private"
+  target = %q
 }
-`
-)
+`, p.target)
+}
+
+type ProviderConfig struct {
+	name   string
+	target string
+	region string
+}
 
 var (
-    // testAccProtoV6ProviderFactories are used to instantiate a provider during
-    // acceptance testing. The factory function will be invoked for every Terraform
-    // CLI command executed to create a provider server to which the CLI can
-    // reattach.
-    testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
-        "elemento": providerserver.NewProtocol6WithError(New("test")()),
-    }
+	// testAccProtoV6ProviderFactories are used to instantiate a provider during
+	// acceptance testing. The factory function will be invoked for every Terraform
+	// CLI command executed to create a provider server to which the CLI can
+	// reattach.
+	testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+		"elemento": providerserver.NewProtocol6WithError(New("test")()),
+	}
+	targets = map[string]ProviderConfig{
+		"aws": ProviderConfig{name: "aws", target: "aws-dev-private", region: "eu-south-1"},
+		"scaleway": ProviderConfig{name: "scaleway", target: "scaleway-dev-private", region: "it-mil"},
+	}
+	services = map[string][]string{
+		"dbaas": []string{"aws"},
+		"filestorage": []string{"aws"},
+		"kaas": []string{"aws"},
+	}
 )
 
 func AttrImportStateIdFunc(resourceName, attrName string) resource.ImportStateIdFunc {
@@ -58,26 +69,49 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
-func testAccCreateImport(t *testing.T, resourceName string, config func(name string) string, checks func(name string) []resource.TestCheckFunc, ignore []string) {
-	rName := acctest.RandomWithPrefix("test")
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			// Create and Read testing
-			{
-				Config: config(rName),
-				Check:  resource.ComposeAggregateTestCheckFunc(checks(rName)...),
-			},
-			// ImportState testing
-			{
-				ResourceName:                         resourceName,
-				ImportState:                          true,
-				ImportStateVerify:                    true,
-				ImportStateVerifyIgnore:              ignore,
-				ImportStateIdFunc:                    AttrImportStateIdFunc(resourceName, "uuid"),
-				ImportStateVerifyIdentifierAttribute: "uuid",
-			},
-		},
-	})
+func testAccCreateImport(
+	t *testing.T,
+	resourceName string,
+	resourceType string,
+	config func(name string, target ProviderConfig) string,
+	checks func(name string, target ProviderConfig) []resource.TestCheckFunc,
+	ignore []string,
+) {
+	providerNames, ok := services[resourceType]
+	if !ok || len(providerNames) == 0 {
+		t.Fatalf("no target providers registered in services map for %q", resourceType)
+	}
+
+	for _, providerName := range providerNames {
+		target, ok := targets[providerName]
+		if !ok {
+			t.Fatalf("unknown target %q referenced by %q", providerName, resourceType)
+		}
+
+		t.Run(target.name, func(t *testing.T) {
+			rName := acctest.RandomWithPrefix("test")
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					// Create and Read testing
+					{
+						Config: config(rName, target),
+						Check:  resource.ComposeAggregateTestCheckFunc(checks(rName, target)...),
+					},
+					// ImportState testing
+					{
+						ResourceName:                         resourceName,
+						ImportState:                          true,
+						ImportStateVerify:                    true,
+						ImportStateVerifyIgnore:              ignore,
+						ImportStateIdFunc:                    AttrImportStateIdFunc(resourceName, "uuid"),
+						ImportStateVerifyIdentifierAttribute: "uuid",
+					},
+				},
+			})
+		})
+	}
 }
+
+func ptr[T any](s T) *T { return &s }
