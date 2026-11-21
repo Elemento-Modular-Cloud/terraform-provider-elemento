@@ -1,5 +1,10 @@
 package client
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type CreateResponse interface {
 	isCreateResponse()
 }
@@ -42,11 +47,36 @@ type CanCreateBilling struct {
 	PaymentURL  string `json:"payment_url"`
 }
 
+
+type StringOrSlice []string
+
+func (s *StringOrSlice) UnmarshalJSON(data []byte) error {
+	//Try unmarshaling as a slice of strings (also handles JSON `null` as nil)
+	var slice []string
+	if err := json.Unmarshal(data, &slice); err == nil {
+		*s = slice
+		return nil
+	}
+
+	// Fallback to unmarshaling as a single string
+	var single string
+	if err := json.Unmarshal(data, &single); err == nil {
+		*s = []string{single}
+		return nil
+	}
+
+	return fmt.Errorf("cannot unmarshal %s into StringOrSlice", string(data))
+}
+
+type Config struct {
+	Tags StringOrSlice `json:"tags"`
+}
+
 type CanCreateResponse struct {
 	CanCreate bool               `json:"cancreate"`
 	Billing   []CanCreateBilling `json:"billing"`
 	Provider  string             `json:"provider"`
-	Reasons   map[string]string  `json:"reasons"`
+	Reasons   map[string]StringOrSlice  `json:"reasons"`
 }
 
 type authRequest struct {
