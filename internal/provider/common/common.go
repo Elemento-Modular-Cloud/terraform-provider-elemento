@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 type BaseDataSourceModel struct {
@@ -252,3 +253,29 @@ func AddNotFoundError(diags *diag.Diagnostics, typeName string) OnNotFound {
 }
 
 const DefaultCreateTimeout = 20 * time.Minute
+const DefaultDeleteTimeout = 20 * time.Minute
+
+type HasRead interface {
+	Read(ctx context.Context, client *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics)
+}
+
+func GetCreateStateConf(ctx context.Context, client *client.ElementoClient, timeout time.Duration, plan HasRead) *retry.StateChangeConf {
+    	return &retry.StateChangeConf{
+     		Pending: []string{"CREATING"},
+       		Target: []string{"READY"},
+         	Delay: 5 * time.Second,
+          	MinTimeout: 3 * time.Second,
+           	Timeout: timeout,
+            Refresh: func() (any, string, error) {
+            	found, diags := plan.Read(ctx, client, func(_ context.Context, _ bool) {})
+             	if diags.HasError() {
+             		return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
+             	}
+              	if !found {
+               		return &plan, "CREATING", nil
+                }
+                return &plan, "READY", nil
+            },
+     	}
+
+}

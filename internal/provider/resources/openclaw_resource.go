@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var (
@@ -250,23 +249,7 @@ func (r *openclawResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	if mustRead {
-    	stateConf := &retry.StateChangeConf{
-     		Pending: []string{"CREATING"},
-       		Target: []string{"READY"},
-         	Delay: 5 * time.Second,
-          	MinTimeout: 3 * time.Second,
-           	Timeout: createTimeout,
-            Refresh: func() (any, string, error) {
-            	found, diags := plan.Read(ctx, r.Client, func(_ context.Context, _ bool) {})
-             	if diags.HasError() {
-             		return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
-             	}
-              	if !found {
-               		return &plan, "CREATING", nil
-                }
-                return &plan, "READY", nil
-            },
-     	}
+    	stateConf := common.GetCreateStateConf(ctx, r.Client, createTimeout, &plan)
 
       	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
        		resp.Diagnostics.AddError("Timeout waiting for resource creation", err.Error())
