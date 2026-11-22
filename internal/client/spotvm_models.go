@@ -138,7 +138,7 @@ type SpotVMListResponse struct {
 func spotVMVolumeToResponseMin(v SpotVMVolume, bootable bool) StorageResourceResponseMin {
 	vol := StorageResourceResponseMin{
 		Name:     v.Name,
-		Size:     int(v.SizeGB),
+		Size:     float64(v.SizeGB),
 		Bootable: bootable,
 		Tags:     []string{},
 	}

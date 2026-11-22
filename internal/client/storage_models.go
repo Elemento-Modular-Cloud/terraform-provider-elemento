@@ -49,7 +49,7 @@ type CanCreateStorageBenchmark struct {
 type StorageResourceResponseMin struct {
     CreatorUUID string   `json:"creatorID"`
     Name        string   `json:"name"`
-    Size        int      `json:"size"`
+    Size        float64  `json:"size"`
     Private     bool     `json:"private"`
     Shareable   bool     `json:"shareable"`
     Bootable    bool     `json:"bootable"`
@@ -65,7 +65,7 @@ type StorageResourceResponseMin struct {
 type StorageResourceResponse struct {
     CreatorUUID string   `json:"creatorID"`
     Name        string   `json:"name"`
-    Size        int      `json:"size"`
+    Size        float64  `json:"size"`
     Private     bool     `json:"private"`
     Shareable   bool     `json:"shareable"`
     Bootable    bool     `json:"bootable"`
