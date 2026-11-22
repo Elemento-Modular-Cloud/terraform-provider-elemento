@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 )
 
 var (
@@ -194,7 +195,7 @@ func volumeAttributes() map[string]schema.Attribute {
     }
 }
 
-func (r *storageResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *storageResource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
     attributes := volumeAttributes()
     attributes["region"] = schema.StringAttribute{
         Required: true,
@@ -203,12 +204,17 @@ func (r *storageResource) Schema(_ context.Context, _ resource.SchemaRequest, re
         },
     }
     attributes["billing_frequency"] = schema.StringAttribute{
-        Required: true,
+        Optional: true,
         Description: "Billing period, e.g. `day`, `month` or `year`. Changing it forces a new resource.",
         PlanModifiers: []planmodifier.String {
            stringplanmodifier.RequiresReplace(),
         },
     }
+
+    attributes["timeouts"] = timeouts.Attributes(ctx, timeouts.Opts{
+			Create: true,
+			Delete: true,
+		})
 
     resp.Schema = schema.Schema{
 		Attributes: attributes,
