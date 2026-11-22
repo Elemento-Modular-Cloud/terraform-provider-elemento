@@ -85,6 +85,7 @@ func BaseSchema(ctx context.Context) map[string]rschema.Attribute {
 		},
 		"timeouts": timeouts.Attributes(ctx, timeouts.Opts{
 			Create: true,
+			Delete: true,
 		}),
 	}
 }
@@ -260,22 +261,41 @@ type HasRead interface {
 }
 
 func GetCreateStateConf(ctx context.Context, client *client.ElementoClient, timeout time.Duration, plan HasRead) *retry.StateChangeConf {
-    	return &retry.StateChangeConf{
-     		Pending: []string{"CREATING"},
-       		Target: []string{"READY"},
-         	Delay: 5 * time.Second,
-          	MinTimeout: 3 * time.Second,
-           	Timeout: timeout,
-            Refresh: func() (any, string, error) {
-            	found, diags := plan.Read(ctx, client, func(_ context.Context, _ bool) {})
-             	if diags.HasError() {
-             		return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
-             	}
-              	if !found {
-               		return &plan, "CREATING", nil
-                }
-                return &plan, "READY", nil
-            },
-     	}
+	return &retry.StateChangeConf{
+		Pending: []string{"CREATING"},
+		Target: []string{"READY"},
+		Delay: 5 * time.Second,
+		MinTimeout: 3 * time.Second,
+		Timeout: timeout,
+		Refresh: func() (any, string, error) {
+			found, diags := plan.Read(ctx, client, func(_ context.Context, _ bool) {})
+			if diags.HasError() {
+				return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
+			}
+			if !found {
+				return &plan, "CREATING", nil
+			}
+			return &plan, "READY", nil
+		},
+	}
+}
 
+func GetDeleteStateConf(ctx context.Context, client *client.ElementoClient, timeout time.Duration, state HasRead) *retry.StateChangeConf {
+    return &retry.StateChangeConf{
+		Pending:    []string{"DELETING"},
+		Target:     []string{"DELETED"},
+		Delay:      5 * time.Second,
+		MinTimeout: 3 * time.Second,
+		Timeout:    timeout,
+		Refresh: func() (any, string, error) {
+			found, diags := state.Read(ctx, client, func(_ context.Context, _ bool) {})
+			if diags.HasError() {
+				return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
+			}
+			if found {
+				return &state, "DELETING", nil
+			}
+			return &state, "DELETED", nil
+		},
+	}
 }

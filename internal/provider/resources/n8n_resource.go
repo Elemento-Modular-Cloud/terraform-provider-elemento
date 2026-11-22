@@ -290,6 +290,12 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 		return
 	}
 
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, common.DefaultDeleteTimeout)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	statusCode, err := r.Client.DeleteSpotVMResource(ctx, state.UUID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
@@ -303,6 +309,15 @@ func (r *n8nResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 				"Could not delete n8n resource, unexpected error: "+err.Error(),
 			)
 		}
+		return
+	}
+
+	stateConf := common.GetDeleteStateConf(ctx, r.Client, deleteTimeout, &state)
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		resp.Diagnostics.AddError(
+			"Error Waiting for Resource Deletion",
+			fmt.Sprintf("Could not confirm deletion of resource %s: %s", state.UUID.ValueString(), err.Error()),
+		)
 		return
 	}
 }

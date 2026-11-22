@@ -218,6 +218,12 @@ func (r *aiserverlessResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
+	deleteTimeout, diags := state.Timeouts.Delete(ctx, common.DefaultDeleteTimeout)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	statusCode, err := r.Client.DeleteResource(ctx, state.UUID.ValueString(), "aiserverless")
 	if err != nil {
 		if statusCode == 404 {
@@ -232,6 +238,15 @@ func (r *aiserverlessResource) Delete(ctx context.Context, req resource.DeleteRe
 			)
 		}
 
+		return
+	}
+
+	stateConf := common.GetDeleteStateConf(ctx, r.Client, deleteTimeout, &state)
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		resp.Diagnostics.AddError(
+			"Error Waiting for Resource Deletion",
+			fmt.Sprintf("Could not confirm deletion of resource %s: %s", state.UUID.ValueString(), err.Error()),
+		)
 		return
 	}
 }

@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"terraform-provider-elemento/internal/client"
 	"terraform-provider-elemento/internal/provider/common"
 	"time"
@@ -314,6 +315,12 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
     }
 
+    deleteTimeout, diags := state.Timeouts.Delete(ctx, common.DefaultDeleteTimeout)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
     statusCode, err := r.Client.DeleteKAASResource(ctx, state.UUID.ValueString())
     if err != nil {
 		if statusCode == 404 {
@@ -329,6 +336,15 @@ func (r *kaasResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		}
 		return
     }
+
+	stateConf := common.GetDeleteStateConf(ctx, r.Client, deleteTimeout, &state)
+	if _, err := stateConf.WaitForStateContext(ctx); err != nil {
+		resp.Diagnostics.AddError(
+			"Error Waiting for Resource Deletion",
+			fmt.Sprintf("Could not confirm deletion of resource %s: %s", state.UUID.ValueString(), err.Error()),
+		)
+		return
+	}
 }
 
 func (r *kaasResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
