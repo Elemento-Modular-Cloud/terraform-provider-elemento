@@ -35,13 +35,23 @@ var (
 		"elemento": providerserver.NewProtocol6WithError(New("test")()),
 	}
 	targets = map[string]ProviderConfig{
-		"aws": ProviderConfig{name: "aws", target: "aws-dev-private", region: "eu-south-1"},
-		"scaleway": ProviderConfig{name: "scaleway", target: "scaleway-dev-private", region: "it-mil"},
+		"aws": {name: "aws", target: "aws-dev-private", region: "eu-south-1"},
+		"scaleway": {name: "scaleway", target: "scaleway-dev-private", region: "it-mil"},
 	}
 	services = map[string][]string{
-		"dbaas": []string{"aws"},
-		"filestorage": []string{"aws"},
-		"kaas": []string{"aws"},
+		"dbaas": {"aws"},
+		"filestorage": {"aws"},
+		"kaas": {"aws"},
+		"loadbalancer": {"aws"},
+		"objectstorage": {"aws"},
+		"privatenetwork": {"aws"},
+		"publicgateway": {"aws"},
+		"publicip": {"aws"},
+		"queueaas": {"aws"},
+		"registry": {"aws"},
+		"serverless": {"aws"},
+		"spotvm": {"aws"},
+		"storage": {"aws"},
 	}
 )
 
@@ -62,7 +72,7 @@ func AttrImportStateIdFunc(resourceName, attrName string) resource.ImportStateId
 }
 
 func testAccPreCheck(t *testing.T) {
-	for _, envVar := range []string{"ELEMENTO_TARGET", "ELEMENTO_USERNAME", "ELEMENTO_PASSWORD"} {
+	for _, envVar := range []string{"ELEMENTO_USERNAME", "ELEMENTO_PASSWORD"} {
 		if os.Getenv(envVar) == "" {
 			t.Fatalf("%s must be set for acceptance tests", envVar)
 		}

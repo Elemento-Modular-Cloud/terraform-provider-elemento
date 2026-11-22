@@ -9,31 +9,31 @@ import (
 )
 
 type queueAASTestParams struct {
-	cidr string
+	cidr           string
 	autoAssignCidr bool
-	nodeNumber int
-	nodeSize string
-	sizeGB int
-	username string
-	password string
-	kafkaVersion string
-	isHA bool
-	isPublic bool
+	nodeNumber     int
+	nodeSize       string
+	sizeGB         int
+	username       string
+	password       string
+	kafkaVersion   string
+	isHA           bool
+	isPublic       bool
 }
 
 func TestAccQueueAASResource(t *testing.T) {
 	paramsByProvider := map[string]queueAASTestParams{
 		"aws": {
-			cidr: "192.168.2.0/24",
+			cidr:           "192.168.2.0/24",
 			autoAssignCidr: false,
-			nodeNumber: 3,
-			nodeSize: "M",
-			sizeGB: 10,
-			username: "user",
-			password: "1234515438u_sdf!",
-			kafkaVersion: "3.9.1",
-			isHA: true,
-			isPublic: false,
+			nodeNumber:     3,
+			nodeSize:       "M",
+			sizeGB:         10,
+			username:       "user",
+			password:       "1234515438u_sdf!",
+			kafkaVersion:   "3.9.1",
+			isHA:           true,
+			isPublic:       false,
 		},
 	}
 
