@@ -81,6 +81,6 @@ resource "elemento_n8n" "test" {
 				resource.TestCheckNoResourceAttr(resourceName, "billing_uuid"),
 			}
 		},
-		[]string{"password", "ssh_key", "payment_url", "status", "last_updated"},
+		[]string{"username", "password", "ssh_key", "payment_url", "status", "last_updated", "state", "service_url"},
 	)
 }
