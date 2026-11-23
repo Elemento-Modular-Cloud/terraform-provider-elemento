@@ -80,7 +80,7 @@ func (d *publicGatewayDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "PublicGateway"))
+	found, _, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "PublicGateway"))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() || !found {
 		return

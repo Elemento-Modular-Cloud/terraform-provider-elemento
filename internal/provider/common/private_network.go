@@ -41,7 +41,7 @@ type PrivateNetworkResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.PrivateNetworkResponse
@@ -52,7 +52,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 				"Error Reading PrivateNetwork Resources",
 				"Could not list privatenetwork resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -68,7 +68,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 				"Error Reading PrivateNetwork Resource"+strconv.Itoa(code),
 				"Could not read privatenetwork resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -83,7 +83,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 				"Error Reading PrivateNetwork Resource Status",
 				"Could not read privatenetwork resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -92,7 +92,7 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -126,9 +126,9 @@ func (m *PrivateNetworkDataSourceModel) Read(ctx context.Context, c *client.Elem
 	// 		"Error Reading PrivateNetwork Credentials",
 	// 		"Could not read privatenetwork credentials: "+err.Error(),
 	// 	)
-	// 	return true, diags
+	// 	return true, false, diags
 	// }
 
 
-	return true, diags
+	return true, true, diags
 }

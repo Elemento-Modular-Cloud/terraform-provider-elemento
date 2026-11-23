@@ -30,7 +30,7 @@ type QueueAASResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.QueueAASResponse
@@ -41,7 +41,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading QueueAAS Resources",
 				"Could not list queueaas resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -57,7 +57,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading QueueAAS Resource"+strconv.Itoa(code),
 				"Could not read queueaas resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -72,7 +72,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading QueueAAS Resource Status",
 				"Could not read queueaas resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -81,7 +81,7 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -106,11 +106,11 @@ func (m *QueueAASDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 			"Error Reading QueueAAS Credentials",
 			"Could not read queueaas credentials: "+err.Error(),
 		)
-		return true, diags
+		return true, false, diags
 	}
 
 	m.BootstrapServers = types.StringValue(credentials.BootstrapServers)
 	m.KafkaCert = types.StringValue(credentials.KafkaCert)
 
-	return true, diags
+	return true, true, diags
 }

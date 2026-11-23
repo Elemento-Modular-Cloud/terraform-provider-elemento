@@ -28,7 +28,7 @@ type PublicGatewayResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.PublicGatewayResponse
@@ -39,7 +39,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 				"Error Reading PublicGateway Resources",
 				"Could not list publicgateway resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -55,7 +55,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 				"Error Reading PublicGateway Resource"+strconv.Itoa(code),
 				"Could not read publicgateway resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -70,7 +70,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 				"Error Reading PublicGateway Resource Status",
 				"Could not read publicgateway resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -79,7 +79,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -104,7 +104,7 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	// 		"Error Reading PublicGateway Credentials",
 	// 		"Could not read publicgateway credentials: "+err.Error(),
 	// 	)
-	// 	return true, diags
+	// 	return true, false, diags
 	// }
 
 	// state.NFSHost = types.StringValue(credentials.NFSHost)
@@ -112,5 +112,5 @@ func (m *PublicGatewayDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	// state.NFSVersion = types.StringValue(credentials.NFSVersion)
 	// state.MountCommand = types.StringValue(credentials.MountCommand)
 
-	return true, diags
+	return true, true, diags
 }

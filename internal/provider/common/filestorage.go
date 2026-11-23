@@ -28,7 +28,7 @@ type FileStorageResourceModel struct {
 	IsPublic types.Bool `tfsdk:"is_public"`
 }
 
-func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.FileStorageResponse
@@ -39,7 +39,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 				"Error Reading FileStorage Resources",
 				"Could not list filestorage resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -55,7 +55,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 				"Error Reading FileStorage Resource"+strconv.Itoa(code),
 				"Could not read filestorage resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -70,7 +70,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 				"Error Reading FileStorage Resource Status",
 				"Could not read filestorage resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -79,7 +79,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -99,7 +99,7 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 			"Error Reading FileStorage Credentials",
 			"Could not read filestorage credentials: "+err.Error(),
 		)
-		return true, diags
+		return true, false, diags
 	}
 
 	m.NFSHost = types.StringValue(credentials.NFSHost)
@@ -107,5 +107,5 @@ func (m *FileStorageDataSourceModel) Read(ctx context.Context, c *client.Element
 	m.NFSVersion = types.StringValue(credentials.NFSVersion)
 	m.MountCommand = types.StringValue(credentials.MountCommand)
 
-	return true, diags
+	return true, true, diags
 }

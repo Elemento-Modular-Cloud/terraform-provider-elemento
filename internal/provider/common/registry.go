@@ -30,7 +30,7 @@ type RegistryResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.RegistryResponse
@@ -41,7 +41,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading Registry Resources",
 				"Could not list registry resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -57,7 +57,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading Registry Resource"+strconv.Itoa(code),
 				"Could not read registry resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -72,7 +72,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 				"Error Reading Registry Resource Status",
 				"Could not read registry resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -81,7 +81,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -104,7 +104,7 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 			"Error Reading Registry Credentials",
 			"Could not read registry credentials: "+err.Error(),
 		)
-		return true, diags
+		return true, false, diags
 	}
 
 	m.AccessKeyID = types.StringValue(credentials.AccessKeyID)
@@ -112,5 +112,5 @@ func (m *RegistryDataSourceModel) Read(ctx context.Context, c *client.ElementoCl
 	m.RegistryType = types.StringValue(credentials.RegistryType)
 	m.LoginCommand = types.StringValue(credentials.LoginCommand)
 
-	return true, diags
+	return true, true, diags
 }

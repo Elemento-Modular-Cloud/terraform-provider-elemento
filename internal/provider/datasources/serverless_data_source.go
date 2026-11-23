@@ -94,7 +94,7 @@ func (d *ServerlessDataSource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 
-	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "Serverless"))
+	found, _, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "Serverless"))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() || !found {
 		return

@@ -68,7 +68,7 @@ func (d *n8nDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		return
 	}
 
-	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "N8N"))
+	found, _, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "N8N"))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() || !found {
 		return

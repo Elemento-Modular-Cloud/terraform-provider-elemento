@@ -95,7 +95,7 @@ func (d *registryDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	found, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "Registry"))
+	found, _, diags := model.Read(ctx, d.Client, common.AddNotFoundError(&resp.Diagnostics, "Registry"))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() || !found {
 		return

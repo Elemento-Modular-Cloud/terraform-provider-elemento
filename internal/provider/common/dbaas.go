@@ -30,7 +30,7 @@ type DBAASResourceModel struct {
 	Password types.String `tfsdk:"password"`
 }
 
-func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 	var resource *client.DBAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
@@ -40,7 +40,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 				"Error Reading DBAAS Resources",
 				"Could not list dbaas resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -56,7 +56,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 				"Error Reading DBAAS Resource",
 				"Could not read dbaas resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -71,7 +71,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 				"Error Reading DBAAS Resource Status",
 				"Could not read dbaas resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -80,7 +80,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -100,7 +100,7 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 			"Error Reading DBAAS Credentials",
 			"Could not read dbaas credentials: "+err.Error(),
 		)
-		return true, diags
+		return true, false, diags
 	}
 
 	m.DatabaseHost = types.StringValue(credentials.DatabaseHost)
@@ -111,5 +111,5 @@ func (m *DBAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClien
 	m.DatabaseSSLMode = types.StringValue(credentials.DatabaseSSLMode)
 	m.PublicURI = types.StringValue(credentials.PublicURI)
 
-	return true, diags
+	return true, true, diags
 }

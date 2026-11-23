@@ -25,7 +25,7 @@ type AIServerlessResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.AIServerlessResponse
@@ -36,7 +36,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading AIServerless Resources",
 				"Could not list aiserverless resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -52,7 +52,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading AIServerless Resource"+strconv.Itoa(code),
 				"Could not read aiserverless resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -67,7 +67,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading AIServerless Resource Status",
 				"Could not read aiserverless resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -76,7 +76,7 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -96,11 +96,11 @@ func (m *AIServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemen
 			"Error Reading AIServerless Credentials",
 			"Could not read aiserverless credentials: "+err.Error(),
 		)
-		return true, diags
+		return true, false, diags
 	}
 
 	m.AccessKeyID = types.StringValue(credentials.AccessKeyID)
 	m.SecretAccessKey = types.StringValue(credentials.SecretAccessKey)
 
-	return true, diags
+	return true, true, diags
 }

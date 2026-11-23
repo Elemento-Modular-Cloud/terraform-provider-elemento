@@ -26,7 +26,7 @@ type N8NResourceModel struct {
 	SSHKey   types.String `tfsdk:"ssh_key"`
 }
 
-func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	resources, err := c.ListSpotVMResources(ctx)
@@ -35,7 +35,7 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 			"Error Reading n8n Resources",
 			"Could not list n8n resources: "+err.Error(),
 		)
-		return true, diags
+		return false, false, diags
 	}
 
 	var resource *client.SpotVMListItem
@@ -55,7 +55,7 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 				"Error Reading n8n Resource Status",
 				"Could not read n8n resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -64,7 +64,7 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -81,11 +81,11 @@ func (m *N8NDataSourceModel) Read(ctx context.Context, c *client.ElementoClient,
 			"Error Reading n8n Credentials",
 			"Could not read n8n credentials: "+err.Error(),
 		)
-		return true, diags
+		return true, false, diags
 	}
 
 	m.State = types.StringValue(credentials.State)
 	m.ServiceURL = types.StringValue(credentials.URL)
 
-	return true, diags
+	return true, true, diags
 }

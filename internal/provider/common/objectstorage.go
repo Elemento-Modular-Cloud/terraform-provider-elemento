@@ -25,7 +25,7 @@ type ObjectStorageResourceModel struct {
 	SizeTB types.Int64 `tfsdk:"size_tb"`
 }
 
-func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
     var resource *client.ObjectStorageResponse
     if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
@@ -35,7 +35,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
                 "Error Reading ObjectStorage Resources",
                 "Could not list objectstorage resources: "+err.Error(),
             )
-            return true, diags
+            return false, false, diags
         }
 
         for _, res := range resources {
@@ -51,7 +51,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
                 "Error Reading ObjectStorage Resource",
                 "Could not read objectstorage resource: "+err.Error(),
             )
-            return true, diags
+            return false, false, diags
         }
         resource = res
     }
@@ -66,7 +66,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
 				"Error Reading ObjectStorage Resource Status",
 				"Could not read objectstorage resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -75,7 +75,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
     m.Status        = types.StringPointerValue(status)
@@ -91,7 +91,7 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
             "Error Reading ObjectStorage Credentials",
             "Could not read objectstorage credentials: "+err.Error(),
         )
-        return true, diags
+        return true, false, diags
     }
 
     m.AccountName = types.StringValue(credentials.AccountName)
@@ -99,5 +99,5 @@ func (m *ObjectStorageDataSourceModel) Read(ctx context.Context, c *client.Eleme
     m.SasToken = types.StringValue(credentials.SasToken)
     m.AzureCliCommand = types.StringValue(credentials.AzureCliCommand)
 
-    return true, diags
+    return true, true, diags
 }

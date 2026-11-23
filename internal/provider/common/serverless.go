@@ -32,7 +32,7 @@ type ServerlessResourceModel struct {
 	CodeZipB64  types.String `tfsdk:"code_zip_b64"`
 }
 
-func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.ServerlessResponse
@@ -43,7 +43,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 				"Error Reading Serverless Resources",
 				"Could not list serverless resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -59,7 +59,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 				"Error Reading Serverless Resource"+strconv.Itoa(code),
 				"Could not read serverless resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -74,7 +74,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 				"Error Reading Serverless Resource Status",
 				"Could not read serverless resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -83,7 +83,7 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -107,12 +107,12 @@ func (m *ServerlessDataSourceModel) Read(ctx context.Context, c *client.Elemento
 			"Error Reading Serverless Credentials",
 			"Could not read serverless credentials: "+err.Error(),
 		)
-		return true, diags
+		return true, false, diags
 	}
 
 	m.AccessKeyID = types.StringValue(credentials.AccessKeyID)
 	m.SecretAccessKey = types.StringValue(credentials.SecretAccessKey)
 	m.AuthType = types.StringValue(credentials.AuthType)
 
-	return true, diags
+	return true, true, diags
 }

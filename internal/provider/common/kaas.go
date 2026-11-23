@@ -49,7 +49,7 @@ type nodeSubnetModel struct {
 	CIDR        types.String `tfsdk:"cidr"`
 }
 
-func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 	var resource *client.KAASResponse
 	if m.UUID.IsNull() || m.UUID.IsUnknown() || m.UUID.ValueString() == "" {
@@ -59,7 +59,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 				"Error Reading KAAS Resources",
 				"Could not list kaas resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -75,7 +75,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 				"Error Reading KAAS Resource",
 				"Could not read kaas resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -90,7 +90,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 				"Error Reading KAAS Resource Status",
 				"Could not read kaas resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -99,7 +99,7 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -124,5 +124,5 @@ func (m *KAASDataSourceModel) Read(ctx context.Context, c *client.ElementoClient
 	//     return
 	// }
 
-	return true, diags
+	return true, true, diags
 }

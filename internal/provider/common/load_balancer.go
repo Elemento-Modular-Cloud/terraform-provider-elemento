@@ -29,7 +29,7 @@ type LoadBalancerResourceModel struct {
 	ResourceExtraModel
 }
 
-func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics) {
+func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics) {
 	var diags diag.Diagnostics = nil
 
 	var resource *client.LoadBalancerResponse
@@ -40,7 +40,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading LoadBalancer Resources",
 				"Could not list loadbalancer resources: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 
 		for _, res := range resources {
@@ -56,7 +56,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading LoadBalancer Resource"+strconv.Itoa(code),
 				"Could not read loadbalancer resource: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 		resource = res
 	}
@@ -71,7 +71,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 				"Error Reading LoadBalancer Resource Status",
 				"Could not read loadbalancer resource status: "+err.Error(),
 			)
-			return true, diags
+			return false, false, diags
 		}
 	} else {
 		status = nil
@@ -80,7 +80,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	if resource == nil {
 		statusDeleted := status == nil || *status == "deleted" || *status == "error" || *status == "canceled"
 		onNotFound(ctx, statusDeleted)
-		return !statusDeleted, diags
+		return !statusDeleted, false, diags
 	}
 
 	m.Status = types.StringPointerValue(status)
@@ -107,7 +107,7 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	// 		"Error Reading LoadBalancer Credentials",
 	// 		"Could not read loadbalancer credentials: "+err.Error(),
 	// 	)
-	// 	return true, diags
+	// 	return true, false, diags
 	// }
 
 	// state.NFSHost = types.StringValue(credentials.NFSHost)
@@ -115,5 +115,5 @@ func (m *LoadBalancerDataSourceModel) Read(ctx context.Context, c *client.Elemen
 	// state.NFSVersion = types.StringValue(credentials.NFSVersion)
 	// state.MountCommand = types.StringValue(credentials.MountCommand)
 
-	return true, diags
+	return true, true, diags
 }

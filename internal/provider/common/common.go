@@ -257,7 +257,7 @@ const DefaultCreateTimeout = 20 * time.Minute
 const DefaultDeleteTimeout = 20 * time.Minute
 
 type HasRead interface {
-	Read(ctx context.Context, client *client.ElementoClient, onNotFound OnNotFound) (bool, diag.Diagnostics)
+	Read(ctx context.Context, client *client.ElementoClient, onNotFound OnNotFound) (bool, bool, diag.Diagnostics)
 }
 
 func GetCreateStateConf(ctx context.Context, client *client.ElementoClient, timeout time.Duration, plan HasRead) *retry.StateChangeConf {
@@ -268,11 +268,11 @@ func GetCreateStateConf(ctx context.Context, client *client.ElementoClient, time
 		MinTimeout: 3 * time.Second,
 		Timeout: timeout,
 		Refresh: func() (any, string, error) {
-			found, diags := plan.Read(ctx, client, func(_ context.Context, _ bool) {})
+			found, credentials, diags := plan.Read(ctx, client, func(_ context.Context, _ bool) {})
 			if diags.HasError() {
 				return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
 			}
-			if !found {
+			if !found || !credentials {
 				return &plan, "CREATING", nil
 			}
 			return &plan, "READY", nil
@@ -288,7 +288,7 @@ func GetDeleteStateConf(ctx context.Context, client *client.ElementoClient, time
 		MinTimeout: 3 * time.Second,
 		Timeout:    timeout,
 		Refresh: func() (any, string, error) {
-			found, diags := state.Read(ctx, client, func(_ context.Context, _ bool) {})
+			found, _, diags := state.Read(ctx, client, func(_ context.Context, _ bool) {})
 			if diags.HasError() {
 				return nil, "", fmt.Errorf("%s: %s", diags.Errors()[0].Summary(), diags.Errors()[0].Detail())
 			}
