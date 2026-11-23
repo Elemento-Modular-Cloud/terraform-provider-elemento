@@ -2,37 +2,85 @@ package provider
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
+type n8nTestParams struct {
+	cpuCores int
+	ramSizeMB int
+	diskSizeGB int
+	username string
+	password string
+	sshKey string
+}
+
 func TestAccN8NResource(t *testing.T) {
+	paramsByProvider := map[string]n8nTestParams{
+		"aws": {
+			cpuCores: 2,
+			ramSizeMB: 4096,
+			diskSizeGB: 32,
+			username: "elemento",
+			password: "elemento123!",
+			sshKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBS/qkkoKOEmkCANzrvPki5t5crf0mwRItAXWnw45R3v",
+		},
+	}
+
+	const resourceType = "n8n"
 	const resourceName = "elemento_n8n.test"
-	testAccCreateImport(t, resourceName,
-		func(name string) string {
-			return providerConfig + fmt.Sprintf(`
+	const resourceFormat = `
 resource "elemento_n8n" "test" {
   vm_name           = %[1]q
-  region            = "it-mil"
-  billing_frequency = "day"
-  cpu_cores         = 2
-  ram_size_mb       = 4096
-  disk_size_gb      = 32
-  username          = "elemento"
-  password          = "elemento123!"
-  ssh_key           = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBS/qkkoKOEmkCANzrvPki5t5crf0mwRItAXWnw45R3v"
+  cpu_cores         = %[2]d
+  ram_size_mb       = %[3]d
+  disk_size_gb      = %[4]d
+  username          = %[5]q
+  password          = %[6]q
+  ssh_key           = %[7]q
+  region            = %[8]q
 }
-`, name)
+`
+
+	testAccCreateImport(
+		t,
+		resourceName,
+		resourceType,
+		func(name string, target ProviderConfig) string {
+			p := paramsByProvider[target.name]
+
+			return target.ProviderBlock() + fmt.Sprintf(
+				resourceFormat,
+				name,
+				p.cpuCores,
+				p.ramSizeMB,
+				p.diskSizeGB,
+				p.username,
+				p.password,
+				p.sshKey,
+				target.region,
+			)
 		},
-		func(name string) []resource.TestCheckFunc {
+		func(name string, target ProviderConfig) []resource.TestCheckFunc {
+			p := paramsByProvider[target.name]
+
 			return []resource.TestCheckFunc{
-				resource.TestCheckResourceAttr(resourceName, "vm_name", name),
-				resource.TestCheckResourceAttr(resourceName, "cpu_cores", "2"),
-				resource.TestCheckResourceAttr(resourceName, "ram_size_mb", "4096"),
-				resource.TestCheckResourceAttr(resourceName, "disk_size_gb", "32"),
+				resource.TestCheckResourceAttr(resourceName, "cpu_cores", strconv.Itoa(p.cpuCores)),
+				resource.TestCheckResourceAttr(resourceName, "ram_size_mb", strconv.Itoa(p.ramSizeMB)),
+				resource.TestCheckResourceAttr(resourceName, "disk_size_gb", strconv.Itoa(p.diskSizeGB)),
+				resource.TestCheckResourceAttr(resourceName, "username", p.username),
+				resource.TestCheckResourceAttr(resourceName, "password", p.password),
+				resource.TestCheckResourceAttr(resourceName, "ssh_key", p.sshKey),
+				resource.TestCheckResourceAttr(resourceName, "region", target.region),
+
+				// Public resource attributes
+				resource.TestCheckNoResourceAttr(resourceName, "payment_url"),
+				resource.TestCheckNoResourceAttr(resourceName, "billing_frequency"),
+				resource.TestCheckNoResourceAttr(resourceName, "billing_uuid"),
 			}
 		},
-		[]string{"password", "ssh_key", "payment_url", "status"},
+		[]string{"password", "ssh_key", "payment_url", "status", "last_updated"},
 	)
 }

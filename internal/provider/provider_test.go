@@ -39,11 +39,14 @@ var (
 		"scaleway": {name: "scaleway", target: "scaleway-dev-private", region: "it-mil"},
 	}
 	services = map[string][]string{
+		"aiserverless": {"aws"},
 		"dbaas": {"aws"},
 		"filestorage": {"aws"},
 		"kaas": {"aws"},
 		"loadbalancer": {"aws"},
+		"n8n": {"aws"},
 		"objectstorage": {"aws"},
+		"openclaw": {"aws"},
 		"privatenetwork": {"aws"},
 		"publicgateway": {"aws"},
 		"publicip": {"aws"},
